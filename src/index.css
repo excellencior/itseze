@@ -1,0 +1,163 @@
+@import "tailwindcss";
+
+/* ══ Theme tokens are injected from src/theme.js at runtime ══ */
+/* ══ Edit src/theme.js to change colors, not this file      ══ */
+:root {
+  /* Fallbacks (overridden by theme.js injection) */
+  --accent: #0891B2;
+  --accent-50: rgba(8, 145, 178, 0.5);
+  --accent-20: rgba(8, 145, 178, 0.2);
+  --accent-70: rgba(8, 145, 178, 0.7);
+  --bg: #EAEAEA;
+  --node-bg: #FFFFFF;
+  --border: #D4D4D4;
+  --border-focus: #A0A0A0;
+  --text-main: #000000;
+  --text-muted: #545454;
+  --text-light: #A0A0A0;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+  --shadow-md: 0 8px 20px rgba(0,0,0,0.06);
+  --shadow-hover: 0 12px 32px rgba(0,0,0,0.08);
+  --radius: 0px;
+  --radius-sm: 0px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Google Sans', 'Roboto', sans-serif;
+  background: var(--bg);
+  color: var(--text-main);
+  line-height: 1.6;
+}
+
+/* ── SPINE LAYOUT ── */
+.spine-container {
+  display: flex; flex-direction: column; align-items: stretch;
+  width: 100%; position: relative;
+}
+.spine-line {
+  position: absolute; top: 0; bottom: 0; left: 50%;
+  width: 1px; background: var(--border); transform: translateX(-50%); z-index: 0;
+}
+
+/* ── NODE (Accordion) ── */
+.node {
+  background: var(--node-bg); border: 1px solid var(--border);
+  border-radius: var(--radius); width: 100%;
+  margin: 12px 0; box-shadow: var(--shadow-sm); z-index: 10;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+.node:hover { box-shadow: var(--shadow-md); border-color: var(--accent-50); }
+.node-header {
+  padding: 20px 24px; cursor: pointer; display: flex;
+  align-items: center; justify-content: space-between; user-select: none;
+}
+.node-title-area { display: flex; flex-direction: column; }
+.node-title { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+.node-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+.node-icon {
+  width: 32px; height: 32px; display: flex; border: 1.5px solid var(--border);
+  align-items: center; justify-content: center; font-weight: 800; color: var(--text-main); flex-shrink: 0;
+  background: white; font-size: 13px;
+}
+.node:hover .node-icon { border-color: var(--accent); color: var(--accent); }
+.chevron { font-size: 16px; color: var(--text-muted); transition: transform 0.3s, color 0.2s; }
+.node:hover .chevron { color: var(--accent); }
+
+/* ── EXPANDED CONTENT ── */
+.node-content {
+  max-height: 0; opacity: 0; overflow: hidden;
+  transition: max-height 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s;
+  background: white; border-top: 1px solid transparent;
+}
+.node.expanded { box-shadow: var(--shadow-hover); border-color: var(--accent-50); }
+.node.expanded .node-content {
+  max-height: 2500px; opacity: 1; border-top-color: var(--border); padding: 24px;
+}
+.node.expanded .chevron { transform: rotate(180deg); }
+
+/* ── INNER COMPONENTS ── */
+.inner-block {
+  background: white; border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 20px; margin-bottom: 20px;
+}
+.inner-title { font-weight: 800; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; font-size: 15px; letter-spacing: -0.3px; }
+
+/* Grid for QKV */
+.qkv-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 16px; }
+.qkv-card {
+  padding: 16px; border: 1px solid var(--border);
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  background: white;
+}
+.qkv-title { font-weight: 800; margin-bottom: 4px; font-size: 14px; }
+.qkv-desc { font-size: 12px; color: var(--text-muted); }
+
+/* Playground */
+.playground {
+  background: white; border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 24px; width: 100%; margin: 0 0 32px 0; box-shadow: var(--shadow-sm);
+  position: relative; z-index: 10;
+}
+.pg-input {
+  width: 100%; padding: 16px; font-size: 18px; border: 1.5px solid var(--border); font-weight: 600;
+  border-radius: 0px; outline: none; transition: border-color 0.2s;
+  font-family: 'Google Sans', 'Roboto', sans-serif; letter-spacing: -0.5px;
+}
+.pg-input:focus { border-color: var(--accent); }
+.pg-tokens { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+.tok {
+  background: white; border: 1.5px solid var(--border); padding: 6px 14px;
+  font-family: 'Fira Code', monospace; font-size: 14px; font-weight: 600;
+  transition: border-color 0.2s;
+}
+.tok:hover { border-color: var(--accent); }
+
+/* Sliders */
+.controls-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 20px; }
+.control-group { display: flex; flex-direction: column; gap: 6px; }
+.control-group label { font-size: 12px; font-weight: 700; color: var(--text-main); display:flex; justify-content:space-between; }
+input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+
+/* Math blocks */
+code {
+  font-family: 'Fira Code', monospace; font-size: 13px; color: var(--text-main);
+  background: #f6f6f6; padding: 3px 6px; border: 1px solid var(--border);
+}
+.math-box {
+  background: #f6f6f6; border: 1px solid var(--border); padding: 16px;
+  font-family: 'Fira Code', monospace; font-size: 13px; margin: 16px 0; color: #000; font-weight: 600;
+}
+
+/* Attention Heatmap */
+.attn-wrap { overflow-x: auto; margin-top: 16px; }
+.attn-row { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+.attn-cell {
+  width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; transition: transform 0.2s; cursor: pointer; border: 1px solid var(--border);
+}
+.attn-cell:hover { transform: scale(1.08); z-index: 2; box-shadow: var(--shadow-sm); border-color: var(--accent); }
+.attn-lbl { width: 72px; font-size: 12px; font-weight: 600; text-align: right; padding-right: 10px; font-family: 'Fira Code', monospace; }
+
+/* Arrows inside blocks */
+.arrow-down { text-align: center; color: var(--text-light); font-size: 24px; margin: 12px 0; line-height: 1; font-weight: 300; }
+
+/* ── Custom Sidebar Scrollbar ── */
+.sidebar-nav {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-50) transparent;
+}
+.sidebar-nav::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: var(--accent-50);
+  border-radius: 3px;
+}
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-70);
+}
