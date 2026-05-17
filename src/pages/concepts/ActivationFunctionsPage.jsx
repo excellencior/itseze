@@ -3,6 +3,8 @@ import Latex from '../../components/Latex';
 import FunctionPlot from '../../components/viz/FunctionPlot';
 import InlinePanel from '../../components/viz/InlinePanel';
 import LinearCollapseViz from '../../components/viz/LinearCollapseViz';
+import GradientDecayViz from '../../components/viz/GradientDecayViz';
+import HoverCard from '../../components/HoverCard';
 
 // ── Activation function definitions ──
 const sigmoid = (x) => 1 / (1 + Math.exp(-x));
@@ -25,9 +27,19 @@ const siluDeriv = (x) => {
 };
 
 // ── Section component ──
+function slugify(title) {
+  return title
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')   // strip emoji, punctuation, special chars
+    .replace(/^\d+\.\s*/, '')   // strip leading number prefix like "1. "
+    .trim()
+    .replace(/\s+/g, '-');      // spaces → hyphens
+}
+
 function Section({ title, children }) {
+  const id = slugify(title);
   return (
-    <div style={{ marginBottom: '48px' }}>
+    <div id={id} data-section style={{ marginBottom: '48px', scrollMarginTop: '24px' }}>
       <h2 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '16px', letterSpacing: '-0.5px' }}>{title}</h2>
       {children}
     </div>
@@ -43,6 +55,7 @@ function Callout({ type = 'info', children }) {
     info: { bg: '#EFF6FF', border: '#3B82F6', icon: 'ℹ️' },
     warning: { bg: '#FFF7ED', border: '#F59E0B', icon: '⚠️' },
     key: { bg: '#F0FDF4', border: '#10B981', icon: '💡' },
+    accent: { bg: 'var(--accent-20)', border: 'var(--accent)', icon: '↩' },
   };
   const c = colors[type];
   return (
@@ -99,20 +112,26 @@ export default function ActivationFunctionsPage() {
   };
 
   const [collapsePanel, setCollapsePanel] = useState(() => {
-    // Lazily initialize from sessionStorage so it persists across refreshes
     return sessionStorage.getItem('activation-viz-panel-open') === 'true';
   });
   const btnRef = useRef(null);
 
-  // Sync state to sessionStorage whenever it changes
+  const [gradientPanel, setGradientPanel] = useState(() => {
+    return sessionStorage.getItem('activation-gradient-panel-open') === 'true';
+  });
+  const gradientBtnRef = useRef(null);
+
   useEffect(() => {
     sessionStorage.setItem('activation-viz-panel-open', collapsePanel);
   }, [collapsePanel]);
 
+  useEffect(() => {
+    sessionStorage.setItem('activation-gradient-panel-open', gradientPanel);
+  }, [gradientPanel]);
+
   const handleTogglePanel = () => {
     setCollapsePanel(prev => {
       const nextState = !prev;
-      // If we are opening the panel, wait for the accordion to start then scroll to it
       if (nextState && btnRef.current) {
         setTimeout(() => {
           btnRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -127,6 +146,27 @@ export default function ActivationFunctionsPage() {
     if (btnRef.current) {
       setTimeout(() => {
         btnRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 50);
+    }
+  };
+
+  const handleToggleGradientPanel = () => {
+    setGradientPanel(prev => {
+      const nextState = !prev;
+      if (nextState && gradientBtnRef.current) {
+        setTimeout(() => {
+          gradientBtnRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 150);
+      }
+      return nextState;
+    });
+  };
+
+  const handleCloseGradientPanel = () => {
+    setGradientPanel(false);
+    if (gradientBtnRef.current) {
+      setTimeout(() => {
+        gradientBtnRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 50);
     }
   };
@@ -221,7 +261,7 @@ export default function ActivationFunctionsPage() {
           The sigmoid squashes any real-valued input into the (0, 1) range. Crucially, it isn't just an arbitrary bounding function—it is the mathematical inverse of the logit function. If a network outputs the log-odds (logits) of a binary event, passing them through a sigmoid rigorously converts them into a true probability.
         </P>
         <P>
-          However, as a hidden layer activation, it has a fatal flaw. Take a look at its derivative (the dashed line). It peaks at just <strong>0.25</strong> and rapidly drops to zero on both sides. In a deep network, gradients get multiplied through every layer via the chain rule, and each one is capped at a quarter. This causes the infamous <strong>vanishing gradient problem</strong>.
+          <span style={{ background: 'var(--accent-20)', borderBottom: '2px solid var(--accent)', padding: '1px 4px' }}>However, as a hidden layer activation, it has a fatal flaw. Take a look at its derivative (the dashed line). It peaks at just <strong>0.25</strong> and rapidly drops to zero on both sides.</span> In a deep network, gradients get multiplied through every layer via the chain rule, and each one is capped at a quarter. This causes the infamous <strong>vanishing gradient problem</strong>.
         </P>
         <Callout type="warning">
           <strong>Vanishing gradients:</strong> After 10 layers of sigmoid, the gradient is at most
@@ -231,6 +271,11 @@ export default function ActivationFunctionsPage() {
           <strong>Where it's still used:</strong> Binary classification output layers, and gates in LSTMs and GRUs
           where the 0 to 1 range is deliberately needed as a "gate".
         </P>
+        <Callout type="accent">
+          <strong>Interesting twist:</strong> Sigmoid's "flaws" are actually <strong>features</strong> here.
+          A gate <em>needs</em> outputs between 0 and 1 to work as a <strong>learned valve</strong>.
+          And as the final layer, there's nowhere left for gradients to vanish <em>through</em>.
+        </Callout>
       </Section>
 
       {/* ── TANH ── */}
@@ -256,8 +301,35 @@ export default function ActivationFunctionsPage() {
           Think of tanh as a rescaled sigmoid. It's centered around zero and has stronger gradients,
           peaking at 1.0 instead of 0.25. That means gradients flow about 4× better through each layer.
           The catch is that it still saturates at the extremes, so deep networks will still run into
-          vanishing gradients, just not as quickly.
+          vanishing gradients, just not as quickly.{' '}
+          <button
+            ref={gradientBtnRef}
+            onClick={handleToggleGradientPanel}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '2px 8px',
+              fontSize: '12px',
+              fontWeight: 600,
+              border: '1px solid var(--accent)',
+              background: 'transparent',
+              color: 'var(--accent)',
+              cursor: 'pointer',
+              borderRadius: '3px',
+              fontFamily: 'inherit',
+              transition: 'all 0.15s',
+              verticalAlign: 'middle',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--accent-20)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+          >
+            ◧ visualize
+          </button>
         </P>
+        <InlinePanel open={gradientPanel} onClose={handleCloseGradientPanel}>
+          <GradientDecayViz />
+        </InlinePanel>
         <P>
           <strong>Where it's used:</strong> LSTM cell states, some RNN architectures, and normalization outputs.
         </P>
@@ -283,7 +355,7 @@ export default function ActivationFunctionsPage() {
           title="ReLU and its derivative"
         />
         <P>
-          ReLU was the breakthrough that enabled deep learning. For positive inputs, the gradient is always
+          <span style={{ background: 'var(--accent-20)', borderBottom: '2px solid var(--accent)', padding: '1px 4px' }}>ReLU was the breakthrough that enabled deep learning.</span> For positive inputs, the gradient is always
           exactly 1, so it never vanishes no matter how deep the network goes. It's also incredibly cheap to
           compute since it's just a max operation. This simplicity is what enabled training networks like
           AlexNet, VGG, and ResNet that were previously impossible with sigmoid or tanh.
@@ -294,10 +366,72 @@ export default function ActivationFunctionsPage() {
           up to 20 to 40% of neurons can die during training.
         </Callout>
         <P>
-          <strong>Example:</strong> Say a neuron computes <code>ReLU(w·x + b)</code>. If a large gradient
-          update pushes <code>w</code> negative and <code>b</code> very negative, then for every training example
-          <code>w·x + b &lt; 0</code>, so the output is always 0, the gradient is always 0, and it's stuck forever.
+          <strong>Example:</strong> Say a neuron computes <code>ReLU(w·x + b)</code>. Here's exactly how it dies:
         </P>
+        <div style={{
+          display: 'flex', flexDirection: 'column', gap: '0px',
+          margin: '8px 0 20px 0',
+        }}>
+          {/* Step 1 */}
+          <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+            <div style={{
+              minWidth: '28px', height: '28px', borderRadius: '14px',
+              background: 'var(--accent)', color: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '13px', fontWeight: 700, marginTop: '2px',
+            }}>1</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '6px', color: 'var(--text-main)' }}>A bad gradient update</div>
+              <div className="math-box" style={{ margin: '0 0 6px 0', padding: '10px 14px' }}>
+                <Latex math={"w \\leftarrow w - \\eta \\cdot \\nabla L \\quad \\Rightarrow \\quad w = -3.2, \\; b = -1.5"} />
+              </div>
+              <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '14px' }}>
+                A large learning rate or unlucky gradient pushes the weights deeply negative.
+              </div>
+            </div>
+          </div>
+
+          {/* Step 2 */}
+          <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+            <div style={{
+              minWidth: '28px', height: '28px', borderRadius: '14px',
+              background: 'var(--accent)', color: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '13px', fontWeight: 700, marginTop: '2px',
+            }}>2</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '6px', color: 'var(--text-main)' }}>Next input arrives</div>
+              <div className="math-box" style={{ margin: '0 0 6px 0', padding: '10px 14px' }}>
+                <div style={{ marginBottom: '4px' }}><Latex math={"z = w \\cdot x + b = (-3.2)(0.8) + (-1.5) = -4.06"} /></div>
+                <div><Latex math={"\\text{ReLU}(-4.06) = \\max(0,\\, -4.06)"} /> = <strong style={{ color: '#EF4444' }}>0</strong></div>
+              </div>
+              <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '14px' }}>
+                The pre-activation is negative, so ReLU <strong>kills the output entirely</strong>.
+              </div>
+            </div>
+          </div>
+
+          {/* Step 3 */}
+          <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+            <div style={{
+              minWidth: '28px', height: '28px', borderRadius: '14px',
+              background: '#EF4444', color: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '13px', fontWeight: 700, marginTop: '2px',
+            }}>✕</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '6px', color: '#EF4444' }}>Gradient is zero. Forever.</div>
+              <div className="math-box" style={{ margin: '0 0 6px 0', padding: '10px 14px' }}>
+                <div style={{ marginBottom: '4px' }}><Latex math={"\\frac{\\partial \\text{ReLU}}{\\partial z} = 0 \\quad \\text{(since } z < 0\\text{)}"} /></div>
+                <div style={{ marginBottom: '4px' }}><Latex math={"\\Rightarrow \\; \\frac{\\partial L}{\\partial w} = \\frac{\\partial L}{\\partial z} \\cdot \\underbrace{\\frac{\\partial \\text{ReLU}}{\\partial z}}_{= \\, 0} \\cdot x = 0"} /></div>
+                <div><Latex math={"\\Rightarrow \\; \\Delta w = -\\eta \\cdot 0 = 0"} /></div>
+              </div>
+              <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                The weight <strong>never changes</strong>. The neuron outputs zero for every future input. It's dead.
+              </div>
+            </div>
+          </div>
+        </div>
       </Section>
 
       {/* ── LEAKY RELU ── */}
@@ -315,10 +449,28 @@ export default function ActivationFunctionsPage() {
           title="ReLU vs Leaky ReLU vs ELU"
         />
         <P>
-          Leaky ReLU fixes the dying neuron problem by giving a small slope (α = 0.01) to negative inputs.
-          The gradient is never zero — dead neurons can always recover.
-          <strong> PReLU</strong> (Parametric ReLU) makes α a learnable parameter.
-          <strong> ELU</strong> uses an exponential curve for negative values, making it smooth at zero
+          <span style={{ background: 'var(--accent-20)', borderBottom: '2px solid var(--accent)', padding: '1px 4px' }}>Leaky ReLU fixes the dying neuron problem by giving a small slope (α = 0.01) to negative inputs.</span>
+          The gradient is never zero — dead neurons can always recover.{' '}
+          <HoverCard term="PReLU" position="above">
+            <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '8px' }}>Parametric ReLU</div>
+            <div className="math-box" style={{ margin: '0 0 8px 0', padding: '8px 12px' }}>
+              <Latex math={"\\text{PReLU}(x) = \\begin{cases} x & x > 0 \\\\ \\alpha x & x \\leq 0 \\end{cases}"} />
+            </div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
+              Unlike Leaky ReLU where <strong>α = 0.01</strong> is fixed, PReLU makes <strong>α a learnable parameter</strong> that the network optimizes during training. Each channel can learn its own slope.
+            </div>
+          </HoverCard>{' '}
+          (Parametric ReLU) makes α a learnable parameter.{' '}
+          <HoverCard term="ELU" position="above">
+            <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '8px' }}>Exponential Linear Unit</div>
+            <div className="math-box" style={{ margin: '0 0 8px 0', padding: '8px 12px' }}>
+              <Latex math={"\\text{ELU}(x) = \\begin{cases} x & x > 0 \\\\ \\alpha(e^x - 1) & x \\leq 0 \\end{cases}"} />
+            </div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
+              The exponential curve for negative values makes ELU <strong>smooth at x = 0</strong> (unlike ReLU's sharp corner) and pushes mean activations <strong>closer to zero</strong>, which speeds up convergence.
+            </div>
+          </HoverCard>{' '}
+          uses an exponential curve for negative values, making it smooth at zero
           and pushing mean activations closer to zero.
         </P>
       </Section>
@@ -344,7 +496,7 @@ export default function ActivationFunctionsPage() {
           title="GELU vs ReLU, notice the smooth transition near zero"
         />
         <P>
-          GELU is the default activation in modern transformers. Instead of the hard cutoff that ReLU uses
+          <span style={{ background: 'var(--accent-20)', borderBottom: '2px solid var(--accent)', padding: '1px 4px' }}>GELU is the default activation in modern transformers.</span> Instead of the hard cutoff that ReLU uses
           at zero, GELU essentially asks: <em>"How likely is this input to be positive?"</em> and scales
           the value by that probability. So small negative values still get a small negative output rather
           than being zeroed out completely. It creates a smooth, probabilistic gate.
@@ -375,8 +527,16 @@ export default function ActivationFunctionsPage() {
           title="SiLU/Swish vs GELU, remarkably similar shapes"
         />
         <P>
-          This one has an interesting origin story. Google Brain discovered it through <strong>automated search</strong>
-          (NAS) over the space of possible activation functions. What it does is multiply the input by its own
+          This one has an interesting origin story. Google Brain discovered it through <strong>automated search</strong>{' '}
+          (<HoverCard term="NAS" position="below">
+            <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '8px' }}>Neural Architecture Search</div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '12px', marginBottom: '8px' }}>
+              A technique where a <strong>search algorithm</strong> (often reinforcement learning or evolutionary methods) automatically explores the space of possible neural network designs to find optimal architectures, instead of relying on human intuition.
+            </div>
+            <div style={{ color: 'var(--text-light)', fontSize: '11px', fontStyle: 'italic' }}>
+              Zoph & Le, "Neural Architecture Search with Reinforcement Learning" (2017)
+            </div>
+          </HoverCard>) over the space of possible activation functions. What it does is multiply the input by its own
           sigmoid, which is a form of <em>self gating</em>. Essentially, the input decides how much of itself
           to let through.
         </P>

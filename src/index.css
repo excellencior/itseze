@@ -2,6 +2,11 @@
 
 /* ══ Theme tokens are injected from src/theme.js at runtime ══ */
 /* ══ Edit src/theme.js to change colors, not this file      ══ */
+::selection {
+  background: var(--accent-20);
+  color: var(--text-main);
+}
+
 :root {
   /* Fallbacks (overridden by theme.js injection) */
   --accent: #0891B2;

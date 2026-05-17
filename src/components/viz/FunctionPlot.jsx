@@ -197,24 +197,32 @@ export default function FunctionPlot({
       });
     }
 
-    // Legend
-    const legendX = canvasWidth - 16;
+    // Legend — measure text to avoid overlaps
+    ctx.font = '12px "Google Sans", Roboto, sans-serif';
+    const legendPadRight = 16;
     let legendY = 20;
     ctx.textAlign = 'right';
     functions.forEach(({ label, color, dash }) => {
+      const textW = ctx.measureText(label).width;
+      const lineLen = 22;
+      const gap = 8;
+      const textX = canvasWidth - legendPadRight;
+      const lineEndX = textX - textW - gap;
+      const lineStartX = lineEndX - lineLen;
+
       ctx.strokeStyle = color;
       ctx.lineWidth = 2.5;
       if (dash) ctx.setLineDash(dash);
       else ctx.setLineDash([]);
       ctx.beginPath();
-      ctx.moveTo(legendX - 60, legendY);
-      ctx.lineTo(legendX - 38, legendY);
+      ctx.moveTo(lineStartX, legendY);
+      ctx.lineTo(lineEndX, legendY);
       ctx.stroke();
       ctx.setLineDash([]);
 
       ctx.fillStyle = color;
       ctx.font = '12px "Google Sans", Roboto, sans-serif';
-      ctx.fillText(label, legendX - 2, legendY + 4);
+      ctx.fillText(label, textX, legendY + 4);
       legendY += 20;
     });
     ctx.textAlign = 'left';
@@ -222,7 +230,7 @@ export default function FunctionPlot({
   }, [functions, xRange, yRange, height, canvasWidth, showGrid, showAxes, interactive, mousePos, toCanvasX, toCanvasY, fromCanvasX]);
 
   return (
-    <div ref={containerRef} style={{ width: '100%', marginTop: '16px' }}>
+    <div ref={containerRef} style={{ width: '100%', marginTop: '16px', marginBottom: '10px' }}>
       {title && (
         <div style={{
           fontSize: '12px',

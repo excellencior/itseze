@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import theme from '../../theme';
+import { CONCEPTS, ARCHITECTURES } from '../../navigation';
 
 const sidebarStyles = {
   aside: (width) => ({
@@ -67,8 +68,8 @@ const sidebarStyles = {
     transition: 'transform 0.25s ease',
   },
   listContainer: {
-    overflow: 'hidden',
-    transition: 'max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease',
+    display: 'grid',
+    transition: 'grid-template-rows 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease',
   },
   list: {
     listStyle: 'none',
@@ -158,30 +159,22 @@ const sidebarStyles = {
   },
 };
 
-const CONCEPTS = [
-  { name: 'Activation Functions', route: 'concept:activation-functions', ready: true },
-  { name: 'Attention (Self / Cross)', route: 'concept:attention', ready: false },
-  { name: 'Batch Normalization', route: 'concept:batch-norm', ready: false },
-  { name: 'Convolution Layers', route: 'concept:convolution', ready: false },
-  { name: 'Dropout', route: 'concept:dropout', ready: false },
-  { name: 'Embedding (Token + Positional)', route: 'concept:embedding', ready: false },
-  { name: 'Feed-Forward Network (MLP)', route: 'concept:mlp', ready: false },
-  { name: 'KV Cache', route: 'concept:kv-cache', ready: false },
-  { name: 'Layer Normalization / RMSNorm', route: 'concept:layer-norm', ready: false },
-  { name: 'Loss Functions', route: 'concept:loss-functions', ready: false },
-  { name: 'Mixture of Experts (MoE)', route: 'concept:moe', ready: false },
-  { name: 'Multi-Head Attention', route: 'concept:multi-head-attention', ready: false },
-  { name: 'Residual Connections', route: 'concept:residual', ready: false },
-  { name: 'Rotary Position Embedding (RoPE)', route: 'concept:rope', ready: false },
-  { name: 'Softmax', route: 'concept:softmax', ready: false },
-  { name: 'Tokenization (BPE / SentencePiece)', route: 'concept:tokenization', ready: false },
-  { name: 'Transformer Block', route: 'concept:transformer', ready: false },
-];
+
 
 export default function Sidebar({ selectedModel, onSelectModel, width = 280 }) {
-  const [archOpen, setArchOpen] = useState(true);
-  const [conceptsOpen, setConceptsOpen] = useState(false);
+  const isConcept = selectedModel.startsWith('concept:');
+  const [archOpen, setArchOpen] = useState(!isConcept);
+  const [conceptsOpen, setConceptsOpen] = useState(isConcept);
   const [hovered, setHovered] = useState(null);
+
+  // Auto-expand the relevant section when the page changes
+  React.useEffect(() => {
+    if (selectedModel.startsWith('concept:')) {
+      setConceptsOpen(true);
+    } else {
+      setArchOpen(true);
+    }
+  }, [selectedModel]);
 
   return (
     <aside style={sidebarStyles.aside(width)}>
@@ -214,39 +207,38 @@ export default function Sidebar({ selectedModel, onSelectModel, width = 280 }) {
         {/* Model List */}
         <div style={{
           ...sidebarStyles.listContainer,
-          maxHeight: archOpen ? '300px' : '0px',
+          gridTemplateRows: archOpen ? '1fr' : '0fr',
           opacity: archOpen ? 1 : 0,
         }}>
-          <ul style={sidebarStyles.list}>
-            <li>
-              <button
-                onClick={() => onSelectModel('gpt3')}
-                style={{
-                  ...sidebarStyles.modelButton(selectedModel === 'gpt3'),
-                  ...(hovered === 'gpt3' && selectedModel !== 'gpt3' ? { background: theme.sidebarHoverBg, color: theme.accent } : {}),
-                }}
-                onMouseEnter={() => setHovered('gpt3')}
-                onMouseLeave={() => setHovered(null)}
-              >
-                <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  {selectedModel === 'gpt3' && <span style={sidebarStyles.activeDot} />}
-                  GPT-3 (175B)
-                </span>
-              </button>
-            </li>
-            <li>
-              <button disabled style={sidebarStyles.disabledButton}>
-                <span>Llama 3</span>
-                <span style={sidebarStyles.badge}>Soon</span>
-              </button>
-            </li>
-            <li>
-              <button disabled style={sidebarStyles.disabledButton}>
-                <span>Claude 3</span>
-                <span style={sidebarStyles.badge}>Soon</span>
-              </button>
-            </li>
-          </ul>
+          <div style={{ overflow: 'hidden' }}>
+            <ul style={sidebarStyles.list}>
+              {ARCHITECTURES.map((a) => (
+                <li
+                  key={a.name}
+                  style={{
+                    ...sidebarStyles.conceptItem,
+                    position: 'relative',
+                    cursor: a.ready ? 'pointer' : 'not-allowed',
+                    color: selectedModel === a.route ? theme.accent : (a.ready ? '#ccc' : '#555'),
+                    transition: 'color 0.2s',
+                  }}
+                  onClick={(e) => { if (a.ready) { const span = e.currentTarget.querySelector('span'); if (span) span.style.outline = 'none'; onSelectModel(a.route); } }}
+                  onMouseEnter={(e) => { if (a.ready && selectedModel !== a.route) { const span = e.currentTarget.querySelector('span'); if (span) { span.style.outline = '1px solid var(--accent)'; span.style.borderRadius = '4px'; span.style.outlineOffset = '2px'; } } }}
+                  onMouseLeave={(e) => { const span = e.currentTarget.querySelector('span'); if (span) { span.style.outline = 'none'; } }}
+                >
+                  {selectedModel === a.route && <span style={{
+                    ...sidebarStyles.activeDot,
+                    position: 'absolute',
+                    left: '-9px',
+                    top: '50%',
+                    transform: 'translate(-50%, -50%)',
+                  }} />}
+                  <span style={{ display: 'inline' }}>{a.name}</span>
+                  {!a.ready && <span style={sidebarStyles.badge}>Soon</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         {/* ── Concepts Section ── */}
@@ -270,31 +262,38 @@ export default function Sidebar({ selectedModel, onSelectModel, width = 280 }) {
 
           <div style={{
             ...sidebarStyles.listContainer,
-            maxHeight: conceptsOpen ? '600px' : '0px',
+            gridTemplateRows: conceptsOpen ? '1fr' : '0fr',
             opacity: conceptsOpen ? 1 : 0,
           }}>
-            <ul style={sidebarStyles.list}>
+            <div style={{ overflow: 'hidden' }}>
+              <ul style={sidebarStyles.list}>
               {CONCEPTS.map((c) => (
                 <li
                   key={c.name}
                   style={{
                     ...sidebarStyles.conceptItem,
+                    position: 'relative',
                     cursor: c.ready ? 'pointer' : 'not-allowed',
                     color: selectedModel === c.route ? theme.accent : (c.ready ? '#ccc' : '#555'),
                     transition: 'color 0.2s',
                   }}
-                  onClick={() => c.ready && onSelectModel(c.route)}
-                  onMouseEnter={(e) => { if (c.ready) e.currentTarget.style.color = theme.accent; }}
-                  onMouseLeave={(e) => { if (c.ready && selectedModel !== c.route) e.currentTarget.style.color = '#ccc'; }}
+                  onClick={(e) => { if (c.ready) { const span = e.currentTarget.querySelector('span'); if (span) span.style.outline = 'none'; onSelectModel(c.route); } }}
+                  onMouseEnter={(e) => { if (c.ready && selectedModel !== c.route) { const span = e.currentTarget.querySelector('span'); if (span) { span.style.outline = '1px solid var(--accent)'; span.style.borderRadius = '4px'; span.style.outlineOffset = '2px'; } } }}
+                  onMouseLeave={(e) => { const span = e.currentTarget.querySelector('span'); if (span) { span.style.outline = 'none'; } }}
                 >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {selectedModel === c.route && <span style={sidebarStyles.activeDot} />}
-                    {c.name}
-                  </span>
+                  {selectedModel === c.route && <span style={{
+                    ...sidebarStyles.activeDot,
+                    position: 'absolute',
+                    left: '-9px',
+                    top: '50%',
+                    transform: 'translate(-50%, -50%)',
+                  }} />}
+                  <span style={{ display: 'inline' }}>{c.name}</span>
                   {!c.ready && <span style={sidebarStyles.badge}>Soon</span>}
                 </li>
               ))}
-            </ul>
+              </ul>
+            </div>
           </div>
         </div>
       </nav>
