@@ -26,6 +26,9 @@ import ZeroCOTPage from './pages/prompting/ZeroCOTPage';
 import LeastToMostPage from './pages/prompting/LeastToMostPage';
 import SelfConsistencyPage from './pages/prompting/SelfConsistencyPage';
 
+// Admin
+import EditorPage from './pages/admin/EditorPage';
+
 // ── Route mapping: internal key ↔ URL path ──
 const ROUTE_MAP = {
   'gpt3': '/gpt3',
@@ -57,6 +60,7 @@ const PATH_TO_KEY = Object.fromEntries(
 
 function getKeyFromURL() {
   const path = window.location.pathname;
+  if (path === '/admin/editor') return '__editor__';
   return PATH_TO_KEY[path] || 'gpt3';
 }
 
@@ -239,6 +243,11 @@ function App() {
         );
     }
   };
+
+  // Editor page renders outside MainLayout
+  if (selectedModel === '__editor__' || window.location.pathname === '/admin/editor') {
+    return <EditorPage />;
+  }
 
   return (
     <MainLayout selectedModel={selectedModel} onSelectModel={setSelectedModel}>
