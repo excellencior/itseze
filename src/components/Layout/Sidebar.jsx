@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import theme from '../../theme';
 import { CONCEPTS, ARCHITECTURES } from '../../navigation';
 
@@ -163,18 +163,170 @@ const sidebarStyles = {
 
 export default function Sidebar({ selectedModel, onSelectModel, width = 280 }) {
   const isConcept = selectedModel.startsWith('concept:');
+  
+  const [lastSelectedModel, setLastSelectedModel] = useState(selectedModel);
   const [archOpen, setArchOpen] = useState(!isConcept);
   const [conceptsOpen, setConceptsOpen] = useState(isConcept);
+  const [reasoningSubOpen, setReasoningSubOpen] = useState(() => {
+    return CONCEPTS.some(
+      c => c.children && c.children.some(child => selectedModel === child.route)
+    );
+  });
   const [hovered, setHovered] = useState(null);
 
-  // Auto-expand the relevant section when the page changes
-  React.useEffect(() => {
-    if (selectedModel.startsWith('concept:')) {
+  // Auto-expand the relevant section when the page changes on render
+  if (selectedModel !== lastSelectedModel) {
+    setLastSelectedModel(selectedModel);
+    if (isConcept) {
       setConceptsOpen(true);
+      const hasChildActive = CONCEPTS.some(
+        c => c.children && c.children.some(child => selectedModel === child.route)
+      );
+      if (hasChildActive) {
+        setReasoningSubOpen(true);
+      }
     } else {
       setArchOpen(true);
     }
-  }, [selectedModel]);
+  }
+
+  const renderConceptsList = () => {
+    const rendered = [];
+
+    CONCEPTS.forEach((c) => {
+      if (c.children) {
+        // Render the collapsible subcategory!
+        const isAnyChildActive = c.children.some(child => selectedModel === child.route);
+        
+        rendered.push(
+          <li key={`subcategory-${c.name.toLowerCase()}`} style={{ listStyle: 'none', margin: '4px 0' }}>
+            {/* Subcategory Toggle Button */}
+            <button
+              onClick={() => setReasoningSubOpen(!reasoningSubOpen)}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '6px 12px',
+                border: 'none',
+                background: 'transparent',
+                color: isAnyChildActive ? theme.accent : '#fff',
+                fontSize: '13.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                borderRadius: '4px',
+                textAlign: 'left',
+                fontFamily: 'inherit',
+              }}
+            >
+              <span>{c.name}</span>
+              <span style={{ fontSize: '9px', color: '#555', transform: reasoningSubOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
+            </button>
+
+            {/* Subcategory List Container */}
+            <div style={{
+              display: 'grid',
+              gridTemplateRows: reasoningSubOpen ? '1fr' : '0fr',
+              opacity: reasoningSubOpen ? 1 : 0,
+              transition: 'grid-template-rows 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease',
+            }}>
+              <div style={{ overflow: 'hidden' }}>
+                <ul style={{
+                  listStyle: 'none',
+                  margin: '4px 0 0 0',
+                  padding: '0 0 0 8px',
+                  borderLeft: '1.5px solid #333',
+                  marginLeft: '18px',
+                }}>
+                  {c.children.map((child) => {
+                    const isActive = selectedModel === child.route;
+                    return (
+                      <li
+                        key={child.name}
+                        style={{
+                          ...sidebarStyles.conceptItem,
+                          padding: '5px 12px',
+                          fontSize: '12.5px',
+                          position: 'relative',
+                          cursor: child.ready ? 'pointer' : 'not-allowed',
+                          color: isActive ? theme.accent : (child.ready ? '#aaa' : '#444'),
+                          transition: 'color 0.2s',
+                        }}
+                        onClick={(e) => {
+                          if (child.ready) {
+                            const span = e.currentTarget.querySelector('span');
+                            if (span) span.style.outline = 'none';
+                            onSelectModel(child.route);
+                          }
+                        }}
+                        onMouseEnter={(e) => {
+                          if (child.ready && selectedModel !== child.route) {
+                            const span = e.currentTarget.querySelector('span');
+                            if (span) {
+                              span.style.outline = '1px solid var(--accent)';
+                              span.style.borderRadius = '4px';
+                              span.style.outlineOffset = '2px';
+                            }
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          const span = e.currentTarget.querySelector('span');
+                          if (span) span.style.outline = 'none';
+                        }}
+                      >
+                        {isActive && <span style={{
+                          ...sidebarStyles.activeDot,
+                          position: 'absolute',
+                          left: '-9px',
+                          top: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          width: '5px',
+                          height: '5px',
+                        }} />}
+                        <span style={{ display: 'inline' }}>{child.name}</span>
+                        {!child.ready && <span style={sidebarStyles.badge}>Soon</span>}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </div>
+          </li>
+        );
+      } else {
+        // Render normal concept item
+        const isActive = selectedModel === c.route;
+        rendered.push(
+          <li
+            key={c.name}
+            style={{
+              ...sidebarStyles.conceptItem,
+              position: 'relative',
+              cursor: c.ready ? 'pointer' : 'not-allowed',
+              color: isActive ? theme.accent : (c.ready ? '#ccc' : '#555'),
+              transition: 'color 0.2s',
+            }}
+            onClick={(e) => { if (c.ready) { const span = e.currentTarget.querySelector('span'); if (span) span.style.outline = 'none'; onSelectModel(c.route); } }}
+            onMouseEnter={(e) => { if (c.ready && selectedModel !== c.route) { const span = e.currentTarget.querySelector('span'); if (span) { span.style.outline = '1px solid var(--accent)'; span.style.borderRadius = '4px'; span.style.outlineOffset = '2px'; } } }}
+            onMouseLeave={(e) => { const span = e.currentTarget.querySelector('span'); if (span) { span.style.outline = 'none'; } }}
+          >
+            {isActive && <span style={{
+              ...sidebarStyles.activeDot,
+              position: 'absolute',
+              left: '-9px',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+            }} />}
+            <span style={{ display: 'inline' }}>{c.name}</span>
+            {!c.ready && <span style={sidebarStyles.badge}>Soon</span>}
+          </li>
+        );
+      }
+    });
+
+    return rendered;
+  };
 
   return (
     <aside style={sidebarStyles.aside(width)}>
@@ -241,6 +393,7 @@ export default function Sidebar({ selectedModel, onSelectModel, width = 280 }) {
           </div>
         </div>
 
+
         {/* ── Concepts Section ── */}
         <div style={{ marginTop: '12px' }}>
           <button
@@ -267,31 +420,7 @@ export default function Sidebar({ selectedModel, onSelectModel, width = 280 }) {
           }}>
             <div style={{ overflow: 'hidden' }}>
               <ul style={sidebarStyles.list}>
-              {CONCEPTS.map((c) => (
-                <li
-                  key={c.name}
-                  style={{
-                    ...sidebarStyles.conceptItem,
-                    position: 'relative',
-                    cursor: c.ready ? 'pointer' : 'not-allowed',
-                    color: selectedModel === c.route ? theme.accent : (c.ready ? '#ccc' : '#555'),
-                    transition: 'color 0.2s',
-                  }}
-                  onClick={(e) => { if (c.ready) { const span = e.currentTarget.querySelector('span'); if (span) span.style.outline = 'none'; onSelectModel(c.route); } }}
-                  onMouseEnter={(e) => { if (c.ready && selectedModel !== c.route) { const span = e.currentTarget.querySelector('span'); if (span) { span.style.outline = '1px solid var(--accent)'; span.style.borderRadius = '4px'; span.style.outlineOffset = '2px'; } } }}
-                  onMouseLeave={(e) => { const span = e.currentTarget.querySelector('span'); if (span) { span.style.outline = 'none'; } }}
-                >
-                  {selectedModel === c.route && <span style={{
-                    ...sidebarStyles.activeDot,
-                    position: 'absolute',
-                    left: '-9px',
-                    top: '50%',
-                    transform: 'translate(-50%, -50%)',
-                  }} />}
-                  <span style={{ display: 'inline' }}>{c.name}</span>
-                  {!c.ready && <span style={sidebarStyles.badge}>Soon</span>}
-                </li>
-              ))}
+              {renderConceptsList()}
               </ul>
             </div>
           </div>

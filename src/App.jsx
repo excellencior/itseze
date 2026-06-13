@@ -1,10 +1,21 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import MainLayout from './components/Layout/MainLayout';
 import GPT3Course from './pages/GPT3Course';
 import ActivationFunctionsPage from './pages/concepts/ActivationFunctionsPage';
 import AttentionPage from './pages/concepts/AttentionPage';
 import EncoderPage from './pages/concepts/EncoderPage';
 import SpeculativeDecodingPage from './pages/concepts/SpeculativeDecodingPage';
+import SSMPage from './pages/concepts/SSMPage';
+
+// Reasoning Pages
+import ReasoningHubPage from './pages/reasoning/ReasoningHubPage';
+import SymbolicPage from './pages/reasoning/SymbolicPage';
+import ProbabilisticPage from './pages/reasoning/ProbabilisticPage';
+import NeuralPage from './pages/reasoning/NeuralPage';
+import NeuroSymbolicPage from './pages/reasoning/NeuroSymbolicPage';
+import ChainOfThoughtPage from './pages/reasoning/ChainOfThoughtPage';
+import RagPage from './pages/reasoning/RagPage';
+import ProgramSynthesisPage from './pages/reasoning/ProgramSynthesisPage';
 
 // ── Route mapping: internal key ↔ URL path ──
 const ROUTE_MAP = {
@@ -13,6 +24,15 @@ const ROUTE_MAP = {
   'concept:attention': '/concepts/attention',
   'concept:encoder': '/concepts/encoder',
   'concept:speculative-decoding': '/concepts/speculative-decoding',
+  'concept:ssm': '/concepts/ssm',
+  'concept:reasoning': '/concepts/reasoning',
+  'concept:reasoning-symbolic': '/concepts/reasoning/symbolic',
+  'concept:reasoning-probabilistic': '/concepts/reasoning/probabilistic',
+  'concept:reasoning-neural': '/concepts/reasoning/neural',
+  'concept:reasoning-neuro-symbolic': '/concepts/reasoning/neuro-symbolic',
+  'concept:reasoning-chain-of-thought': '/concepts/reasoning/chain-of-thought',
+  'concept:reasoning-rag': '/concepts/reasoning/rag',
+  'concept:reasoning-program-synthesis': '/concepts/reasoning/program-synthesis',
 };
 
 const PATH_TO_KEY = Object.fromEntries(
@@ -161,6 +181,24 @@ function App() {
         return <EncoderPage />;
       case 'concept:speculative-decoding':
         return <SpeculativeDecodingPage />;
+      case 'concept:ssm':
+        return <SSMPage />;
+      case 'concept:reasoning':
+        return <ReasoningHubPage onNavigate={setSelectedModel} />;
+      case 'concept:reasoning-symbolic':
+        return <SymbolicPage />;
+      case 'concept:reasoning-probabilistic':
+        return <ProbabilisticPage />;
+      case 'concept:reasoning-neural':
+        return <NeuralPage />;
+      case 'concept:reasoning-neuro-symbolic':
+        return <NeuroSymbolicPage />;
+      case 'concept:reasoning-chain-of-thought':
+        return <ChainOfThoughtPage />;
+      case 'concept:reasoning-rag':
+        return <RagPage />;
+      case 'concept:reasoning-program-synthesis':
+        return <ProgramSynthesisPage />;
       default:
         return (
           <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--text-light)' }}>

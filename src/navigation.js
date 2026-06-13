@@ -27,10 +27,25 @@ export const CONCEPTS = [
   { name: 'Loss Functions', route: 'concept:loss-functions', ready: false },
   { name: 'Mixture of Experts (MoE)', route: 'concept:moe', ready: false },
   { name: 'Multi-Head Attention', route: 'concept:multi-head-attention', ready: false },
+  {
+    name: 'Reasoning',
+    ready: true,
+    children: [
+      { name: 'Hub', route: 'concept:reasoning', ready: true },
+      { name: 'Symbolic Logic', route: 'concept:reasoning-symbolic', ready: true },
+      { name: 'Probabilistic Graphs', route: 'concept:reasoning-probabilistic', ready: true },
+      { name: 'Neural Networks', route: 'concept:reasoning-neural', ready: true },
+      { name: 'Neuro-Symbolic', route: 'concept:reasoning-neuro-symbolic', ready: true },
+      { name: 'Chain-of-Thought', route: 'concept:reasoning-chain-of-thought', ready: true },
+      { name: 'RAG Pipelines', route: 'concept:reasoning-rag', ready: true },
+      { name: 'Program Synthesis', route: 'concept:reasoning-program-synthesis', ready: true },
+    ]
+  },
   { name: 'Residual Connections', route: 'concept:residual', ready: false },
   { name: 'Rotary Position Embedding (RoPE)', route: 'concept:rope', ready: false },
   { name: 'Softmax', route: 'concept:softmax', ready: false },
   { name: 'Speculative Decoding', route: 'concept:speculative-decoding', ready: true },
+  { name: 'State Space Models (SSMs)', route: 'concept:ssm', ready: true },
   { name: 'Tokenization (BPE / SentencePiece)', route: 'concept:tokenization', ready: false },
 ];
 
@@ -41,7 +56,24 @@ export const CONCEPTS = [
 export function getPageNeighbors(route) {
   const isConcept = route.startsWith('concept:');
   const list = isConcept ? CONCEPTS : ARCHITECTURES;
-  const readyList = list.filter(p => p.ready);
+  
+  // Flatten concept categories containing nested children
+  const flatList = [];
+  list.forEach(item => {
+    if (item.children) {
+      item.children.forEach(child => {
+        flatList.push({
+          name: `${item.name}: ${child.name}`,
+          route: child.route,
+          ready: child.ready,
+        });
+      });
+    } else {
+      flatList.push(item);
+    }
+  });
+
+  const readyList = flatList.filter(p => p.ready);
   const idx = readyList.findIndex(p => p.route === route);
 
   if (idx === -1) return { prev: null, next: null };

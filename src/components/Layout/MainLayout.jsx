@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import PageNav from './PageNav';
+import SeekLadder from './SeekLadder';
 
 export default function MainLayout({ selectedModel, onSelectModel, children }) {
   const [sidebarWidth, setSidebarWidth] = useState(280);
@@ -99,6 +100,7 @@ export default function MainLayout({ selectedModel, onSelectModel, children }) {
             <div style={{ width: '80%', maxWidth: '1200px', margin: '0 auto' }}>
               <PageNav currentRoute={selectedModel} onNavigate={onSelectModel} />
             </div>
+            <SeekLadder scrollContainerRef={mainRef} />
         </main>
       </div>
     </div>
