@@ -7,18 +7,30 @@ import { exportToJSX, exportToJSON } from './exportPage';
 import './editor.css';
 
 /* ═══════════════════════════════════════════
- *  Block Type Definitions
+ *  Block Type Definitions & Icons
  * ═══════════════════════════════════════════ */
+const Icons = {
+  section: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>,
+  paragraph: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h16M4 12h16M4 18h7"/></svg>,
+  callout: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>,
+  math: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 4H6l7 8-7 8h13"/></svg>,
+  code: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>,
+  scene: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>,
+  table: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>,
+  reference: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>,
+  ai: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275z"></path></svg>,
+};
+
 const BLOCK_TYPES = [
-  { type: 'section', icon: '§', label: 'Section' },
-  { type: 'paragraph', icon: '¶', label: 'Paragraph' },
-  { type: 'callout', icon: '💡', label: 'Callout' },
-  { type: 'math-box', icon: '∑', label: 'Display Math' },
-  { type: 'code-block', icon: '</>', label: 'Code Block' },
-  { type: 'three-scene', icon: '🧊', label: '3D Scene' },
-  { type: 'prop-table', icon: '⊞', label: 'Prop Table' },
-  { type: 'reference', icon: '📄', label: 'Reference' },
-  { type: 'ai-disclosure', icon: '🤖', label: 'AI Note' },
+  { type: 'section', icon: Icons.section, label: 'Section' },
+  { type: 'paragraph', icon: Icons.paragraph, label: 'Paragraph' },
+  { type: 'callout', icon: Icons.callout, label: 'Callout' },
+  { type: 'math-box', icon: Icons.math, label: 'Display Math' },
+  { type: 'code-block', icon: Icons.code, label: 'Code Block' },
+  { type: 'three-scene', icon: Icons.scene, label: '3D Scene' },
+  { type: 'prop-table', icon: Icons.table, label: 'Prop Table' },
+  { type: 'reference', icon: Icons.reference, label: 'Reference' },
+  { type: 'ai-disclosure', icon: Icons.ai, label: 'AI Note' },
 ];
 
 /* ═══════════════════════════════════════════
@@ -528,22 +540,7 @@ function ThreeSceneEditor({ block, onChange }) {
         <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '4px' }}>⚠ {dataError}</div>
       )}
 
-      {/* Live 3D preview inside the editor card */}
-      {parsedData && (
-        <div style={{ marginTop: '10px', borderRadius: '6px', overflow: 'hidden', border: '1px solid #27272a' }}>
-          {block.sceneType === 'bar-chart' && Array.isArray(parsedData) && (
-            <BarChart3D data={parsedData} height={Math.min(block.height || 280, 220)} hint={block.hint} />
-          )}
-          {block.sceneType === 'scatter-plot' && parsedData.points && (
-            <ScatterPlot3D
-              points={parsedData.points}
-              connections={parsedData.connections}
-              height={Math.min(block.height || 280, 220)}
-              hint={block.hint}
-            />
-          )}
-        </div>
-      )}
+      {/* Live 3D preview handled dynamically on the right-side LivePreview */}
     </div>
   );
 }
@@ -741,6 +738,27 @@ function renderPreviewBlock(block, idx) {
           <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{block.content || '...'}</pre>
         </div>
       );
+
+    case 'three-scene': {
+      let parsedData = null;
+      try { parsedData = JSON.parse(block.data); } catch { /* */ }
+      if (!parsedData) return null;
+      return (
+        <div key={idx} style={{ margin: '16px 0' }}>
+          {block.sceneType === 'bar-chart' && Array.isArray(parsedData) && (
+            <BarChart3D data={parsedData} height={block.height || 280} hint={block.hint} />
+          )}
+          {block.sceneType === 'scatter-plot' && parsedData.points && (
+            <ScatterPlot3D
+              points={parsedData.points}
+              connections={parsedData.connections}
+              height={block.height || 280}
+              hint={block.hint}
+            />
+          )}
+        </div>
+      );
+    }
 
     case 'prop-table': {
       const rows = (block.rows || []).filter(([k, v]) => k || v);
@@ -970,8 +988,14 @@ export default function EditorPage() {
         <button className="toolbar-btn" onClick={() => setShowPreview(p => !p)}>
           {showPreview ? '◨ Hide Preview' : '◧ Show Preview'}
         </button>
-        <button className="toolbar-btn" onClick={saveDraft}>💾 Save Draft</button>
-        <button className="toolbar-btn primary" onClick={publishPage}>▲ Publish</button>
+        <button className="toolbar-btn" onClick={saveDraft} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
+          Save Draft
+        </button>
+        <button className="toolbar-btn primary" onClick={publishPage} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          Publish
+        </button>
       </div>
 
       {/* ── Main Body ── */}
@@ -991,7 +1015,9 @@ export default function EditorPage() {
               <div className="palette-label" style={{ marginTop: '24px' }}>Saved Drafts</div>
               {savedDrafts.map(d => (
                 <button key={d} className="palette-item" onClick={() => loadDraft(d)} style={{ fontSize: '11px' }}>
-                  <span className="palette-icon">📄</span>
+                  <span className="palette-icon" style={{ background: 'transparent' }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                  </span>
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d}</span>
                 </button>
               ))}
@@ -1002,11 +1028,11 @@ export default function EditorPage() {
         {/* ── Editor Canvas ── */}
         <div 
           className="editor-canvas"
-          style={showPreview ? { width: `${canvasWidth}%`, flex: 'none' } : { flex: 1 }}
+          style={showPreview ? { width: `calc((100% - 186px) * ${canvasWidth} / 100)`, flex: 'none' } : { flex: 1 }}
         >
           {blocks.length === 0 ? (
             <div className="canvas-empty">
-              <div className="empty-icon">📝</div>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4, marginBottom: '8px' }}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
               <p>Click a block type from the left palette to start building your page.</p>
             </div>
           ) : (
@@ -1043,7 +1069,7 @@ export default function EditorPage() {
         {showPreview && (
           <div 
             className="editor-preview"
-            style={{ width: `${100 - canvasWidth}%`, flex: 'none' }}
+            style={{ width: `calc((100% - 186px) * ${100 - canvasWidth} / 100)`, flex: 'none' }}
           >
             <div className="preview-label">Live Preview</div>
             <div className="preview-content">
