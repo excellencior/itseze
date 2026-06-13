@@ -36,7 +36,7 @@ export default function TokenizationNode({ isOpen, onToggle }) {
           GPT-3 has a fixed, hardcoded dictionary. Every token maps to exactly one integer. Notice how spaces are included as part of the token (often visualized as <code>Ġ</code> in raw BPE).
         </p>
         
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontFamily: '"Fira Code", monospace', fontSize: '14px', fontWeight: 600 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 600 }}>
           <div style={{ background: 'white', padding: '12px 16px', border: '1px solid #E5E5E5', display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ color: 'var(--text-main)' }}>"!"</span><span>0</span>
           </div>

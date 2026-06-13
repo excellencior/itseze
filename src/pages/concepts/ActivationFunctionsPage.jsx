@@ -47,7 +47,7 @@ function Section({ title, children }) {
 }
 
 function P({ children }) {
-  return <p style={{ fontSize: '15px', color: 'var(--text-muted)', marginBottom: '14px', lineHeight: 1.7 }}>{children}</p>;
+  return <p>{children}</p>;
 }
 
 function Callout({ type = 'info', children }) {

@@ -24,7 +24,7 @@ function Section({ title, children }) {
 }
 
 function P({ children }) {
-  return <p style={{ fontSize: '15px', color: 'var(--text-muted)', marginBottom: '14px', lineHeight: 1.7 }}>{children}</p>;
+  return <p>{children}</p>;
 }
 
 function Callout({ type = 'info', children }) {
@@ -331,7 +331,7 @@ export default function EncoderPage() {
         }}>
           <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white' }}>
             <div style={{ fontWeight: 800, fontSize: '14px', marginBottom: '8px', color: '#EF4444' }}>Static Embedding (Word2Vec)</div>
-            <div style={{ fontFamily: '"Fira Code", monospace', fontSize: '12px', marginBottom: '8px' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', marginBottom: '8px' }}>
               <div style={{ marginBottom: '4px' }}>"river <strong>bank</strong>" → bank = [0.23, −0.41, ...]</div>
               <div>"money <strong>bank</strong>" → bank = [0.23, −0.41, ...]</div>
             </div>
@@ -341,7 +341,7 @@ export default function EncoderPage() {
           </div>
           <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white' }}>
             <div style={{ fontWeight: 800, fontSize: '14px', marginBottom: '8px', color: '#10B981' }}>Contextual Embedding (Encoder)</div>
-            <div style={{ fontFamily: '"Fira Code", monospace', fontSize: '12px', marginBottom: '8px' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', marginBottom: '8px' }}>
               <div style={{ marginBottom: '4px' }}>"river <strong>bank</strong>" → bank = [0.87, 0.12, ...]</div>
               <div>"money <strong>bank</strong>" → bank = [−0.15, 0.93, ...]</div>
             </div>
@@ -443,7 +443,7 @@ export default function EncoderPage() {
             <div style={{ fontWeight: 700, fontSize: '13px', marginBottom: '8px', color: '#3B82F6' }}>
               Encoder: Bidirectional (no mask)
             </div>
-            <div style={{ display: 'inline-block', fontFamily: '"Fira Code", monospace', fontSize: '12px' }}>
+            <div style={{ display: 'inline-block', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
               {[0, 1, 2, 3, 4].map(i => (
                 <div key={i} style={{ display: 'flex', gap: '3px', marginBottom: '3px' }}>
                   {[0, 1, 2, 3, 4].map(j => (
@@ -465,7 +465,7 @@ export default function EncoderPage() {
             <div style={{ fontWeight: 700, fontSize: '13px', marginBottom: '8px', color: '#EF4444' }}>
               Decoder: Causal (masked)
             </div>
-            <div style={{ display: 'inline-block', fontFamily: '"Fira Code", monospace', fontSize: '12px' }}>
+            <div style={{ display: 'inline-block', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
               {[0, 1, 2, 3, 4].map(i => (
                 <div key={i} style={{ display: 'flex', gap: '3px', marginBottom: '3px' }}>
                   {[0, 1, 2, 3, 4].map(j => (

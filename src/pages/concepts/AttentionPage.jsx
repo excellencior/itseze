@@ -23,7 +23,7 @@ function Section({ title, children }) {
 }
 
 function P({ children }) {
-  return <p style={{ fontSize: '15px', color: 'var(--text-muted)', marginBottom: '14px', lineHeight: 1.7 }}>{children}</p>;
+  return <p>{children}</p>;
 }
 
 function Callout({ type = 'info', children }) {
@@ -76,7 +76,7 @@ function AttentionHeatmap({ tokens, weights }) {
           {tokens.map((t, j) => (
             <div key={j} style={{
               width: '44px', textAlign: 'center', fontSize: '11px', fontWeight: 600,
-              fontFamily: '"Fira Code", monospace', color: 'var(--text-muted)',
+              fontFamily: 'var(--font-mono)', color: 'var(--text-muted)',
               transform: 'rotate(-35deg)', transformOrigin: 'bottom left',
               height: '30px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
             }}>{t}</div>
@@ -87,7 +87,7 @@ function AttentionHeatmap({ tokens, weights }) {
           <div key={i} className="attn-row" style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
             <div className="attn-lbl" style={{
               width: '72px', fontSize: '12px', fontWeight: 600, textAlign: 'right',
-              paddingRight: '10px', fontFamily: '"Fira Code", monospace',
+              paddingRight: '10px', fontFamily: 'var(--font-mono)',
             }}>{rowToken}</div>
             {tokens.map((_, j) => {
               const w = weights[i][j];
@@ -143,7 +143,7 @@ function AttentionHeatmap({ tokens, weights }) {
               <span style={{ margin: '0 4px' }}>→</span>
               <strong style={{ color: 'var(--text-main)' }}>{tokens[hoveredCell[1]]}</strong>
             </div>
-            <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--accent)', fontFamily: '"Fira Code", monospace' }}>
+            <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>
               {weights[hoveredCell[0]][hoveredCell[1]].toFixed(4)}
             </div>
           </>
@@ -233,7 +233,7 @@ function MiniMatrix({ data, label, highlightRow, highlightCol, accentColor = 'va
           {label}
         </div>
       )}
-      <div style={{ display: 'inline-block', fontFamily: '"Fira Code", monospace', fontSize: '11px' }}>
+      <div style={{ display: 'inline-block', fontFamily: 'var(--font-mono)', fontSize: '11px' }}>
         {data.map((row, i) => (
           <div key={i} style={{ display: 'flex', gap: '2px', marginBottom: '2px' }}>
             {row.map((val, j) => {
@@ -647,7 +647,7 @@ export default function AttentionPage() {
           <div style={{ fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#333', marginBottom: '8px' }}>
             Causal mask for a 5-token sequence
           </div>
-          <div style={{ display: 'inline-block', fontFamily: '"Fira Code", monospace', fontSize: '13px' }}>
+          <div style={{ display: 'inline-block', fontFamily: 'var(--font-mono)', fontSize: '13px' }}>
             {[0,1,2,3,4].map(i => (
               <div key={i} style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
                 {[0,1,2,3,4].map(j => (
@@ -753,7 +753,7 @@ export default function AttentionPage() {
             ].map(([c, eq, s], i) => (
               <tr key={i}>
                 <td style={{ padding: '8px 12px', fontWeight: 600, borderBottom: '1px solid var(--border)' }}>{c}</td>
-                <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', fontFamily: '"Fira Code", monospace', fontSize: '12px' }}>{eq}</td>
+                <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>{eq}</td>
                 <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', color: 'var(--text-muted)' }}>{s}</td>
               </tr>
             ))}

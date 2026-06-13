@@ -64,7 +64,7 @@ export default function OutputNode({ isOpen, onToggle }) {
           <div style={{ fontWeight: 800, fontSize: '14px', marginBottom: '16px' }}>PREDICTED NEXT TOKEN</div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
-            <div style={{ width: '90px', fontFamily: '"Fira Code", monospace', fontSize: '15px', fontWeight: 600 }}>" to"</div>
+            <div style={{ width: '90px', fontFamily: 'var(--font-mono)', fontSize: '15px', fontWeight: 600 }}>" to"</div>
             <div style={{ flex: 1, background: 'var(--bg)', height: '24px', overflow: 'hidden' }}>
               <div style={{ width: probs.p1 + '%', height: '100%', background: 'var(--accent)', transition: 'width 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}></div>
             </div>
@@ -72,7 +72,7 @@ export default function OutputNode({ isOpen, onToggle }) {
           </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
-            <div style={{ width: '90px', fontFamily: '"Fira Code", monospace', fontSize: '15px', fontWeight: 600 }}>" them"</div>
+            <div style={{ width: '90px', fontFamily: 'var(--font-mono)', fontSize: '15px', fontWeight: 600 }}>" them"</div>
             <div style={{ flex: 1, background: 'var(--bg)', height: '24px', overflow: 'hidden' }}>
               <div style={{ width: probs.p2 + '%', height: '100%', background: '#000000', transition: 'width 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}></div>
             </div>
@@ -80,7 +80,7 @@ export default function OutputNode({ isOpen, onToggle }) {
           </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ width: '90px', fontFamily: '"Fira Code", monospace', fontSize: '15px', fontWeight: 600 }}>" everyone"</div>
+            <div style={{ width: '90px', fontFamily: 'var(--font-mono)', fontSize: '15px', fontWeight: 600 }}>" everyone"</div>
             <div style={{ flex: 1, background: 'var(--bg)', height: '24px', overflow: 'hidden' }}>
               <div style={{ width: probs.p3 + '%', height: '100%', background: '#545454', transition: 'width 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}></div>
             </div>

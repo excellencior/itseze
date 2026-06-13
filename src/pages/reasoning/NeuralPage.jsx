@@ -11,7 +11,7 @@ function Section({ title, children }) {
 }
 
 function P({ children }) {
-  return <p style={{ fontSize: '15px', color: 'var(--text-muted)', marginBottom: '14px', lineHeight: 1.7 }}>{children}</p>;
+  return <p>{children}</p>;
 }
 
 function Callout({ type = 'info', children }) {
@@ -196,7 +196,7 @@ function AttentionFlowWidget() {
                 fontWeight: 700,
                 fontSize: '12.5px',
                 cursor: 'pointer',
-                fontFamily: '"Fira Code", monospace',
+                fontFamily: 'var(--font-mono)',
                 boxShadow: selectedTokenIndex === idx ? '0 4px 10px rgba(8,145,178,0.2)' : 'none',
               }}
             >
@@ -239,7 +239,7 @@ function AttentionFlowWidget() {
                   borderColor: weightVal > 0.25 ? 'var(--accent)' : 'var(--border)',
                   fontWeight: 600,
                   fontSize: '12.5px',
-                  fontFamily: '"Fira Code", monospace',
+                  fontFamily: 'var(--font-mono)',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
@@ -263,7 +263,7 @@ export default function NeuralPage() {
     <div style={{ width: '80%', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ marginBottom: '48px' }}>
         <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-light)', marginBottom: '8px' }}>
-          Paradigm
+          Reasoning
         </div>
         <h1 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-1px', marginBottom: '12px' }}>
           Neural (Connectionist) Reasoning
@@ -330,7 +330,7 @@ export default function NeuralPage() {
           See this routing in action using the Attention Flow visualizer below. Type any sentence, click a token to select it as the query, and switch between layer depths. Notice how:
         </P>
 
-        <ul style={{ fontSize: '15px', color: 'var(--text-muted)', paddingLeft: '20px', marginBottom: '16px', lineHeight: 1.8 }}>
+        <ul >
           <li><strong>Layer 1 (Syntax)</strong>: Attention concentrates on immediately adjacent tokens — capturing local bigram and trigram patterns.</li>
           <li><strong>Layer 2 (Relational)</strong>: Content words begin attending to each other across distances, linking subjects to verbs and objects.</li>
           <li><strong>Layer 3 (Semantic)</strong>: Attention strongly favors all content words while largely ignoring function words (the, on, a), creating a global semantic summary.</li>
@@ -352,7 +352,7 @@ export default function NeuralPage() {
         <P>
           Despite their versatility, pure neural models suffer from serious reasoning flaws that remain active areas of research:
         </P>
-        <ul style={{ fontSize: '15px', color: 'var(--text-muted)', paddingLeft: '20px', marginBottom: '16px', lineHeight: 1.8 }}>
+        <ul >
           <li><strong>Hallucinations</strong>: Neural nets construct answers probabilistically and cannot distinguish verified facts from plausible-sounding falsehoods. The model will generate confident, fluent text even when the underlying claim is entirely fabricated.</li>
           <li><strong>Opacity</strong>: Despite progress in mechanistic interpretability, inspecting activations or weights does not yield a clean logical proof. We can identify <em>what</em> circuits activate, but explaining <em>why</em> they compose a particular answer remains extremely difficult.</li>
           <li><strong>Compositional generalization failure</strong>: Neural models struggle with systematic compositional reasoning — tasks requiring the application of learned rules in novel combinations. A model that learns "A is left of B" and "B is left of C" may fail to infer "A is left of C" if it never saw that exact combination during training.</li>

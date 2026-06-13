@@ -11,7 +11,7 @@ function Section({ title, children }) {
 }
 
 function P({ children }) {
-  return <p style={{ fontSize: '15px', color: 'var(--text-muted)', marginBottom: '14px', lineHeight: 1.7 }}>{children}</p>;
+  return <p>{children}</p>;
 }
 
 function Callout({ type = 'info', children }) {
@@ -113,7 +113,7 @@ function TextToSqlCompiler() {
           <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '6px' }}>
             ⚙️ Phase 2: Symbolic Execution
           </div>
-          <div style={{ fontFamily: '"Fira Code", monospace', fontSize: '12px', fontWeight: 700, color: '#000', marginBottom: '8px' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 700, color: '#000', marginBottom: '8px' }}>
             {selectedQuery.sql}
           </div>
           <div style={{ fontSize: '11px', color: '#444', lineHeight: 1.4 }}>
@@ -169,7 +169,7 @@ export default function NeuroSymbolicPage() {
     <div style={{ width: '80%', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ marginBottom: '48px' }}>
         <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-light)', marginBottom: '8px' }}>
-          Paradigm
+          Reasoning
         </div>
         <h1 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-1px', marginBottom: '12px' }}>
           Neuro-Symbolic Reasoning
@@ -235,7 +235,7 @@ export default function NeuroSymbolicPage() {
 
         <div style={{
           background: '#1e1e24', color: '#e5c07b', padding: '16px 20px', margin: '16px 0',
-          fontFamily: '"Fira Code", monospace', fontSize: '12.5px', lineHeight: 1.6,
+          fontFamily: 'var(--font-mono)', fontSize: '12.5px', lineHeight: 1.6,
           border: '1px solid #333', position: 'relative',
         }}>
           <div style={{ position: 'absolute', top: '8px', right: '12px', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#666', fontWeight: 700 }}>
@@ -287,7 +287,7 @@ addition(Img1, Img2, Sum) :-
           Neuro-symbolic systems offer compelling advantages over either pure neural or pure symbolic approaches:
         </P>
 
-        <ul style={{ fontSize: '15px', color: 'var(--text-muted)', paddingLeft: '20px', marginBottom: '16px', lineHeight: 1.8 }}>
+        <ul >
           <li><strong>Out-of-distribution generalization</strong>: Once compiled into symbolic form, a query or program runs correctly on inputs of any size, bypassing the scaling limits of neural computation.</li>
           <li><strong>Full explainability</strong>: The compiled program (SQL, Python, logical proof) is explicit and inspectable, making error auditing straightforward.</li>
           <li><strong>Parameter efficiency</strong>: Because heavy reasoning is offloaded to symbolic engines, the neural component can remain smaller and requires less training data.</li>

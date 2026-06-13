@@ -73,7 +73,7 @@ export default function MainLayout({ selectedModel, onSelectModel, children }) {
       width: '100vw',
       padding: '12px',
       backgroundColor: '#111',
-      fontFamily: '"Google Sans", "Roboto", sans-serif',
+      fontFamily: 'var(--font-main)',
       boxSizing: 'border-box',
     }}>
       <div

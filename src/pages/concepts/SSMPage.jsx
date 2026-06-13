@@ -15,7 +15,7 @@ function Section({ title, children }) {
   );
 }
 function P({ children }) {
-  return <p style={{ fontSize: '15px', color: 'var(--text-muted)', marginBottom: '14px', lineHeight: 1.7 }}>{children}</p>;
+  return <p>{children}</p>;
 }
 function Callout({ type = 'info', children }) {
   const colors = {
@@ -47,7 +47,7 @@ function PropTable({ rows }) {
 }
 function CodeBlock({ children }) {
   return (
-    <pre style={{ background: '#f6f6f6', border: '1px solid var(--border)', padding: '16px', fontFamily: '"Fira Code", monospace', fontSize: '12px', lineHeight: 1.6, marginBottom: '16px', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
+    <pre style={{ background: '#f6f6f6', border: '1px solid var(--border)', padding: '16px', fontFamily: 'var(--font-mono)', fontSize: '12px', lineHeight: 1.6, marginBottom: '16px', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
       {children}
     </pre>
   );
@@ -104,7 +104,7 @@ function SSMWalkthrough() {
             display: 'inline-block', padding: '4px 10px',
             border: `1.5px solid ${i < step ? '#10B981' : i === step ? 'var(--accent)' : 'var(--border)'}`,
             background: i < step ? '#F0FDF4' : i === step ? 'var(--accent-20)' : '#FAFAFA',
-            fontFamily: '"Fira Code", monospace', fontSize: '13px',
+            fontFamily: 'var(--font-mono)', fontSize: '13px',
             fontWeight: i <= step ? 700 : 500,
             color: i < step ? '#166534' : i === step ? 'var(--accent)' : 'var(--text-light)',
           }}>{t}</span>
@@ -122,14 +122,14 @@ function SSMWalkthrough() {
               flex: 1, height: '24px', background: `rgba(8, 145, 178, ${v * 3})`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '10px', fontWeight: 700, color: v > 0.1 ? '#fff' : 'var(--text-light)',
-              fontFamily: '"Fira Code", monospace',
+              fontFamily: 'var(--font-mono)',
             }}>{v.toFixed(2)}</div>
           ))}
         </div>
       </div>
 
       {/* Equation */}
-      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px', fontFamily: '"Fira Code", monospace' }}>
+      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px', fontFamily: 'var(--font-mono)' }}>
         {step === 0
           ? 'h₀ = [0, 0, 0, 0]  (initial state — no tokens processed yet)'
           : `h₍${step}₎ = Ā · h₍${step-1}₎ + B̄ · embed("${tokens[step-1]}")  →  [${stateVals[step].map(v => v.toFixed(2)).join(', ')}]`
@@ -185,11 +185,11 @@ function AttnVsSSMViz() {
           <div style={{ display: 'grid', gridTemplateColumns: `32px repeat(${N}, 1fr)`, gap: '2px', marginBottom: '14px' }}>
             <div />
             {Array.from({length: N}).map((_, i) => (
-              <div key={i} style={{ fontSize: '10px', fontWeight: 700, textAlign: 'center', color: 'var(--text-light)', fontFamily: '"Fira Code", monospace' }}>t{i+1}</div>
+              <div key={i} style={{ fontSize: '10px', fontWeight: 700, textAlign: 'center', color: 'var(--text-light)', fontFamily: 'var(--font-mono)' }}>t{i+1}</div>
             ))}
             {Array.from({length: N}).map((_, r) => (
               <React.Fragment key={r}>
-                <div style={{ fontSize: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: '4px', color: 'var(--text-light)', fontFamily: '"Fira Code", monospace' }}>t{r+1}</div>
+                <div style={{ fontSize: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: '4px', color: 'var(--text-light)', fontFamily: 'var(--font-mono)' }}>t{r+1}</div>
                 {Array.from({length: N}).map((_, c) => (
                   <div key={c} style={{
                     height: '28px', background: '#3B82F6',
@@ -213,7 +213,7 @@ function AttnVsSSMViz() {
                 <div style={{
                   width: '48px', height: '32px', background: '#10B981',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '10px', fontWeight: 700, color: '#fff', fontFamily: '"Fira Code", monospace',
+                  fontSize: '10px', fontWeight: 700, color: '#fff', fontFamily: 'var(--font-mono)',
                   opacity: animate ? 1 : 0.1, transition: `opacity 0.4s ease ${i * 0.1}s`,
                 }}>t{i+1}</div>
                 <div style={{ fontSize: '14px', color: 'var(--text-light)', fontWeight: 300 }}>→</div>
@@ -221,7 +221,7 @@ function AttnVsSSMViz() {
             ))}
             <div style={{
               padding: '6px 12px', border: '2px solid #10B981', background: '#F0FDF4',
-              fontSize: '10px', fontWeight: 700, fontFamily: '"Fira Code", monospace',
+              fontSize: '10px', fontWeight: 700, fontFamily: 'var(--font-mono)',
               opacity: animate ? 1 : 0.1, transition: 'opacity 0.5s ease 0.6s',
             }}>h (fixed size)</div>
           </div>
@@ -781,7 +781,7 @@ No information lost between stages.`}</CodeBlock>
             ].map(([c, eq, s], i) => (
               <tr key={i}>
                 <td style={{ padding: '8px 12px', fontWeight: 600, borderBottom: '1px solid var(--border)' }}>{c}</td>
-                <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', fontFamily: '"Fira Code", monospace', fontSize: '12px' }}>{eq}</td>
+                <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>{eq}</td>
                 <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', color: 'var(--text-muted)' }}>{s}</td>
               </tr>
             ))}

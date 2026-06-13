@@ -47,7 +47,7 @@ function TokenCard({ text, position, index }) {
           color: '#fff',
           fontSize: '13px',
           fontWeight: 700,
-          fontFamily: '"Fira Code", monospace',
+          fontFamily: 'var(--font-mono)',
           whiteSpace: 'nowrap',
           userSelect: 'none',
         }}>

@@ -46,7 +46,7 @@ function ScatterPoint({ label, position, color }) {
           color: '#fff',
           fontSize: '12px',
           fontWeight: 700,
-          fontFamily: 'Google Sans, Roboto, sans-serif',
+          fontFamily: 'var(--font-main)',
           background: 'rgba(0,0,0,0.6)',
           padding: '2px 8px',
           borderRadius: '4px',

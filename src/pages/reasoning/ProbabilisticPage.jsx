@@ -11,7 +11,7 @@ function Section({ title, children }) {
 }
 
 function P({ children }) {
-  return <p style={{ fontSize: '15px', color: 'var(--text-muted)', marginBottom: '14px', lineHeight: 1.7 }}>{children}</p>;
+  return <p>{children}</p>;
 }
 
 function Callout({ type = 'info', children }) {
@@ -306,7 +306,7 @@ export default function ProbabilisticPage() {
     <div style={{ width: '80%', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ marginBottom: '48px' }}>
         <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-light)', marginBottom: '8px' }}>
-          Paradigm
+          Reasoning
         </div>
         <h1 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-1px', marginBottom: '12px' }}>
           Probabilistic Reasoning
@@ -386,7 +386,7 @@ export default function ProbabilisticPage() {
           The Bayesian framework extends far beyond static belief networks. Several key extensions have shaped modern AI:
         </P>
 
-        <ul style={{ fontSize: '15px', color: 'var(--text-muted)', paddingLeft: '20px', marginBottom: '16px', lineHeight: 1.8 }}>
+        <ul >
           <li>
             <strong>Hidden Markov Models (HMMs)</strong>: Introduced by Baum and Petrie (1966), HMMs model sequential data where the system transitions between hidden states over time. They powered speech recognition for decades and remain central to computational biology (gene finding, protein structure).
           </li>
@@ -404,7 +404,7 @@ export default function ProbabilisticPage() {
           While modern Large Language Models operate primarily via neural weight activations, probabilistic concepts are woven into their very foundations:
         </P>
 
-        <ul style={{ fontSize: '15px', color: 'var(--text-muted)', paddingLeft: '20px', marginBottom: '16px', lineHeight: 1.8 }}>
+        <ul >
           <li><strong>Autoregressive generation</strong>: LLMs output tokens by sampling from a conditional probability distribution <Latex math="P(x_t | x_{<t})" />. Every token prediction is fundamentally Bayesian — the model uses all prior context to compute its posterior belief over the next token.</li>
           <li><strong>Temperature and sampling</strong>: The temperature parameter in LLM inference directly controls the entropy of the output distribution — a probabilistic concept. Low temperature sharpens the distribution (more deterministic), high temperature flattens it (more creative).</li>
           <li><strong>Beam search</strong>: When generating text, beam search maintains multiple hypothesis paths weighted by their cumulative log-probabilities — a direct application of probabilistic reasoning to sequence decoding.</li>

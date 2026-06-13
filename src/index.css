@@ -25,15 +25,23 @@
   --shadow-hover: 0 12px 32px rgba(0,0,0,0.08);
   --radius: 0px;
   --radius-sm: 0px;
+  --font-main: 'Iosevka Charon', sans-serif;
+  --font-mono: 'Iosevka Charon', monospace;
+  --font-size: 17px;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: 'Google Sans', 'Roboto', sans-serif;
+  font-family: var(--font-main);
+  font-size: var(--font-size);
   background: var(--bg);
   color: var(--text-main);
   line-height: 1.6;
 }
+
+/* ── Prose typography — inherits font-size from body ── */
+p  { color: var(--text-muted); margin-bottom: 14px; line-height: 1.7; }
+ul, ol { color: var(--text-muted); padding-left: 20px; margin-bottom: 16px; line-height: 1.8; }
 
 /* ── SPINE LAYOUT ── */
 .spine-container {
@@ -108,13 +116,13 @@ body {
 .pg-input {
   width: 100%; padding: 16px; font-size: 18px; border: 1.5px solid var(--border); font-weight: 600;
   border-radius: 0px; outline: none; transition: border-color 0.2s;
-  font-family: 'Google Sans', 'Roboto', sans-serif; letter-spacing: -0.5px;
+  font-family: var(--font-main); letter-spacing: -0.5px;
 }
 .pg-input:focus { border-color: var(--accent); }
 .pg-tokens { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
 .tok {
   background: white; border: 1.5px solid var(--border); padding: 6px 14px;
-  font-family: 'Fira Code', monospace; font-size: 14px; font-weight: 600;
+  font-family: var(--font-mono); font-size: 14px; font-weight: 600;
   transition: border-color 0.2s;
 }
 .tok:hover { border-color: var(--accent); }
@@ -127,12 +135,12 @@ input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
 
 /* Math blocks */
 code {
-  font-family: 'Fira Code', monospace; font-size: 13px; color: var(--text-main);
+  font-family: var(--font-mono); font-size: 13px; color: var(--text-main);
   background: #f6f6f6; padding: 3px 6px; border: 1px solid var(--border);
 }
 .math-box {
   background: #f6f6f6; border: 1px solid var(--border); padding: 16px;
-  font-family: 'Fira Code', monospace; font-size: 13px; margin: 16px 0; color: #000; font-weight: 600;
+  font-family: var(--font-mono); font-size: 13px; margin: 16px 0; color: #000; font-weight: 600;
 }
 
 /* Attention Heatmap */
@@ -143,7 +151,7 @@ code {
   font-size: 11px; font-weight: 700; transition: transform 0.2s; cursor: pointer; border: 1px solid var(--border);
 }
 .attn-cell:hover { transform: scale(1.08); z-index: 2; box-shadow: var(--shadow-sm); border-color: var(--accent); }
-.attn-lbl { width: 72px; font-size: 12px; font-weight: 600; text-align: right; padding-right: 10px; font-family: 'Fira Code', monospace; }
+.attn-lbl { width: 72px; font-size: 12px; font-weight: 600; text-align: right; padding-right: 10px; font-family: var(--font-mono); }
 
 /* Arrows inside blocks */
 .arrow-down { text-align: center; color: var(--text-light); font-size: 24px; margin: 12px 0; line-height: 1; font-weight: 300; }

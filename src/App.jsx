@@ -17,6 +17,15 @@ import ChainOfThoughtPage from './pages/reasoning/ChainOfThoughtPage';
 import RagPage from './pages/reasoning/RagPage';
 import ProgramSynthesisPage from './pages/reasoning/ProgramSynthesisPage';
 
+// Prompting Pages
+import PromptingHubPage from './pages/prompting/PromptingHubPage';
+import ZeroShotPage from './pages/prompting/ZeroShotPage';
+import FewShotPage from './pages/prompting/FewShotPage';
+import COTPage from './pages/prompting/COTPage';
+import ZeroCOTPage from './pages/prompting/ZeroCOTPage';
+import LeastToMostPage from './pages/prompting/LeastToMostPage';
+import SelfConsistencyPage from './pages/prompting/SelfConsistencyPage';
+
 // ── Route mapping: internal key ↔ URL path ──
 const ROUTE_MAP = {
   'gpt3': '/gpt3',
@@ -33,6 +42,13 @@ const ROUTE_MAP = {
   'concept:reasoning-chain-of-thought': '/concepts/reasoning/chain-of-thought',
   'concept:reasoning-rag': '/concepts/reasoning/rag',
   'concept:reasoning-program-synthesis': '/concepts/reasoning/program-synthesis',
+  'concept:prompting': '/concepts/prompting',
+  'concept:prompting-zero-shot': '/concepts/prompting/zero-shot',
+  'concept:prompting-few-shot': '/concepts/prompting/few-shot',
+  'concept:prompting-cot': '/concepts/prompting/cot',
+  'concept:prompting-zero-cot': '/concepts/prompting/zero-cot',
+  'concept:prompting-ltm': '/concepts/prompting/least-to-most',
+  'concept:prompting-sc': '/concepts/prompting/self-consistency',
 };
 
 const PATH_TO_KEY = Object.fromEntries(
@@ -199,6 +215,20 @@ function App() {
         return <RagPage />;
       case 'concept:reasoning-program-synthesis':
         return <ProgramSynthesisPage />;
+      case 'concept:prompting':
+        return <PromptingHubPage onNavigate={setSelectedModel} />;
+      case 'concept:prompting-zero-shot':
+        return <ZeroShotPage />;
+      case 'concept:prompting-few-shot':
+        return <FewShotPage />;
+      case 'concept:prompting-cot':
+        return <COTPage />;
+      case 'concept:prompting-zero-cot':
+        return <ZeroCOTPage />;
+      case 'concept:prompting-ltm':
+        return <LeastToMostPage />;
+      case 'concept:prompting-sc':
+        return <SelfConsistencyPage />;
       default:
         return (
           <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--text-light)' }}>

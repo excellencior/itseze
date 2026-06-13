@@ -16,7 +16,7 @@ function Section({ title, children }) {
   );
 }
 function P({ children }) {
-  return <p style={{ fontSize: '15px', color: 'var(--text-muted)', marginBottom: '14px', lineHeight: 1.7 }}>{children}</p>;
+  return <p>{children}</p>;
 }
 function Callout({ type = 'info', children }) {
   const colors = {
@@ -61,7 +61,7 @@ function TokenChip({ text, color = 'var(--text-main)', bg = '#FAFAFA', border = 
     <span style={{
       display: 'inline-block', padding: '4px 10px',
       border: `1.5px solid ${border}`, background: bg,
-      fontFamily: mono ? '"Fira Code", monospace' : 'inherit',
+      fontFamily: mono ? 'var(--font-mono)' : 'inherit',
       fontSize: '13px', fontWeight: bold ? 700 : 500, color,
       marginRight: '4px', marginBottom: '4px',
     }}>{text}</span>
@@ -81,8 +81,8 @@ function MiniTable({ rows, draftToken, accepted }) {
           const isDraft = tok === draftToken;
           return (
             <tr key={i} style={{ background: isDraft ? (accepted ? '#F0FDF4' : '#FEF2F2') : 'white' }}>
-              <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--border)', fontFamily: '"Fira Code", monospace', fontWeight: isDraft ? 700 : 400 }}>{tok}</td>
-              <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--border)', fontFamily: '"Fira Code", monospace' }}>{prob}%</td>
+              <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--border)', fontFamily: 'var(--font-mono)', fontWeight: isDraft ? 700 : 400 }}>{tok}</td>
+              <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--border)', fontFamily: 'var(--font-mono)' }}>{prob}%</td>
               <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--border)', fontWeight: 700, fontSize: '11px' }}>
                 {isDraft && (accepted ? <span style={{ color: '#10B981' }}>← draft ✓</span> : <span style={{ color: '#EF4444' }}>← draft ✗</span>)}
               </td>
@@ -136,7 +136,7 @@ function SpecDecodingWalkthrough() {
           <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.7 }}>
             <p style={{ marginBottom: '12px' }}>Think of it as a <strong>junior writer</strong> and a <strong>senior editor</strong>.</p>
             <p style={{ marginBottom: '12px' }}>The junior drafts a few sentences quickly. The senior editor reads ahead and, at each word, asks:</p>
-            <div style={{ padding: '14px 18px', background: '#FAFAFA', border: '1px solid var(--border)', fontFamily: '"Fira Code", monospace', fontSize: '13px', fontWeight: 600, marginBottom: '14px' }}>
+            <div style={{ padding: '14px 18px', background: '#FAFAFA', border: '1px solid var(--border)', fontFamily: 'var(--font-mono)', fontSize: '13px', fontWeight: 600, marginBottom: '14px' }}>
               "Would I myself likely write this next word?"
             </div>
             <p style={{ marginBottom: '6px' }}>If <strong>yes</strong> → keep it, move on.</p>
@@ -181,8 +181,8 @@ function SpecDecodingWalkthrough() {
                   {VERIFY_TABLES.map((v, i) => (
                     <tr key={i}>
                       <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', fontWeight: 700, color: 'var(--text-light)' }}>{i + 1}</td>
-                      <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', fontFamily: '"Fira Code", monospace' }}>{v.after}</td>
-                      <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', fontFamily: '"Fira Code", monospace', fontWeight: 700 }}>{v.draft}</td>
+                      <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', fontFamily: 'var(--font-mono)' }}>{v.after}</td>
+                      <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{v.draft}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -222,11 +222,11 @@ function SpecDecodingWalkthrough() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
               <div style={{ padding: '12px 14px', border: '1px solid #10B981', background: '#F0FDF4', fontSize: '12px' }}>
                 <div style={{ fontWeight: 700, marginBottom: '6px', color: '#166534' }}>✓ Finalized</div>
-                <div style={{ fontFamily: '"Fira Code", monospace', fontWeight: 600 }}>I want <strong>to eat</strong></div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>I want <strong>to eat</strong></div>
               </div>
               <div style={{ padding: '12px 14px', border: '1px solid #EF4444', background: '#FEF2F2', fontSize: '12px' }}>
                 <div style={{ fontWeight: 700, marginBottom: '6px', color: '#991B1B' }}>✗ Discarded</div>
-                <div style={{ fontFamily: '"Fira Code", monospace', fontWeight: 600, textDecoration: 'line-through', color: 'var(--text-light)' }}>pizza tonight</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, textDecoration: 'line-through', color: 'var(--text-light)' }}>pizza tonight</div>
               </div>
             </div>
             <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '14px', lineHeight: 1.7 }}>
@@ -278,7 +278,7 @@ function GanttBar({ label, segments, totalWidth, animDelay, active }) {
     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
       <div style={{
         minWidth: '42px', fontSize: '11px', fontWeight: 700,
-        fontFamily: '"Fira Code", monospace', color: 'var(--text-muted)', textAlign: 'right',
+        fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', textAlign: 'right',
       }}>{label}</div>
       <div style={{ flex: 1, display: 'flex', height: '28px', position: 'relative' }}>
         {segments.map((seg, j) => (
@@ -321,7 +321,7 @@ function MatrixShape({ rows, cols, color, label, animate }) {
       </div>
       <div style={{
         fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)',
-        fontFamily: '"Fira Code", monospace', whiteSpace: 'nowrap',
+        fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap',
       }}>{label}</div>
     </div>
   );
@@ -396,8 +396,8 @@ function ParallelViz() {
             ))}
             {/* Total bar */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--border)' }}>
-              <div style={{ minWidth: '42px', fontSize: '11px', fontWeight: 700, fontFamily: '"Fira Code", monospace', color: 'var(--text-main)', textAlign: 'right' }}>total</div>
-              <div style={{ fontSize: '13px', fontWeight: 800, color: '#EF4444', fontFamily: '"Fira Code", monospace' }}>
+              <div style={{ minWidth: '42px', fontSize: '11px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--text-main)', textAlign: 'right' }}>total</div>
+              <div style={{ fontSize: '13px', fontWeight: 800, color: '#EF4444', fontFamily: 'var(--font-mono)' }}>
                 {seqTotal}ms <span style={{ fontWeight: 500, color: 'var(--text-light)', fontSize: '11px' }}>({K} × {LOAD_COST + COMPUTE_1}ms)</span>
               </div>
             </div>
@@ -416,8 +416,8 @@ function ParallelViz() {
               ]}
             />
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--border)' }}>
-              <div style={{ minWidth: '42px', fontSize: '11px', fontWeight: 700, fontFamily: '"Fira Code", monospace', color: 'var(--text-main)', textAlign: 'right' }}>total</div>
-              <div style={{ fontSize: '13px', fontWeight: 800, color: '#10B981', fontFamily: '"Fira Code", monospace' }}>
+              <div style={{ minWidth: '42px', fontSize: '11px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--text-main)', textAlign: 'right' }}>total</div>
+              <div style={{ fontSize: '13px', fontWeight: 800, color: '#10B981', fontFamily: 'var(--font-mono)' }}>
                 {parTotal}ms <span style={{ fontWeight: 500, color: 'var(--text-light)', fontSize: '11px' }}>(1 × load + 1 × compute)</span>
               </div>
             </div>
@@ -957,7 +957,7 @@ export default function SpeculativeDecodingPage() {
             ].map(([c, eq, s], i) => (
               <tr key={i}>
                 <td style={{ padding: '8px 12px', fontWeight: 600, borderBottom: '1px solid var(--border)' }}>{c}</td>
-                <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', fontFamily: '"Fira Code", monospace', fontSize: '12px' }}>{eq}</td>
+                <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>{eq}</td>
                 <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', color: 'var(--text-muted)' }}>{s}</td>
               </tr>
             ))}

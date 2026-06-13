@@ -11,7 +11,7 @@ function Section({ title, children }) {
 }
 
 function P({ children }) {
-  return <p style={{ fontSize: '15px', color: 'var(--text-muted)', marginBottom: '14px', lineHeight: 1.7 }}>{children}</p>;
+  return <p>{children}</p>;
 }
 
 function Callout({ type = 'info', children }) {
@@ -119,7 +119,7 @@ function DebuggingLoopSimulator() {
               background: currentStageInfo.testResult.success ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
               borderLeft: `3px solid ${currentStageInfo.testResult.success ? '#10B981' : '#EF4444'}`,
               fontSize: '12.5px',
-              fontFamily: '"Fira Code", monospace',
+              fontFamily: 'var(--font-mono)',
               fontWeight: 700,
               color: currentStageInfo.testResult.success ? '#10B981' : '#EF4444',
               whiteSpace: 'pre-line',
@@ -135,7 +135,7 @@ function DebuggingLoopSimulator() {
             filter_evens.py
           </div>
           {currentStageInfo.code ? (
-            <pre style={{ margin: 0, fontFamily: '"Fira Code", monospace', fontSize: '12px', lineHeight: 1.5, color: '#e5c07b', paddingTop: '16px' }}>
+            <pre style={{ margin: 0, fontFamily: 'var(--font-mono)', fontSize: '12px', lineHeight: 1.5, color: '#e5c07b', paddingTop: '16px' }}>
               <code>{currentStageInfo.code}</code>
             </pre>
           ) : (
@@ -218,7 +218,7 @@ export default function ProgramSynthesisPage() {
     <div style={{ width: '80%', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ marginBottom: '48px' }}>
         <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-light)', marginBottom: '8px' }}>
-          Paradigm
+          Reasoning
         </div>
         <h1 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-1px', marginBottom: '12px' }}>
           Program Synthesis
@@ -236,7 +236,7 @@ export default function ProgramSynthesisPage() {
           <strong>Program synthesis</strong> changes the paradigm entirely: instead of asking the model to <em>solve</em> the problem directly, we ask it to <em>write a program</em> that solves the problem. Code serves as a formal, deterministic sandbox with crucial properties:
         </P>
 
-        <ul style={{ fontSize: '15px', color: 'var(--text-muted)', paddingLeft: '20px', marginBottom: '16px', lineHeight: 1.8 }}>
+        <ul >
           <li><strong>Precise semantics</strong>: Every line of code has an unambiguous meaning, unlike natural language where the same sentence can be interpreted multiple ways.</li>
           <li><strong>Executable verification</strong>: Code can be compiled and run against test inputs, producing concrete pass/fail signals rather than subjective quality judgments.</li>
           <li><strong>Structured feedback</strong>: When code fails, the error trace (syntax errors, type mismatches, assertion failures, stack traces) tells the model <em>exactly</em> what went wrong and where.</li>
@@ -255,7 +255,7 @@ export default function ProgramSynthesisPage() {
           The field advanced rapidly. <strong>AlphaCode</strong> (Li et al., 2022, published in <em>Science</em>) tackled <em>competitive programming</em> — problems requiring algorithmic thinking, mathematical reasoning, and careful implementation. AlphaCode's approach was distinctive:
         </P>
 
-        <ol style={{ fontSize: '15px', color: 'var(--text-muted)', paddingLeft: '20px', marginBottom: '16px', lineHeight: 1.8 }}>
+        <ol >
           <li><strong>Massive sampling</strong>: Generate millions of candidate programs for each problem.</li>
           <li><strong>Execution-based filtering</strong>: Run every candidate against sample inputs, discarding programs that produce wrong outputs.</li>
           <li><strong>Behavioral clustering</strong>: Cluster surviving programs by their output patterns, then select one representative from each cluster — ensuring diversity.</li>
@@ -295,7 +295,7 @@ export default function ProgramSynthesisPage() {
           Program synthesis is the engine of modern <strong>autonomous coding agents</strong> — systems that can independently write, test, debug, and deploy software. The paradigm has evolved from simple code completion to full agentic loops:
         </P>
 
-        <ul style={{ fontSize: '15px', color: 'var(--text-muted)', paddingLeft: '20px', marginBottom: '16px', lineHeight: 1.8 }}>
+        <ul >
           <li><strong>Test-driven synthesis</strong>: The agent writes unit tests <em>first</em> based on the specification, then iterates on the source code until all tests pass. This inverts the traditional development workflow, making tests the specification and code the implementation.</li>
           <li><strong>Tool use</strong>: The model uses compilers, linters, type checkers, terminals, and even web browsers to check its work, shifting from passive prediction to active software engineering.</li>
           <li><strong>Multi-file reasoning</strong>: Advanced agents (SWE-bench, Devin) navigate entire codebases, understanding dependency graphs, reading documentation, and making coordinated changes across multiple files.</li>
@@ -312,7 +312,7 @@ export default function ProgramSynthesisPage() {
           Despite rapid progress, several challenges remain:
         </P>
 
-        <ul style={{ fontSize: '15px', color: 'var(--text-muted)', paddingLeft: '20px', marginBottom: '16px', lineHeight: 1.8 }}>
+        <ul >
           <li><strong>Specification ambiguity</strong>: Natural language specifications are inherently incomplete. The model must infer edge cases, handle implicit constraints, and ask for clarification when the task is underspecified.</li>
           <li><strong>Security</strong>: Executing model-generated code in production environments creates significant security risks (code injection, resource exhaustion, data exfiltration). Sandboxing and formal verification are essential safeguards.</li>
           <li><strong>Algorithmic creativity</strong>: While LLMs can implement known algorithms, inventing genuinely novel algorithms — the kind that would earn a research publication — remains largely beyond current capabilities.</li>

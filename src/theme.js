@@ -66,6 +66,12 @@ const theme = {
   sidebarMinWidth: 200,
   sidebarMaxWidth: 500,
   outerPadding: '12px',
+
+  // ── Typography ──
+  // Change these values to update fonts/sizes across the entire app.
+  fontMain: '"Iosevka Charon", sans-serif',
+  fontMono: '"Iosevka Charon", monospace',
+  fontSize: '17px',
 };
 
 /**
@@ -93,6 +99,9 @@ function toCSSVariables(t) {
     '--shadow-hover': t.shadowHover,
     '--radius': t.radius,
     '--radius-sm': t.radiusSm,
+    '--font-main': t.fontMain,
+    '--font-mono': t.fontMono,
+    '--font-size': t.fontSize,
   };
 }
 

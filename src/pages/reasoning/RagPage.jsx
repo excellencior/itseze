@@ -11,7 +11,7 @@ function Section({ title, children }) {
 }
 
 function P({ children }) {
-  return <p style={{ fontSize: '15px', color: 'var(--text-muted)', marginBottom: '14px', lineHeight: 1.7 }}>{children}</p>;
+  return <p>{children}</p>;
 }
 
 function Callout({ type = 'info', children }) {
@@ -212,7 +212,7 @@ export default function RagPage() {
     <div style={{ width: '80%', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ marginBottom: '48px' }}>
         <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-light)', marginBottom: '8px' }}>
-          Paradigm
+          Reasoning
         </div>
         <h1 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-1px', marginBottom: '12px' }}>
           Retrieval-Augmented Reasoning (RAG)
@@ -227,7 +227,7 @@ export default function RagPage() {
           Large language models are knowledge snapshots: they lock everything they know inside static weight matrices at the end of training. This creates three fundamental problems:
         </P>
 
-        <ul style={{ fontSize: '15px', color: 'var(--text-muted)', paddingLeft: '20px', marginBottom: '16px', lineHeight: 1.8 }}>
+        <ul >
           <li><strong>Temporal staleness</strong>: A model trained in January 2024 cannot answer questions about events in March 2024. The world keeps moving; the model's knowledge does not.</li>
           <li><strong>Domain gaps</strong>: General-purpose models lack deep expertise in specialized domains (medical records, legal case law, proprietary codebases) unless they were specifically trained on that data.</li>
           <li><strong>Parameter bloat</strong>: Trying to memorize the entirety of human knowledge within model weights leads to enormous parameter counts, training costs, and — ironically — more hallucinations, because the model must compress and approximate vast amounts of information.</li>
@@ -293,7 +293,7 @@ export default function RagPage() {
           Building production RAG systems requires navigating several critical trade-offs:
         </P>
 
-        <ul style={{ fontSize: '15px', color: 'var(--text-muted)', paddingLeft: '20px', marginBottom: '16px', lineHeight: 1.8 }}>
+        <ul >
           <li><strong>Chunking strategy</strong>: How documents are segmented (sentences, paragraphs, fixed token windows, or semantic sections) dramatically affects retrieval precision. Too small and you lose context; too large and you dilute the signal.</li>
           <li><strong>Context window limits</strong>: Even with 128K-token context windows, injecting too many retrieved passages creates the <strong>needle-in-a-haystack</strong> problem — the model struggles to locate and utilize the relevant passage among many irrelevant ones.</li>
           <li><strong>Embedding model quality</strong>: The retriever is only as good as its embedding model. If the embedding space doesn't capture the semantic relationship between the query and the answer, no amount of LLM sophistication can compensate.</li>

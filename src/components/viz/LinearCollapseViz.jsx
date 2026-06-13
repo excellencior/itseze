@@ -141,7 +141,7 @@ export default function LinearCollapseViz() {
       ctx.fillStyle = (l === 0 || l === 3)
         ? '#333'
         : `rgba(100, 100, 100, ${opacity})`;
-      ctx.font = '11px "Google Sans", Roboto, sans-serif';
+      ctx.font = '11px "Iosevka Charon", sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(layer.label, lx, h - 10);
     });
@@ -150,7 +150,7 @@ export default function LinearCollapseViz() {
     if (progress > 0.5) {
       const cx = (getLayerX(1) + getLayerX(2)) / 2;
       ctx.fillStyle = `rgba(8, 145, 178, ${(progress - 0.5) * 2})`;
-      ctx.font = 'bold 13px "Google Sans", Roboto, sans-serif';
+      ctx.font = 'bold 13px "Iosevka Charon", sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText("W' = W₂·W₁", cx, h - 10);
     }
@@ -174,7 +174,7 @@ export default function LinearCollapseViz() {
         justifyContent: 'center',
         fontSize: '12px',
         fontWeight: 'bold',
-        fontFamily: '"Google Sans", Roboto, sans-serif',
+        fontFamily: 'var(--font-main)',
         boxShadow: '0 2px 4px rgba(8, 145, 178, 0.2)',
         zIndex: 10,
         transition: 'all 0.3s ease',

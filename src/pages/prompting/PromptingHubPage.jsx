@@ -14,28 +14,25 @@ function P({ children }) {
   return <p>{children}</p>;
 }
 
-export default function ReasoningHubPage({ onNavigate }) {
+export default function PromptingHubPage({ onNavigate }) {
   const [hoveredNode, setHoveredNode] = useState(null);
 
   const nodes = [
-    { id: 'symbolic', name: 'Symbolic (Logical)', x: 150, y: 120, route: 'concept:reasoning-symbolic', desc: 'Deductive logic, formal systems, rules, and deterministic knowledge representations.' },
-    { id: 'probabilistic', name: 'Probabilistic', x: 120, y: 250, route: 'concept:reasoning-probabilistic', desc: 'Bayesian networks, graphical models, and reasoning under uncertainty.' },
-    { id: 'neural', name: 'Neural (Connectionist)', x: 180, y: 380, route: 'concept:reasoning-neural', desc: 'Implicit pattern matching, embedding spaces, and emergent reasoning in deep neural networks.' },
-    { id: 'neuro-symbolic', name: 'Neuro-Symbolic', x: 380, y: 250, route: 'concept:reasoning-neuro-symbolic', desc: 'The hybrid frontier: combining connectionist learning with symbolic logic and execution.' },
-    { id: 'chain-of-thought', name: 'Chain-of-Thought', x: 580, y: 150, route: 'concept:reasoning-chain-of-thought', desc: 'Step-by-step logic, backtracking, and self-correction in Large Language Models.' },
-    { id: 'rag', name: 'RAG as Reasoning', x: 620, y: 280, route: 'concept:reasoning-rag', desc: 'Retrieval-augmented generation: referencing external knowledge stores to solve complex queries.' },
-    { id: 'program-synthesis', name: 'Program Synthesis', x: 580, y: 380, route: 'concept:reasoning-program-synthesis', desc: 'Generating structured, executable code as a form of precise planning and logic execution.' },
+    { id: 'zero-shot', name: 'Zero-Shot', x: 120, y: 150, route: 'concept:prompting-zero-shot', desc: 'Task completion through instructions alone, without any demonstrations. The simplest baseline for evaluating LLM capabilities.' },
+    { id: 'few-shot', name: 'Few-Shot ICL', x: 120, y: 320, route: 'concept:prompting-few-shot', desc: 'In-context learning via k input-output demonstrations, leveraging the model\'s ability to learn patterns at inference time without weight updates.' },
+    { id: 'cot', name: 'Chain-of-Thought', x: 400, y: 150, route: 'concept:prompting-cot', desc: 'Few-shot prompting with step-by-step reasoning exemplars that decompose complex problems into intermediate steps.' },
+    { id: 'zero-cot', name: 'Zero-Shot CoT', x: 400, y: 320, route: 'concept:prompting-zero-cot', desc: 'Eliciting reasoning chains without demonstrations using a simple trigger phrase: "Let\'s think step by step."' },
+    { id: 'ltm', name: 'Least-to-Most', x: 650, y: 150, route: 'concept:prompting-ltm', desc: 'Decomposing complex problems into simpler subproblems and solving them sequentially, enabling easy-to-hard generalization.' },
+    { id: 'sc', name: 'Self-Consistency', x: 650, y: 320, route: 'concept:prompting-sc', desc: 'Sampling multiple diverse reasoning paths and selecting the most consistent answer via majority voting.' },
   ];
 
   const connections = [
-    { from: 'symbolic', to: 'neuro-symbolic' },
-    { from: 'probabilistic', to: 'symbolic' },
-    { from: 'probabilistic', to: 'neural' },
-    { from: 'neural', to: 'neuro-symbolic' },
-    { from: 'neural', to: 'chain-of-thought' },
-    { from: 'neuro-symbolic', to: 'program-synthesis' },
-    { from: 'chain-of-thought', to: 'program-synthesis' },
-    { from: 'rag', to: 'chain-of-thought' },
+    { from: 'zero-shot', to: 'few-shot' },
+    { from: 'zero-shot', to: 'zero-cot' },
+    { from: 'few-shot', to: 'cot' },
+    { from: 'cot', to: 'zero-cot' },
+    { from: 'cot', to: 'sc' },
+    { from: 'cot', to: 'ltm' },
   ];
 
   const activeNodeInfo = hoveredNode ? nodes.find(n => n.id === hoveredNode) : null;
@@ -48,17 +45,17 @@ export default function ReasoningHubPage({ onNavigate }) {
           Topic Overview
         </div>
         <h1 style={{ fontSize: '36px', fontWeight: 900, letterSpacing: '-1.5px', marginBottom: '16px', lineHeight: 1.1 }}>
-          The Spectrum of Reasoning in AI
+          The Landscape of Prompting Strategies
         </h1>
         <p style={{ fontSize: '16px', color: 'var(--text-muted)', lineHeight: 1.6, maxWidth: '800px' }}>
-          Reasoning is the cornerstone of intelligence. Explore the journey of AI reasoning from the deterministic mathematical structures of Symbolic Logic, through Probabilistic graphs and Neural networks, to modern hybrid paradigms like Neuro-Symbolic frameworks, Chain-of-Thought planning, and Program Synthesis.
+          Prompting strategies have transformed how we interact with large language models, evolving from simple zero-shot instructions to sophisticated multi-step reasoning frameworks. Explore the lineage of techniques, from basic demonstrations through chain-of-thought decomposition to self-consistency ensembles, that unlock increasingly powerful capabilities without modifying a single model weight.
         </p>
       </div>
 
       {/* SVG Interactive Map */}
-      <Section title="Interactive Paradigm Map">
+      <Section title="Interactive Strategy Map">
         <P>
-          Hover over the nodes below to see how these paradigms connect, and click any node to read the detailed subblog.
+          Hover over the nodes below to see how these strategies connect, and click any node to read the detailed subblog.
         </P>
 
         <div style={{
@@ -202,14 +199,14 @@ export default function ReasoningHubPage({ onNavigate }) {
                 marginBottom: '4px',
                 letterSpacing: '-0.3px',
               }}>
-                {activeNodeInfo ? activeNodeInfo.name : 'Select a paradigm above'}
+                {activeNodeInfo ? activeNodeInfo.name : 'Select a strategy above'}
               </h3>
               <p style={{
                 fontSize: '12.5px',
                 color: activeNodeInfo ? '#ccc' : '#888',
                 lineHeight: 1.4,
               }}>
-                {activeNodeInfo ? activeNodeInfo.desc : 'Hover or tap on any paradigm node in the network to inspect its connections and summary.'}
+                {activeNodeInfo ? activeNodeInfo.desc : 'Hover or tap on any strategy node in the network to inspect its connections and summary.'}
               </p>
             </div>
             {activeNodeInfo && (
@@ -279,7 +276,7 @@ export default function ReasoningHubPage({ onNavigate }) {
                 letterSpacing: '0.05em',
                 marginBottom: '8px'
               }}>
-                Paradigm
+                Strategy
               </div>
               <h3 style={{
                 fontSize: '18px',

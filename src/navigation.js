@@ -41,6 +41,19 @@ export const CONCEPTS = [
       { name: 'Program Synthesis', route: 'concept:reasoning-program-synthesis', ready: true },
     ]
   },
+  {
+    name: 'Prompting',
+    ready: true,
+    children: [
+      { name: 'Hub', route: 'concept:prompting', ready: true },
+      { name: 'Zero-Shot', route: 'concept:prompting-zero-shot', ready: true },
+      { name: 'Few-Shot ICL', route: 'concept:prompting-few-shot', ready: true },
+      { name: 'Chain-of-Thought', route: 'concept:prompting-cot', ready: true },
+      { name: 'Zero-Shot CoT', route: 'concept:prompting-zero-cot', ready: true },
+      { name: 'Least-to-Most', route: 'concept:prompting-ltm', ready: true },
+      { name: 'Self-Consistency', route: 'concept:prompting-sc', ready: true },
+    ]
+  },
   { name: 'Residual Connections', route: 'concept:residual', ready: false },
   { name: 'Rotary Position Embedding (RoPE)', route: 'concept:rope', ready: false },
   { name: 'Softmax', route: 'concept:softmax', ready: false },

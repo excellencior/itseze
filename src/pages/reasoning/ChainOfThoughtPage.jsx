@@ -10,7 +10,7 @@ function Section({ title, children }) {
 }
 
 function P({ children }) {
-  return <p style={{ fontSize: '15px', color: 'var(--text-muted)', marginBottom: '14px', lineHeight: 1.7 }}>{children}</p>;
+  return <p>{children}</p>;
 }
 
 function Callout({ type = 'info', children }) {
@@ -192,7 +192,7 @@ export default function ChainOfThoughtPage() {
     <div style={{ width: '80%', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ marginBottom: '48px' }}>
         <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-light)', marginBottom: '8px' }}>
-          Paradigm
+          Reasoning
         </div>
         <h1 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-1px', marginBottom: '12px' }}>
           Chain-of-Thought Reasoning
@@ -225,7 +225,7 @@ export default function ChainOfThoughtPage() {
 
         <div style={{
           background: '#1e1e24', color: '#e5c07b', padding: '16px 20px', margin: '16px 0',
-          fontFamily: '"Fira Code", monospace', fontSize: '12.5px', lineHeight: 1.6,
+          fontFamily: 'var(--font-mono)', fontSize: '12.5px', lineHeight: 1.6,
           border: '1px solid #333', position: 'relative',
         }}>
           <div style={{ position: 'absolute', top: '8px', right: '12px', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#666', fontWeight: 700 }}>
@@ -273,7 +273,7 @@ Total = 5 + 6 = 11. The answer is 11.`}</pre>
           This connects to the cognitive science concept of <strong>System 2 thinking</strong> — conscious, slow, and effortful reasoning. In AI terms, this is achieved by:
         </P>
 
-        <ul style={{ fontSize: '15px', color: 'var(--text-muted)', paddingLeft: '20px', marginBottom: '16px', lineHeight: 1.8 }}>
+        <ul >
           <li><strong>Search over tokens</strong>: The model generates more intermediate tokens, trading speed for accuracy on hard problems.</li>
           <li><strong>Self-verification</strong>: The model critiques its own intermediate steps before committing, catching errors early.</li>
           <li><strong>Backtracking and retry</strong>: Rather than a single forward pass, the model can explore multiple reasoning paths and select the best one.</li>
@@ -290,7 +290,7 @@ Total = 5 + 6 = 11. The answer is 11.`}</pre>
           Despite the impressive gains, CoT reasoning has important limitations:
         </P>
 
-        <ul style={{ fontSize: '15px', color: 'var(--text-muted)', paddingLeft: '20px', marginBottom: '16px', lineHeight: 1.8 }}>
+        <ul >
           <li><strong>Faithfulness concerns</strong>: The generated chain of thought may not reflect the model's actual internal computation. Turpin et al. (2023) showed that models can produce correct-looking reasoning chains that are actually post-hoc rationalizations rather than genuine step-by-step derivations.</li>
           <li><strong>Error compounding</strong>: Even with self-verification, errors in early steps can cascade in subtle ways. A wrong intermediate value may not trigger an obvious contradiction, leading to a plausible-looking but incorrect final answer.</li>
           <li><strong>Prompt sensitivity</strong>: CoT performance depends heavily on prompt formatting, example selection, and instruction phrasing. Small changes to the prompt can cause large swings in accuracy.</li>

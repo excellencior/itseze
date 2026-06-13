@@ -46,7 +46,7 @@ export default function GradientDecayViz() {
     // Y-axis label
     ctx.save();
     ctx.fillStyle = '#888';
-    ctx.font = '11px "Google Sans", Roboto, sans-serif';
+    ctx.font = '11px "Iosevka Charon", sans-serif';
     ctx.textAlign = 'center';
     ctx.translate(14, padTop + chartH / 2);
     ctx.rotate(-Math.PI / 2);
@@ -55,7 +55,7 @@ export default function GradientDecayViz() {
 
     // Title
     ctx.fillStyle = '#333';
-    ctx.font = 'bold 12px "Google Sans", Roboto, sans-serif';
+    ctx.font = 'bold 12px "Iosevka Charon", sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('Gradient reaching each layer (backprop)', w / 2, 16);
 
@@ -88,7 +88,7 @@ export default function GradientDecayViz() {
       ctx.fillRect(tanX, tanY, barW, tanH);
 
       // Value labels
-      ctx.font = '9px "Fira Code", monospace';
+      ctx.font = '9px "Iosevka Charon", monospace';
       ctx.textAlign = 'center';
 
       // Sigmoid value
@@ -103,14 +103,14 @@ export default function GradientDecayViz() {
 
       // Layer label
       ctx.fillStyle = '#888';
-      ctx.font = '11px "Google Sans", Roboto, sans-serif';
+      ctx.font = '11px "Iosevka Charon", sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(`L${i + 1}`, cx, padTop + chartH + 16);
     }
 
     // Y-axis ticks
     ctx.fillStyle = '#AAA';
-    ctx.font = '10px "Fira Code", monospace';
+    ctx.font = '10px "Iosevka Charon", monospace';
     ctx.textAlign = 'right';
     [0, 0.25, 0.5, 0.75, 1.0].forEach(v => {
       const y = padTop + chartH - (v / maxVal) * chartH;
@@ -124,7 +124,7 @@ export default function GradientDecayViz() {
 
     // Legend
     const legendY = padTop + chartH + 30;
-    ctx.font = '11px "Google Sans", Roboto, sans-serif';
+    ctx.font = '11px "Iosevka Charon", sans-serif';
     ctx.textAlign = 'left';
 
     ctx.fillStyle = '#F59E0B';

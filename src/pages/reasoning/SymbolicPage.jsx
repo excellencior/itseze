@@ -11,7 +11,7 @@ function Section({ title, children }) {
 }
 
 function P({ children }) {
-  return <p style={{ fontSize: '15px', color: 'var(--text-muted)', marginBottom: '14px', lineHeight: 1.7 }}>{children}</p>;
+  return <p>{children}</p>;
 }
 
 function Callout({ type = 'info', children }) {
@@ -147,7 +147,7 @@ function PropositionalEvaluator() {
             border: '1.5px solid var(--border)',
             fontWeight: 600,
             outline: 'none',
-            fontFamily: '"Fira Code", monospace',
+            fontFamily: 'var(--font-mono)',
           }}
         />
       </div>
@@ -228,7 +228,7 @@ function PropositionalEvaluator() {
               >
                 <td style={{ padding: '10px', textAlign: 'center', color: row.a ? '#10B981' : '#EF4444' }}>{row.a ? 'T' : 'F'}</td>
                 <td style={{ padding: '10px', textAlign: 'center', color: row.b ? '#10B981' : '#EF4444' }}>{row.b ? 'T' : 'F'}</td>
-                <td style={{ padding: '10px', fontFamily: '"Fira Code", monospace' }}>{expression}</td>
+                <td style={{ padding: '10px', fontFamily: 'var(--font-mono)' }}>{expression}</td>
                 <td style={{
                   padding: '10px',
                   textAlign: 'center',
@@ -251,7 +251,7 @@ export default function SymbolicPage() {
     <div style={{ width: '80%', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ marginBottom: '48px' }}>
         <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-light)', marginBottom: '8px' }}>
-          Paradigm
+          Reasoning
         </div>
         <h1 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-1px', marginBottom: '12px' }}>
           Symbolic (Logical) Reasoning
@@ -330,7 +330,7 @@ export default function SymbolicPage() {
 
         <div style={{
           background: '#1e1e24', color: '#e5c07b', padding: '16px 20px', margin: '16px 0',
-          fontFamily: '"Fira Code", monospace', fontSize: '12.5px', lineHeight: 1.6,
+          fontFamily: 'var(--font-mono)', fontSize: '12.5px', lineHeight: 1.6,
           border: '1px solid #333', position: 'relative',
         }}>
           <div style={{ position: 'absolute', top: '8px', right: '12px', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#666', fontWeight: 700 }}>
@@ -371,7 +371,7 @@ grandparent(X, Z) :- parent(X, Y), parent(Y, Z).
           Despite decades of success in structured domains, symbolic reasoning faces deep, well-documented limitations that ultimately drove the field toward statistical and neural approaches:
         </P>
 
-        <ul style={{ fontSize: '15px', color: 'var(--text-muted)', paddingLeft: '20px', marginBottom: '16px', lineHeight: 1.8 }}>
+        <ul >
           <li><strong>Brittleness</strong>: A single missing rule, a slightly misspelled predicate, or an unanticipated edge case can cause the entire reasoning chain to fail silently or produce incorrect results. Symbolic systems have no graceful degradation.</li>
           <li><strong>The Frame Problem</strong>: Formulated by McCarthy and Hayes (1969), this asks: how do you formally specify <em>what does not change</em> when an action occurs? In a world with millions of properties, writing explicit frame axioms for every action becomes combinatorially intractable.</li>
           <li><strong>The Qualification Problem</strong>: Closely related, this asks: how do you enumerate every precondition that must hold for an action to succeed? In the real world, the list is essentially infinite — a robot cannot pour water if the cup has a hole, if gravity is reversed, if the water is frozen, etc.</li>

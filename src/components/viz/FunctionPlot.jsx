@@ -104,7 +104,7 @@ export default function FunctionPlot({
 
       // Axis labels
       ctx.fillStyle = '#555';
-      ctx.font = '11px "Google Sans", Roboto, sans-serif';
+      ctx.font = '11px "Iosevka Charon", sans-serif';
       for (let x = Math.ceil(xRange[0]); x <= xRange[1]; x++) {
         if (x === 0) continue;
         ctx.fillText(x.toString(), toCanvasX(x) - 4, yZero + 14);
@@ -187,7 +187,7 @@ export default function FunctionPlot({
       ctx.fillRect(tooltipX, tooltipY, tooltipW, tooltipH);
 
       ctx.fillStyle = '#888';
-      ctx.font = '11px "Fira Code", monospace';
+      ctx.font = '11px "Iosevka Charon", monospace';
       ctx.fillText(`x = ${xVal.toFixed(2)}`, tooltipX + 8, tooltipY + 15);
 
       functions.forEach(({ fn, color, label }, i) => {
@@ -198,7 +198,7 @@ export default function FunctionPlot({
     }
 
     // Legend — measure text to avoid overlaps
-    ctx.font = '12px "Google Sans", Roboto, sans-serif';
+    ctx.font = '12px "Iosevka Charon", sans-serif';
     const legendPadRight = 16;
     let legendY = 20;
     ctx.textAlign = 'right';
@@ -221,7 +221,7 @@ export default function FunctionPlot({
       ctx.setLineDash([]);
 
       ctx.fillStyle = color;
-      ctx.font = '12px "Google Sans", Roboto, sans-serif';
+      ctx.font = '12px "Iosevka Charon", sans-serif';
       ctx.fillText(label, textX, legendY + 4);
       legendY += 20;
     });
