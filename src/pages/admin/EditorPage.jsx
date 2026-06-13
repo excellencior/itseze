@@ -354,6 +354,31 @@ function CalloutEditor({ block, onChange }) {
 
 function MathBoxEditor({ block, onChange }) {
   const [expanded, setExpanded] = useState(false);
+  const [leftWidth, setLeftWidth] = useState(50); // percentage
+  const containerRef = useRef(null);
+
+  const handleMouseDown = (e) => {
+    e.preventDefault();
+    const handleMouseMove = (moveEvent) => {
+      if (!containerRef.current) return;
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const offsetX = moveEvent.clientX - containerRect.left;
+      const percentage = (offsetX / containerRect.width) * 100;
+      setLeftWidth(Math.min(80, Math.max(20, percentage)));
+    };
+    
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
+  };
 
   if (expanded) {
     return (
@@ -362,15 +387,21 @@ function MathBoxEditor({ block, onChange }) {
           <span className="block-fullscreen-title">∑ LaTeX Editor</span>
           <button className="block-fullscreen-close" onClick={() => setExpanded(false)} title="Close fullscreen">✕ Close</button>
         </div>
-        <div className="block-fullscreen-body">
-          <textarea
-            className="block-fullscreen-textarea"
-            value={block.expression}
-            onChange={e => onChange({ ...block, expression: e.target.value })}
-            placeholder={"\\begin{equation}\n  \\text{your expression here}\n\\end{equation}"}
-            autoFocus
+        <div className="block-fullscreen-body" ref={containerRef}>
+          <div style={{ width: `${leftWidth}%`, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+            <textarea
+              className="block-fullscreen-textarea"
+              value={block.expression}
+              onChange={e => onChange({ ...block, expression: e.target.value })}
+              placeholder={"\\begin{equation}\n  \\text{your expression here}\n\\end{equation}"}
+              autoFocus
+            />
+          </div>
+          <div 
+            className="block-fullscreen-splitter" 
+            onMouseDown={handleMouseDown}
           />
-          <div className="block-fullscreen-preview">
+          <div className="block-fullscreen-preview" style={{ flex: 1, width: `${100 - leftWidth}%` }}>
             <div className="block-fullscreen-preview-label">Live Preview</div>
             <div className="block-fullscreen-preview-content">
               {block.expression ? (
@@ -789,6 +820,38 @@ export default function EditorPage() {
   const [dragOverIdx, setDragOverIdx] = useState(null);
   const toastTimer = useRef(null);
 
+  const [canvasWidth, setCanvasWidth] = useState(50); // percentage
+  const mainBodyRef = useRef(null);
+
+  const handleCanvasResize = (e) => {
+    e.preventDefault();
+    const handleMouseMove = (moveEvent) => {
+      if (!mainBodyRef.current) return;
+      const rect = mainBodyRef.current.getBoundingClientRect();
+      const paletteEl = mainBodyRef.current.querySelector('.editor-palette');
+      const paletteWidth = paletteEl ? paletteEl.getBoundingClientRect().width : 180;
+      
+      const totalSplitWidth = rect.width - paletteWidth;
+      if (totalSplitWidth <= 0) return;
+
+      const relativeX = moveEvent.clientX - rect.left - paletteWidth;
+      const percentage = (relativeX / totalSplitWidth) * 100;
+      setCanvasWidth(Math.min(80, Math.max(20, percentage)));
+    };
+    
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
+  };
+
   // Auto-generate route from category + title
   useEffect(() => {
     if (meta.title) {
@@ -948,7 +1011,7 @@ export default function EditorPage() {
       </div>
 
       {/* ── Main Body ── */}
-      <div className="editor-body">
+      <div className="editor-body" ref={mainBodyRef}>
         {/* ── Block Palette ── */}
         <div className="editor-palette">
           <div className="palette-label">Add Block</div>
@@ -973,7 +1036,10 @@ export default function EditorPage() {
         </div>
 
         {/* ── Editor Canvas ── */}
-        <div className="editor-canvas">
+        <div 
+          className="editor-canvas"
+          style={showPreview ? { width: `${canvasWidth}%`, flex: 'none' } : { flex: 1 }}
+        >
           {blocks.length === 0 ? (
             <div className="canvas-empty">
               <div className="empty-icon">📝</div>
@@ -1001,9 +1067,20 @@ export default function EditorPage() {
           )}
         </div>
 
+        {/* ── Splitter ── */}
+        {showPreview && (
+          <div 
+            className="main-editor-splitter"
+            onMouseDown={handleCanvasResize}
+          />
+        )}
+
         {/* ── Live Preview ── */}
         {showPreview && (
-          <div className="editor-preview">
+          <div 
+            className="editor-preview"
+            style={{ width: `${100 - canvasWidth}%`, flex: 'none' }}
+          >
             <div className="preview-label">Live Preview</div>
             <div className="preview-content">
               <LivePreview meta={meta} blocks={blocks} />
