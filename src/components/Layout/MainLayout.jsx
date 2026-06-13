@@ -27,44 +27,56 @@ export default function MainLayout({ selectedModel, onSelectModel, children }) {
     });
   };
 
-  // Automatically hide hardcoded page category headers in existing page content
+  // Automatically hide hardcoded page category headers in existing page content using a MutationObserver
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!mainRef.current) return;
-      
-      const h1 = mainRef.current.querySelector('h1');
-      if (!h1) return;
+    if (!mainRef.current) return;
 
-      const headerContainer = h1.parentElement;
-      if (!headerContainer) return;
-
-      const siblings = Array.from(headerContainer.children);
-      const h1Index = siblings.indexOf(h1);
-      if (h1Index > 0) {
-        for (let i = 0; i < h1Index; i++) {
-          const sib = siblings[i];
-          if (sib.tagName === 'DIV') {
-            const style = window.getComputedStyle(sib);
-            const isUpperCase = style.textTransform === 'uppercase';
-            const isSmallFont = parseInt(style.fontSize, 10) <= 12;
-            const isFlex = style.display === 'flex' || style.display === 'inline-flex';
-            
-            const lowerText = sib.textContent.trim().toLowerCase();
-            const isCategoryText = lowerText === 'concept' || 
-                                   lowerText === 'prompting' || 
-                                   lowerText === 'reasoning' || 
-                                   lowerText === 'topic overview' ||
-                                   lowerText.includes('·');
-
-            if (isUpperCase || isSmallFont || isFlex || isCategoryText) {
-              sib.style.display = 'none';
+    const hideHeader = () => {
+      const h1s = mainRef.current.querySelectorAll('h1');
+      h1s.forEach(h1 => {
+        const parent = h1.parentElement;
+        if (!parent) return;
+        const siblings = Array.from(parent.children);
+        const idx = siblings.indexOf(h1);
+        if (idx > 0) {
+          for (let i = 0; i < idx; i++) {
+            const sib = siblings[i];
+            if (sib.tagName === 'DIV') {
+              const text = sib.textContent.trim().toLowerCase();
+              const style = window.getComputedStyle(sib);
+              const isUpperCase = style.textTransform === 'uppercase' || sib.style.textTransform === 'uppercase';
+              const isSmallFont = parseInt(style.fontSize, 10) <= 12;
+              const isFlex = style.display === 'flex' || style.display === 'inline-flex';
+              
+              if (
+                text === 'concept' ||
+                text === 'prompting' ||
+                text === 'reasoning' ||
+                text === 'topic overview' ||
+                text.includes('·') ||
+                isUpperCase ||
+                isSmallFont ||
+                isFlex
+              ) {
+                sib.style.setProperty('display', 'none', 'important');
+              }
             }
           }
         }
-      }
-    }, 100);
+      });
+    };
 
-    return () => clearTimeout(timer);
+    // Run immediately
+    hideHeader();
+
+    // Observe changes inside the main element to catch late-rendered headers
+    const observer = new MutationObserver(hideHeader);
+    observer.observe(mainRef.current, {
+      childList: true,
+      subtree: true
+    });
+
+    return () => observer.disconnect();
   }, [selectedModel]);
 
   /* ── Persist collapsed state ── */
