@@ -357,31 +357,6 @@ function CalloutEditor({ block, onChange }) {
 
 function MathBoxEditor({ block, onChange }) {
   const [expanded, setExpanded] = useState(false);
-  const [leftWidth, setLeftWidth] = useState(50); // percentage
-  const containerRef = useRef(null);
-
-  const handleMouseDown = (e) => {
-    e.preventDefault();
-    const handleMouseMove = (moveEvent) => {
-      if (!containerRef.current) return;
-      const containerRect = containerRef.current.getBoundingClientRect();
-      const offsetX = moveEvent.clientX - containerRect.left;
-      const percentage = (offsetX / containerRect.width) * 100;
-      setLeftWidth(Math.min(80, Math.max(20, percentage)));
-    };
-    
-    const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.userSelect = '';
-      document.body.style.cursor = '';
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    document.body.style.userSelect = 'none';
-    document.body.style.cursor = 'col-resize';
-  };
 
   if (expanded) {
     const canvasEl = document.querySelector('.editor-canvas');
@@ -391,30 +366,14 @@ function MathBoxEditor({ block, onChange }) {
           <span className="block-fullscreen-title">∑ LaTeX Editor</span>
           <button className="block-fullscreen-close" onClick={() => setExpanded(false)} title="Close fullscreen">✕ Close</button>
         </div>
-        <div className="block-fullscreen-body" ref={containerRef}>
-          <div style={{ width: `${leftWidth}%`, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-            <textarea
-              className="block-fullscreen-textarea"
-              value={block.expression}
-              onChange={e => onChange({ ...block, expression: e.target.value })}
-              placeholder={"\\begin{equation}\n  \\text{your expression here}\n\\end{equation}"}
-              autoFocus
-            />
-          </div>
-          <div 
-            className="block-fullscreen-splitter" 
-            onMouseDown={handleMouseDown}
+        <div className="block-fullscreen-body">
+          <textarea
+            className="block-fullscreen-textarea"
+            value={block.expression}
+            onChange={e => onChange({ ...block, expression: e.target.value })}
+            placeholder={"\\begin{equation}\n  \\text{your expression here}\n\\end{equation}"}
+            autoFocus
           />
-          <div className="block-fullscreen-preview" style={{ flex: 1, width: `${100 - leftWidth}%` }}>
-            <div className="block-fullscreen-preview-label">Live Preview</div>
-            <div className="block-fullscreen-preview-content">
-              {block.expression ? (
-                <Latex math={block.expression} block />
-              ) : (
-                <span style={{ color: '#52525b', fontStyle: 'italic', fontSize: '13px' }}>Preview appears here...</span>
-              )}
-            </div>
-          </div>
         </div>
       </div>
     );
