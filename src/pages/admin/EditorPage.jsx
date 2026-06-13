@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Latex from '../../components/Latex';
 import { BarChart3D, ScatterPlot3D } from '../../components/three';
 import { ARCHITECTURES, CONCEPTS } from '../../navigation';
@@ -276,7 +277,8 @@ function ParagraphEditor({ block, onChange }) {
   ];
 
   if (expanded) {
-    return (
+    const canvasEl = document.querySelector('.editor-canvas');
+    const modalContent = (
       <div className="block-fullscreen">
         <div className="block-fullscreen-header">
           <span className="block-fullscreen-title">¶ Paragraph Editor</span>
@@ -308,6 +310,7 @@ function ParagraphEditor({ block, onChange }) {
         </div>
       </div>
     );
+    return canvasEl ? createPortal(modalContent, canvasEl) : modalContent;
   }
 
   return (
@@ -381,7 +384,8 @@ function MathBoxEditor({ block, onChange }) {
   };
 
   if (expanded) {
-    return (
+    const canvasEl = document.querySelector('.editor-canvas');
+    const modalContent = (
       <div className="block-fullscreen">
         <div className="block-fullscreen-header">
           <span className="block-fullscreen-title">∑ LaTeX Editor</span>
@@ -414,6 +418,7 @@ function MathBoxEditor({ block, onChange }) {
         </div>
       </div>
     );
+    return canvasEl ? createPortal(modalContent, canvasEl) : modalContent;
   }
 
   return (
