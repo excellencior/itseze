@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Latex from '../../components/Latex';
+import Highlight from '../../components/Highlight';
 import LinkedLatex from '../../components/LinkedLatex';
 import HoverCard from '../../components/HoverCard';
 
@@ -427,8 +428,8 @@ export default function EncoderPage() {
       {/* ── 4. BIDIRECTIONAL VS CAUSAL ── */}
       <Section title="4. Bidirectional vs Causal Attention">
         <P>
-          <span style={{ background: 'var(--accent-20)', borderBottom: '2px solid var(--accent)', padding: '1px 4px' }}>
-            The defining feature of an encoder is that its attention is bidirectional.</span>{' '}
+          <Highlight>
+            The defining feature of an encoder is that its attention is bidirectional.</Highlight>{' '}
           Every token can attend to every other token in the sequence — past, present, and future. This is
           in sharp contrast to decoder-style causal attention, where each token can only see tokens that
           came before it.

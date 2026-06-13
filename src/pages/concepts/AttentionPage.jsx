@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Latex from '../../components/Latex';
+import Highlight from '../../components/Highlight';
 import HoverCard from '../../components/HoverCard';
 
 // ── Shared page components ──
@@ -392,8 +393,8 @@ export default function AttentionPage() {
           encode enough information.
         </Callout>
         <P>
-          <span style={{ background: 'var(--accent-20)', borderBottom: '2px solid var(--accent)', padding: '1px 4px' }}>
-            Bahdanau, Cho &amp; Bengio (2014) solved this by letting the decoder look back at every encoder state, not just the final one.</span>{' '}
+          <Highlight>
+            Bahdanau, Cho &amp; Bengio (2014) solved this by letting the decoder look back at every encoder state, not just the final one.</Highlight>{' '}
           Instead of one summary vector, the model learned to <em>attend</em> to different parts of the input at each decoding step.
           This was the birth of attention.
         </P>
@@ -546,8 +547,8 @@ export default function AttentionPage() {
       {/* ── SELF VS CROSS ── */}
       <Section title="4. Self-Attention vs Cross-Attention">
         <P>
-          <span style={{ background: 'var(--accent-20)', borderBottom: '2px solid var(--accent)', padding: '1px 4px' }}>
-            Self-attention is what makes transformers transformers.</span>{' '}
+          <Highlight>
+            Self-attention is what makes transformers transformers.</Highlight>{' '}
           It is the mechanism where a sequence attends to <em>itself</em>. Every token in the input
           simultaneously queries every other token in the same sequence to build a context-aware representation.
         </P>
@@ -604,8 +605,8 @@ export default function AttentionPage() {
           ['GPT-3', '96 heads, d_k = 128, d_model = 12288'],
         ]} />
         <P>
-          <span style={{ background: 'var(--accent-20)', borderBottom: '2px solid var(--accent)', padding: '1px 4px' }}>
-            A single attention head can only learn one type of relationship.</span>{' '}
+          <Highlight>
+            A single attention head can only learn one type of relationship.</Highlight>{' '}
           Multi-head attention runs <strong>h parallel attention operations</strong>, each with its own learned projections.
           One head might learn syntactic relationships (subject-verb), another might learn positional proximity,
           and another might capture coreference (pronouns to their antecedents).

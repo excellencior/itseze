@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import Latex from '../../components/Latex';
+import Highlight from '../../components/Highlight';
 import InlinePanel from '../../components/viz/InlinePanel';
 
 function Section({ title, children }) {
@@ -401,7 +402,7 @@ Sentiment:`}</pre>
       {/* Section 3 */}
       <Section title="3. Instruction Tuning and RLHF">
         <P>
-          While GPT-3 demonstrated the feasibility of zero-shot prompting at scale, its zero-shot performance still lagged behind the few-shot setting on most benchmarks. The model often struggled to follow instructions precisely, produced outputs in unexpected formats, or generated plausible-sounding but factually incorrect completions. The reason is straightforward: GPT-3 was trained as a <em>next-token predictor</em> over web text, not as an instruction follower. Its objective was to model the next-token conditional probability:
+          While GPT-3 demonstrated the feasibility of zero-shot prompting at scale, its zero-shot performance still lagged behind the few-shot setting on most benchmarks. The model often struggled to follow instructions precisely, produced outputs in unexpected formats, or generated plausible-sounding but factually incorrect completions. <Highlight>The reason is straightforward: GPT-3 was trained as a <em>next-token predictor</em> over web text, not as an instruction follower.</Highlight> Its objective was to model the next-token conditional probability:
         </P>
         <div className="math-box" style={{ padding: '16px 14px', textAlign: 'center', margin: '16px 0' }}>
           <Latex math="P(\text{token}_t \mid \text{token}_{<t})" />

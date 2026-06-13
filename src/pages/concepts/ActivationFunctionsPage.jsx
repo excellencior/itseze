@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Latex from '../../components/Latex';
+import Highlight from '../../components/Highlight';
 import FunctionPlot from '../../components/viz/FunctionPlot';
 import InlinePanel from '../../components/viz/InlinePanel';
 import LinearCollapseViz from '../../components/viz/LinearCollapseViz';
@@ -261,7 +262,7 @@ export default function ActivationFunctionsPage() {
           The sigmoid squashes any real-valued input into the (0, 1) range. Crucially, it isn't just an arbitrary bounding function—it is the mathematical inverse of the logit function. If a network outputs the log-odds (logits) of a binary event, passing them through a sigmoid rigorously converts them into a true probability.
         </P>
         <P>
-          <span style={{ background: 'var(--accent-20)', borderBottom: '2px solid var(--accent)', padding: '1px 4px' }}>However, as a hidden layer activation, it has a fatal flaw. Take a look at its derivative (the dashed line). It peaks at just <strong>0.25</strong> and rapidly drops to zero on both sides.</span> In a deep network, gradients get multiplied through every layer via the chain rule, and each one is capped at a quarter. This causes the infamous <strong>vanishing gradient problem</strong>.
+          <Highlight>However, as a hidden layer activation, it has a fatal flaw. Take a look at its derivative (the dashed line). It peaks at just <strong>0.25</strong> and rapidly drops to zero on both sides.</Highlight> In a deep network, gradients get multiplied through every layer via the chain rule, and each one is capped at a quarter. This causes the infamous <strong>vanishing gradient problem</strong>.
         </P>
         <Callout type="warning">
           <strong>Vanishing gradients:</strong> After 10 layers of sigmoid, the gradient is at most
@@ -355,7 +356,7 @@ export default function ActivationFunctionsPage() {
           title="ReLU and its derivative"
         />
         <P>
-          <span style={{ background: 'var(--accent-20)', borderBottom: '2px solid var(--accent)', padding: '1px 4px' }}>ReLU was the breakthrough that enabled deep learning.</span> For positive inputs, the gradient is always
+          <Highlight>ReLU was the breakthrough that enabled deep learning.</Highlight> For positive inputs, the gradient is always
           exactly 1, so it never vanishes no matter how deep the network goes. It's also incredibly cheap to
           compute since it's just a max operation. This simplicity is what enabled training networks like
           AlexNet, VGG, and ResNet that were previously impossible with sigmoid or tanh.
@@ -449,7 +450,7 @@ export default function ActivationFunctionsPage() {
           title="ReLU vs Leaky ReLU vs ELU"
         />
         <P>
-          <span style={{ background: 'var(--accent-20)', borderBottom: '2px solid var(--accent)', padding: '1px 4px' }}>Leaky ReLU fixes the dying neuron problem by giving a small slope (α = 0.01) to negative inputs.</span>
+          <Highlight>Leaky ReLU fixes the dying neuron problem by giving a small slope (α = 0.01) to negative inputs.</Highlight>
           The gradient is never zero — dead neurons can always recover.{' '}
           <HoverCard term="PReLU" position="above">
             <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '8px' }}>Parametric ReLU</div>
@@ -496,7 +497,7 @@ export default function ActivationFunctionsPage() {
           title="GELU vs ReLU, notice the smooth transition near zero"
         />
         <P>
-          <span style={{ background: 'var(--accent-20)', borderBottom: '2px solid var(--accent)', padding: '1px 4px' }}>GELU is the default activation in modern transformers.</span> Instead of the hard cutoff that ReLU uses
+          <Highlight>GELU is the default activation in modern transformers.</Highlight> Instead of the hard cutoff that ReLU uses
           at zero, GELU essentially asks: <em>"How likely is this input to be positive?"</em> and scales
           the value by that probability. So small negative values still get a small negative output rather
           than being zeroed out completely. It creates a smooth, probabilistic gate.
