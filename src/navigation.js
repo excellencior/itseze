@@ -122,6 +122,7 @@ export function getPublishedNavItems() {
       ready: true,
       isPublished: true,
       firstPublishedAt: data.firstPublishedAt || data.publishedAt,
+      publishedAt: data.publishedAt,
       category: data.meta?.category || 'concept',
       subcategory: data.meta?.subcategory || '',
       parentCategory: detectParentCategory(urlPath),
@@ -135,4 +136,63 @@ function detectParentCategory(urlPath) {
   if (urlPath.startsWith('/concepts/prompting/')) return 'Prompting';
   if (urlPath.startsWith('/concepts/')) return null; // flat concept
   return null; // architecture or other
+}
+
+/** Get category, subcategory, and publish dates for any route */
+export function getRouteHeaderInfo(route) {
+  if (!route || route === 'gpt3') return null;
+
+  let category = '';
+  let subcategory = '';
+  let firstPublishedAt = null;
+  let publishedAt = null;
+
+  if (route.startsWith('__pub__')) {
+    const urlPath = route.replace('__pub__', '');
+    try {
+      const published = JSON.parse(localStorage.getItem('itseze-published') || '{}');
+      const data = published[urlPath];
+      if (data) {
+        category = data.meta?.category || 'concept';
+        subcategory = data.meta?.subcategory || '';
+        firstPublishedAt = data.firstPublishedAt || data.publishedAt;
+        publishedAt = data.publishedAt;
+      }
+    } catch { /* */ }
+  } else {
+    // Check ARCHITECTURES
+    const isArch = ARCHITECTURES.some(a => a.route === route);
+    if (isArch) {
+      category = 'architectures';
+    } else {
+      // Check CONCEPTS
+      for (const c of CONCEPTS) {
+        if (c.children) {
+          const child = c.children.find(ch => ch.route === route);
+          if (child) {
+            category = 'concepts';
+            subcategory = c.name;
+          }
+        } else if (c.route === route) {
+          category = 'concepts';
+        }
+      }
+    }
+  }
+
+  const capitalize = (str) => {
+    if (!str) return '';
+    // Handle special cases or default capitalization
+    if (str.toLowerCase() === 'ssm' || str.toLowerCase() === 'ssms') return 'SSMs';
+    if (str.toLowerCase() === 'rag') return 'RAG';
+    if (str.toLowerCase() === 'cot') return 'CoT';
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  };
+
+  return {
+    category: capitalize(category),
+    subcategory: capitalize(subcategory),
+    firstPublishedAt,
+    publishedAt,
+  };
 }

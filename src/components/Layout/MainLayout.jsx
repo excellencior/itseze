@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import PageNav from './PageNav';
 import SeekLadder from './SeekLadder';
+import { getRouteHeaderInfo } from '../../navigation';
 
 export default function MainLayout({ selectedModel, onSelectModel, children }) {
   const [sidebarWidth, setSidebarWidth] = useState(280);
@@ -11,6 +12,60 @@ export default function MainLayout({ selectedModel, onSelectModel, children }) {
   const [isResizing, setIsResizing] = useState(false);
   const containerRef = useRef(null);
   const mainRef = useRef(null);
+
+  const headerInfo = getRouteHeaderInfo(selectedModel);
+
+  // Helper to format date
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '';
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  // Automatically hide hardcoded page category headers in existing page content
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!mainRef.current) return;
+      
+      const h1 = mainRef.current.querySelector('h1');
+      if (!h1) return;
+
+      const headerContainer = h1.parentElement;
+      if (!headerContainer) return;
+
+      const siblings = Array.from(headerContainer.children);
+      const h1Index = siblings.indexOf(h1);
+      if (h1Index > 0) {
+        for (let i = 0; i < h1Index; i++) {
+          const sib = siblings[i];
+          if (sib.tagName === 'DIV') {
+            const style = window.getComputedStyle(sib);
+            const isUpperCase = style.textTransform === 'uppercase';
+            const isSmallFont = parseInt(style.fontSize, 10) <= 12;
+            const isFlex = style.display === 'flex' || style.display === 'inline-flex';
+            
+            const lowerText = sib.textContent.trim().toLowerCase();
+            const isCategoryText = lowerText === 'concept' || 
+                                   lowerText === 'prompting' || 
+                                   lowerText === 'reasoning' || 
+                                   lowerText === 'topic overview' ||
+                                   lowerText.includes('·');
+
+            if (isUpperCase || isSmallFont || isFlex || isCategoryText) {
+              sib.style.display = 'none';
+            }
+          }
+        }
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [selectedModel]);
 
   /* ── Persist collapsed state ── */
   useEffect(() => {
@@ -153,6 +208,42 @@ export default function MainLayout({ selectedModel, onSelectModel, children }) {
               >
                 ☰
               </button>
+            )}
+            {/* Dynamic category / date header */}
+            {headerInfo && (headerInfo.category || headerInfo.firstPublishedAt) && (
+              <div style={
+                selectedModel.startsWith('__pub__') 
+                  ? { maxWidth: '800px', margin: '0 auto', padding: '0 24px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }
+                  : { width: '80%', maxWidth: '1200px', margin: '0 auto', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }
+              }>
+                <div style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                  color: 'var(--text-light)',
+                }}>
+                  {headerInfo.subcategory 
+                    ? `${headerInfo.category} · ${headerInfo.subcategory}`
+                    : headerInfo.category
+                  }
+                </div>
+                {headerInfo.firstPublishedAt && (
+                  <div style={{
+                    fontSize: '11px',
+                    fontWeight: 500,
+                    color: 'var(--text-light)',
+                    display: 'flex',
+                    gap: '12px',
+                    letterSpacing: '0.01em',
+                  }}>
+                    <span>Published {formatDate(headerInfo.firstPublishedAt)}</span>
+                    {headerInfo.publishedAt && headerInfo.publishedAt !== headerInfo.firstPublishedAt && (
+                      <span>· Updated {formatDate(headerInfo.publishedAt)}</span>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
             {children}
             <div style={{ width: '80%', maxWidth: '1200px', margin: '0 auto' }}>
