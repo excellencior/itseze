@@ -875,10 +875,14 @@ export default function EditorPage() {
     let published = {};
     try { published = JSON.parse(localStorage.getItem('itseze-published') || '{}'); } catch { /* */ }
 
+    const existing = published[urlPath];
+    const now = new Date().toISOString();
+
     published[urlPath] = {
       meta: { ...meta, ready: true },
       blocks,
-      publishedAt: new Date().toISOString(),
+      firstPublishedAt: existing?.firstPublishedAt || now,
+      publishedAt: now,
     };
 
     localStorage.setItem('itseze-published', JSON.stringify(published));

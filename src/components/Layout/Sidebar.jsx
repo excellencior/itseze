@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import theme from '../../theme';
-import { CONCEPTS, ARCHITECTURES } from '../../navigation';
+import { CONCEPTS, ARCHITECTURES, getPublishedNavItems } from '../../navigation';
 
 /* ── Color Palette ── */
 const SB = {
@@ -14,8 +14,17 @@ const SB = {
   textDim:     '#444',
 };
 
+/** Check if a published date is within the last 7 days */
+function isNew(firstPublishedAt) {
+  if (!firstPublishedAt) return false;
+  const published = new Date(firstPublishedAt);
+  const now = new Date();
+  const diffDays = (now - published) / (1000 * 60 * 60 * 24);
+  return diffDays <= 7;
+}
+
 /* ── Reusable nav item with boxy hover ── */
-function NavItem({ label, isActive, isReady = true, onClick, indent = 0, badge }) {
+function NavItem({ label, isActive, isReady = true, onClick, indent = 0, badge, badgeColor }) {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -79,8 +88,8 @@ function NavItem({ label, isActive, isReady = true, onClick, indent = 0, badge }
       {badge && <span style={{
         fontSize: '9px',
         fontWeight: 700,
-        background: SB.bgActive,
-        color: SB.textMuted,
+        background: badgeColor === 'accent' ? 'rgba(8,145,178,0.15)' : SB.bgActive,
+        color: badgeColor === 'accent' ? theme.accent : SB.textMuted,
         padding: '2px 7px',
         borderRadius: '4px',
         textTransform: 'uppercase',
@@ -204,7 +213,7 @@ function SubcategoryToggle({ label, isOpen, isActive, onToggle }) {
 
 
 export default function Sidebar({ selectedModel, onSelectModel, width = 280, collapsed = false, onToggleCollapse }) {
-  const isConcept = selectedModel.startsWith('concept:');
+  const isConcept = selectedModel.startsWith('concept:') || selectedModel.startsWith('__pub__/concepts/');
   
   const [lastSelectedModel, setLastSelectedModel] = useState(selectedModel);
   const [archOpen, setArchOpen] = useState(!isConcept);
@@ -212,7 +221,7 @@ export default function Sidebar({ selectedModel, onSelectModel, width = 280, col
   const [reasoningSubOpen, setReasoningSubOpen] = useState(() => {
     return CONCEPTS.some(
       c => c.children && c.children.some(child => selectedModel === child.route)
-    );
+    ) || selectedModel.includes('/reasoning/') || selectedModel.includes('/prompting/');
   });
   const [collapseBtnHovered, setCollapseBtnHovered] = useState(false);
 
@@ -224,7 +233,10 @@ export default function Sidebar({ selectedModel, onSelectModel, width = 280, col
       const hasChildActive = CONCEPTS.some(
         c => c.children && c.children.some(child => selectedModel === child.route)
       );
-      if (hasChildActive) setReasoningSubOpen(true);
+      // Also expand for published pages under reasoning/prompting
+      if (hasChildActive || selectedModel.includes('/reasoning/') || selectedModel.includes('/prompting/')) {
+        setReasoningSubOpen(true);
+      }
     } else {
       setArchOpen(true);
     }
@@ -232,10 +244,16 @@ export default function Sidebar({ selectedModel, onSelectModel, width = 280, col
 
   const renderConceptsList = () => {
     const rendered = [];
+    const publishedItems = getPublishedNavItems();
 
     CONCEPTS.forEach((c) => {
       if (c.children) {
-        const isAnyChildActive = c.children.some(child => selectedModel === child.route);
+        // Merge published pages that belong to this subcategory
+        const subcatName = c.name; // e.g. 'Reasoning', 'Prompting'
+        const pubChildren = publishedItems.filter(p => p.parentCategory === subcatName);
+
+        const isAnyChildActive = c.children.some(child => selectedModel === child.route)
+          || pubChildren.some(p => selectedModel === p.route);
         
         rendered.push(
           <div key={`sub-${c.name}`}>
@@ -265,6 +283,18 @@ export default function Sidebar({ selectedModel, onSelectModel, width = 280, col
                       badge={!child.ready ? 'Soon' : null}
                     />
                   ))}
+                  {pubChildren.map((pub) => (
+                    <NavItem
+                      key={pub.route}
+                      label={pub.name}
+                      isActive={selectedModel === pub.route}
+                      isReady={true}
+                      onClick={() => onSelectModel(pub.route)}
+                      indent={20}
+                      badge={isNew(pub.firstPublishedAt) ? 'New' : null}
+                      badgeColor="accent"
+                    />
+                  ))}
                 </div>
               </div>
             </div>
@@ -282,6 +312,22 @@ export default function Sidebar({ selectedModel, onSelectModel, width = 280, col
           />
         );
       }
+    });
+
+    // Add flat published concepts (no subcategory) at the end
+    const flatPubConcepts = publishedItems.filter(p => !p.parentCategory && p.category !== 'architecture');
+    flatPubConcepts.forEach(pub => {
+      rendered.push(
+        <NavItem
+          key={pub.route}
+          label={pub.name}
+          isActive={selectedModel === pub.route}
+          isReady={true}
+          onClick={() => onSelectModel(pub.route)}
+          badge={isNew(pub.firstPublishedAt) ? 'New' : null}
+          badgeColor="accent"
+        />
+      );
     });
 
     return rendered;

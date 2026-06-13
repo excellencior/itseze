@@ -67,7 +67,7 @@ export const CONCEPTS = [
  * scoped to the same category (architectures or concepts).
  */
 export function getPageNeighbors(route) {
-  const isConcept = route.startsWith('concept:');
+  const isConcept = route.startsWith('concept:') || route.startsWith('__pub__/concepts/');
   const list = isConcept ? CONCEPTS : ARCHITECTURES;
   
   // Flatten concept categories containing nested children
@@ -86,6 +86,18 @@ export function getPageNeighbors(route) {
     }
   });
 
+  // Merge published pages
+  const published = getPublishedNavItems();
+  published.forEach(pub => {
+    const pubIsConcept = pub.route.startsWith('__pub__/concepts/');
+    if (pubIsConcept === isConcept) {
+      // Only add if not already in the list
+      if (!flatList.some(p => p.route === pub.route)) {
+        flatList.push(pub);
+      }
+    }
+  });
+
   const readyList = flatList.filter(p => p.ready);
   const idx = readyList.findIndex(p => p.route === route);
 
@@ -95,4 +107,32 @@ export function getPageNeighbors(route) {
     prev: idx > 0 ? readyList[idx - 1] : null,
     next: idx < readyList.length - 1 ? readyList[idx + 1] : null,
   };
+}
+
+/**
+ * Reads published pages from localStorage and returns them as nav items.
+ * Each item has { name, route, ready, isPublished, firstPublishedAt }.
+ */
+export function getPublishedNavItems() {
+  try {
+    const published = JSON.parse(localStorage.getItem('itseze-published') || '{}');
+    return Object.entries(published).map(([urlPath, data]) => ({
+      name: data.meta?.title || 'Untitled',
+      route: `__pub__${urlPath}`,
+      ready: true,
+      isPublished: true,
+      firstPublishedAt: data.firstPublishedAt || data.publishedAt,
+      category: data.meta?.category || 'concept',
+      subcategory: data.meta?.subcategory || '',
+      parentCategory: detectParentCategory(urlPath),
+    }));
+  } catch { return []; }
+}
+
+/** Detect which subcategory group a published URL belongs to */
+function detectParentCategory(urlPath) {
+  if (urlPath.startsWith('/concepts/reasoning/')) return 'Reasoning';
+  if (urlPath.startsWith('/concepts/prompting/')) return 'Prompting';
+  if (urlPath.startsWith('/concepts/')) return null; // flat concept
+  return null; // architecture or other
 }

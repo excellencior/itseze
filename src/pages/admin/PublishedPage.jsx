@@ -6,12 +6,24 @@ import { BarChart3D, ScatterPlot3D } from '../../components/three';
 /**
  * Renders a published page from localStorage block data.
  * Mirrors the real page styling used across the site.
+ * Includes data-section attributes for SeekLadder compatibility.
  */
+
+/* ── Helpers ── */
+function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function capitalizeFirst(str) {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
 
 /* ── Rich content parser ── */
 function RichText({ content }) {
   if (!content) return null;
-  // Convert <Highlight>...</Highlight> to styled spans for dangerouslySetInnerHTML
   const html = content.replace(
     /<Highlight>(.*?)<\/Highlight>/g,
     '<span style="background:var(--accent-20);border-bottom:2px solid var(--accent);padding:1px 4px">$1</span>'
@@ -19,7 +31,7 @@ function RichText({ content }) {
   return <span dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-/* ── Section wrapper ── */
+/* ── Section wrapper (data-section for SeekLadder) ── */
 function Section({ id, title, children }) {
   return (
     <div id={id} data-section style={{ marginBottom: '48px', scrollMarginTop: '24px' }}>
@@ -127,7 +139,7 @@ function renderBlock(block, idx) {
 }
 
 export default function PublishedPage({ pageData }) {
-  const { meta, blocks } = pageData;
+  const { meta, blocks, firstPublishedAt, publishedAt } = pageData;
 
   // Separate content, references, disclosure
   const contentBlocks = blocks.filter(b => b.type !== 'reference' && b.type !== 'ai-disclosure');
@@ -159,14 +171,37 @@ export default function PublishedPage({ pageData }) {
     return result;
   }, [contentBlocks]);
 
-  const categoryLabel = meta.subcategory || meta.category || 'Concept';
+  // Build category label: "Category · Subcategory" format
+  const category = capitalizeFirst(meta.category);
+  const subcategory = meta.subcategory ? capitalizeFirst(meta.subcategory) : '';
+  const categoryLabel = subcategory ? `${category} · ${subcategory}` : category;
+
+  // Dates
+  const publishedDate = formatDate(firstPublishedAt);
+  const updatedDate = formatDate(publishedAt);
+  const showUpdated = publishedAt && firstPublishedAt && publishedAt !== firstPublishedAt;
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '48px 24px' }}>
       {/* Header */}
       <div style={{ marginBottom: '48px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-light)', marginBottom: '8px' }}>
-          {categoryLabel}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          marginBottom: '8px',
+        }}>
+          <div style={{
+            fontSize: '11px', fontWeight: 700, textTransform: 'uppercase',
+            letterSpacing: '0.1em', color: 'var(--text-light)',
+          }}>
+            {categoryLabel}
+          </div>
+          <div style={{
+            fontSize: '11px', fontWeight: 500, color: 'var(--text-light)',
+            display: 'flex', gap: '12px', letterSpacing: '0.01em',
+          }}>
+            {publishedDate && <span>Published {publishedDate}</span>}
+            {showUpdated && <span>· Updated {updatedDate}</span>}
+          </div>
         </div>
         <h1 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-1px', marginBottom: '12px' }}>
           {meta.title}
