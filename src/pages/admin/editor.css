@@ -279,7 +279,8 @@
   gap: 4px;
 }
 
-.block-card-header .block-action-btn {
+.block-card-header .block-action-btn,
+.block-card-body .block-action-btn {
   width: 24px;
   height: 24px;
   display: flex;
@@ -296,7 +297,8 @@
   transition: all 0.15s;
 }
 
-.block-card-header .block-action-btn:hover {
+.block-card-header .block-action-btn:hover,
+.block-card-body .block-action-btn:hover {
   background: #3f3f46;
   border-color: #52525b;
   color: #f4f4f5;
@@ -578,9 +580,9 @@
 
 /* ── Fullscreen Block Editor Overlay ── */
 .block-fullscreen {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 200;
   background: #0f0f13;
   display: flex;
   flex-direction: column;
@@ -650,6 +652,7 @@
   line-height: 1.7;
   resize: none;
   outline: none;
+  box-sizing: border-box;
   scrollbar-width: thin;
   scrollbar-color: var(--accent-50, rgba(8,145,178,0.5)) transparent;
 }
@@ -714,11 +717,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-/* Make the editor canvas position:relative so fullscreen overlay is scoped */
-.editor-canvas {
-  position: relative;
 }
 
 /* Paragraph fullscreen uses a non-mono font */
