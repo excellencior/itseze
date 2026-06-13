@@ -34,7 +34,7 @@ function Callout({ type = 'info', children }) {
 }
 
 
-function BayesianNetwork() {
+export function BayesianNetwork() {
   const [priorCloudy, setPriorCloudy] = useState(0.5);
 
   // Evidence states: null (unobserved), true, false

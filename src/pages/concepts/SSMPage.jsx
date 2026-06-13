@@ -78,7 +78,7 @@ function CompTable({ headers, rows }) {
 /* ══════════════════════════════════════════
    SSM Recurrence Walkthrough
    ══════════════════════════════════════════ */
-function SSMWalkthrough() {
+export function SSMWalkthrough() {
   const [step, setStep] = useState(0);
   const tokens = ['The', 'cat', 'sat', 'on', 'the', 'mat'];
   const stateVals = [
@@ -155,7 +155,7 @@ function SSMWalkthrough() {
 /* ══════════════════════════════════════════
    Attention vs SSM Comparison Viz
    ══════════════════════════════════════════ */
-function AttnVsSSMViz() {
+export function AttnVsSSMViz() {
   const [mode, setMode] = useState('attention');
   const [animate, setAnimate] = useState(false);
   useEffect(() => { setAnimate(false); const t = setTimeout(() => setAnimate(true), 80); return () => clearTimeout(t); }, [mode]);

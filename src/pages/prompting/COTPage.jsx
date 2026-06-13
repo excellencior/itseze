@@ -35,7 +35,7 @@ function Callout({ type = 'info', children }) {
 }
 
 // ── CoT Trace Stepper Widget ──
-function CoTTraceStepperWidget() {
+export function CoTTraceStepperWidget() {
   const [activeTab, setActiveTab] = useState('standard');
   const [revealedSteps, setRevealedSteps] = useState(0);
 

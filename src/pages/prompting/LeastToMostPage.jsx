@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import Latex from '../../components/Latex';
+import Highlight from '../../components/Highlight';
 import InlinePanel from '../../components/viz/InlinePanel';
 
 function Section({ title, children }) {
@@ -38,7 +39,7 @@ function Callout({ type = 'info', children }) {
    DecompositionTreeWidget — interactive step-through of
    Least-to-Most decomposition and sequential solving
    ──────────────────────────────────────────────────────── */
-function DecompositionTreeWidget() {
+export function DecompositionTreeWidget() {
   const [step, setStep] = useState(0);
   const totalSteps = 4;
 
@@ -480,7 +481,7 @@ To solve this, I need to first solve:`}</pre>
         </div>
 
         <P>
-          The model produces a list of subproblems ordered from simplest to most complex, hence the name <em>least-to-most</em>. This ordering is essential: it ensures that each subsequent subproblem can build on the solutions to all preceding ones.
+          <Highlight>The model produces a list of subproblems ordered from simplest to most complex, hence the name <em>least-to-most</em>.</Highlight> This ordering is essential: it ensures that each subsequent subproblem can build on the solutions to all preceding ones.
         </P>
 
         <h3 style={{ fontSize: '17px', fontWeight: 700, marginBottom: '10px', marginTop: '24px' }}>Stage 2: Sequential Solving</h3>

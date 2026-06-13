@@ -89,7 +89,7 @@ function App() {
   // On page selection change, update URL and sessionStorage
   useEffect(() => {
     // Don't touch URL when on the editor page or a published page
-    if (selectedModel === '__editor__' || selectedModel.startsWith('__pub__')) return;
+    if (!selectedModel || selectedModel === '__editor__' || selectedModel.startsWith('__pub__')) return;
 
     sessionStorage.setItem('itseze-active-page', selectedModel);
 
@@ -248,7 +248,7 @@ function App() {
         return <SelfConsistencyPage />;
       default: {
         // Check for dynamically published pages
-        if (selectedModel.startsWith('__pub__')) {
+        if (selectedModel && selectedModel.startsWith('__pub__')) {
           const pubPath = selectedModel.replace('__pub__', '');
           const published = getPublishedPages();
           const pageData = published[pubPath];

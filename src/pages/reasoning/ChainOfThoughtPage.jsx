@@ -62,7 +62,7 @@ function TreeNode({ label, desc, status, style: overrides }) {
   );
 }
 
-function ThoughtTreeDiagram() {
+export function ThoughtTreeDiagram() {
   return (
     <div style={{ background: '#fff', border: '1px solid var(--border)', padding: '24px', margin: '24px 0' }}>
       <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>

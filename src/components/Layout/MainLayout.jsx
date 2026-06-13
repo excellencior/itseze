@@ -4,7 +4,7 @@ import PageNav from './PageNav';
 import SeekLadder from './SeekLadder';
 import { getRouteHeaderInfo } from '../../navigation';
 
-export default function MainLayout({ selectedModel, onSelectModel, children }) {
+export default function MainLayout({ selectedModel, onSelectModel, children, isAdminMode = false, onCreateNewPage }) {
   const [sidebarWidth, setSidebarWidth] = useState(280);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return sessionStorage.getItem('sidebar-collapsed') === 'true';
@@ -137,7 +137,7 @@ export default function MainLayout({ selectedModel, onSelectModel, children }) {
   return (
     <div style={{
       height: '100vh',
-      width: '100vw',
+      width: '100%',
       padding: '12px',
       backgroundColor: '#111',
       fontFamily: 'var(--font-main)',
@@ -161,6 +161,8 @@ export default function MainLayout({ selectedModel, onSelectModel, children }) {
           width={sidebarWidth}
           collapsed={sidebarCollapsed}
           onToggleCollapse={toggleCollapse}
+          isAdminMode={isAdminMode}
+          onCreateNewPage={onCreateNewPage}
         />
 
         {/* Resize handle — only when sidebar is expanded */}
@@ -224,7 +226,7 @@ export default function MainLayout({ selectedModel, onSelectModel, children }) {
             {/* Dynamic category / date header */}
             {headerInfo && (headerInfo.category || headerInfo.firstPublishedAt) && (
               <div style={
-                selectedModel.startsWith('__pub__') 
+                (selectedModel && selectedModel.startsWith('__pub__'))
                   ? { maxWidth: '800px', margin: '0 auto', padding: '0 24px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }
                   : { width: '80%', maxWidth: '1200px', margin: '0 auto', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }
               }>

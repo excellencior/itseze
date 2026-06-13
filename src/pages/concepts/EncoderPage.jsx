@@ -66,7 +66,7 @@ function PropTable({ rows }) {
 }
 
 // ── Encoder Block Diagram ──
-function EncoderBlockDiagram({ onActiveChange }) {
+export function EncoderBlockDiagram({ onActiveChange }) {
   const [hoveredLayer, setHoveredLayer] = useState(null);
   const [lockedLayer, setLockedLayer] = useState(null);
 
@@ -203,7 +203,7 @@ function EncoderBlockDiagram({ onActiveChange }) {
 }
 
 // ── Token Journey Walkthrough ──
-function TokenJourney() {
+export function TokenJourney() {
   const [step, setStep] = useState(0);
 
   const STEPS = [

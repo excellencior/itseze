@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import Latex from '../../components/Latex';
 import Highlight from '../../components/Highlight';
 import { BarChart3D, ScatterPlot3D } from '../../components/three';
+import { renderCustomElement } from './widgetsRegistry';
 
 /**
  * Renders a published page from localStorage block data.
@@ -132,6 +133,9 @@ function renderBlock(block, idx) {
         </table>
       );
     }
+
+    case 'custom-element':
+      return renderCustomElement(block, idx);
 
     default:
       return null;

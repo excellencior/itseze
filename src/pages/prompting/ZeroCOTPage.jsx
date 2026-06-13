@@ -51,7 +51,7 @@ const PROBLEMS = [
 ];
 
 /* ─── TwoStagePipelineWidget ─── */
-function TwoStagePipelineWidget() {
+export function TwoStagePipelineWidget() {
   const [problemIdx, setProblemIdx] = useState(0);
   const [stage, setStage] = useState(0);       // 0=idle, 1=running-s1, 2=s1-done, 3=running-s2, 4=s2-done
   const [typedReasoning, setTypedReasoning] = useState('');

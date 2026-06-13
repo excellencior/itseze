@@ -1,94 +1,20 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import Latex from '../../components/Latex';
-import { BarChart3D, ScatterPlot3D } from '../../components/three';
-import { ARCHITECTURES, CONCEPTS } from '../../navigation';
-import { exportToJSX, exportToJSON } from './exportPage';
 import './editor.css';
 
-/* ═══════════════════════════════════════════
- *  Block Type Definitions & Icons
- * ═══════════════════════════════════════════ */
-const Icons = {
-  section: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>,
-  paragraph: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h16M4 12h16M4 18h7"/></svg>,
-  callout: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>,
-  math: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 4H6l7 8-7 8h13"/></svg>,
-  code: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>,
-  scene: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>,
-  table: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>,
-  reference: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>,
-  ai: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275z"></path></svg>,
-};
+// Admin modules
+import { parseJSX } from './parseJSX';
+import { RAW_PAGES } from './rawPages';
 
-const BLOCK_TYPES = [
-  { type: 'section', icon: Icons.section, label: 'Section' },
-  { type: 'paragraph', icon: Icons.paragraph, label: 'Paragraph' },
-  { type: 'callout', icon: Icons.callout, label: 'Callout' },
-  { type: 'math-box', icon: Icons.math, label: 'Display Math' },
-  { type: 'code-block', icon: Icons.code, label: 'Code Block' },
-  { type: 'three-scene', icon: Icons.scene, label: '3D Scene' },
-  { type: 'prop-table', icon: Icons.table, label: 'Prop Table' },
-  { type: 'reference', icon: Icons.reference, label: 'Reference' },
-  { type: 'ai-disclosure', icon: Icons.ai, label: 'AI Note' },
-];
+// Extracted components
+import BlockCard, { BLOCK_TYPES } from './BlockCard';
+import LivePreview from './LivePreview';
+import SiteStructureToC, { getBreadcrumb } from './SiteStructureToC';
 
 /* ═══════════════════════════════════════════
- *  Section / Subsection hierarchy from navigation.js
+ *  Block Factory
  * ═══════════════════════════════════════════ */
-function buildSectionTree() {
-  // Build: Architecture (flat), Concepts (flat items + grouped children)
-  const sections = [
-    {
-      key: 'architecture',
-      label: 'Architectures',
-      items: ARCHITECTURES.map(a => ({ name: a.name, route: a.route })),
-      children: [],
-    },
-    {
-      key: 'concept',
-      label: 'Concepts',
-      items: [],
-      children: [],
-    },
-  ];
-
-  const conceptSection = sections[1];
-  CONCEPTS.forEach(item => {
-    if (item.children) {
-      conceptSection.children.push({
-        key: item.name.toLowerCase().replace(/\s+/g, '-'),
-        label: item.name,
-        items: item.children.map(c => ({ name: c.name, route: c.route })),
-      });
-    } else {
-      conceptSection.items.push({ name: item.name, route: item.route });
-    }
-  });
-
-  return sections;
-}
-
-const SECTION_TREE = buildSectionTree();
-
 let _idCounter = 0;
 function uid() { return `b-${++_idCounter}-${Date.now()}`; }
-
-/** Convert a route key like 'concept:reasoning-symbolic' → '/concepts/reasoning/symbolic' */
-function routeKeyToPath(routeKey) {
-  if (!routeKey) return null;
-  if (!routeKey.startsWith('concept:')) return `/${routeKey}`;
-  const rest = routeKey.replace('concept:', '');
-  // subcategory patterns: reasoning-X, prompting-X
-  const subMatch = rest.match(/^(reasoning|prompting)-(.+)$/);
-  if (subMatch) return `/concepts/${subMatch[1]}/${subMatch[2]}`;
-  return `/concepts/${rest}`;
-}
-
-const THREE_SCENE_TYPES = [
-  { value: 'bar-chart', label: 'Bar Chart 3D' },
-  { value: 'scatter-plot', label: 'Scatter Plot 3D' },
-];
 
 const DEFAULT_THREE_DATA = {
   'bar-chart': JSON.stringify([
@@ -123,961 +49,441 @@ function createBlock(type) {
   }
 }
 
-/* ═══════════════════════════════════════════
- *  Preview Components (mirror real page)
- * ═══════════════════════════════════════════ */
-function PreviewSection({ title, children }) {
-  return (
-    <div style={{ marginBottom: '48px', scrollMarginTop: '24px' }}>
-      <h2 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '16px', letterSpacing: '-0.5px', color: '#111827' }}>{title}</h2>
-      {children}
-    </div>
-  );
-}
-
-/**
- * Converts editor content strings containing HTML tags + <Highlight> into
- * safe HTML that can be rendered via dangerouslySetInnerHTML.
- * Replaces <Highlight>...</Highlight> with styled <span> matching the project component.
- */
-function richContentToHtml(raw) {
-  if (!raw) return '';
-  // Convert <Highlight>...</Highlight> to styled spans
-  return raw.replace(
-    /<Highlight>(.*?)<\/Highlight>/g,
-    '<span style="background:rgba(8,145,178,0.2);border-bottom:2px solid #0891B2;padding:1px 4px">$1</span>'
-  );
-}
-
-function PreviewP({ children }) {
-  if (typeof children === 'string') {
-    return <p style={{ fontSize: '15px', lineHeight: 1.75, color: '#374151', marginBottom: '16px' }} dangerouslySetInnerHTML={{ __html: richContentToHtml(children) }} />;
-  }
-  return <p style={{ fontSize: '15px', lineHeight: 1.75, color: '#374151', marginBottom: '16px' }}>{children}</p>;
-}
-
-function PreviewCallout({ type = 'info', children }) {
-  const colors = {
-    info:    { bg: '#EFF6FF', border: '#3B82F6', icon: 'ℹ️' },
-    warning: { bg: '#FFF7ED', border: '#F59E0B', icon: '⚠️' },
-    key:     { bg: '#F0FDF4', border: '#10B981', icon: '💡' },
-    accent:  { bg: 'rgba(8,145,178,0.08)', border: '#0891B2', icon: '↩' },
-  };
-  const c = colors[type] || colors.info;
-  if (typeof children === 'string') {
-    return (
-      <div style={{
-        background: c.bg, borderLeft: `4px solid ${c.border}`,
-        padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0',
-        fontSize: '14px', lineHeight: 1.6, color: '#374151',
-      }}>
-        <span style={{ marginRight: '8px' }}>{c.icon}</span>
-        <span dangerouslySetInnerHTML={{ __html: richContentToHtml(children) }} />
-      </div>
-    );
-  }
-  return (
-    <div style={{
-      background: c.bg, borderLeft: `4px solid ${c.border}`,
-      padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0',
-      fontSize: '14px', lineHeight: 1.6, color: '#374151',
-    }}>
-      <span style={{ marginRight: '8px' }}>{c.icon}</span>{children}
-    </div>
-  );
+/** Convert a route key like 'concept:reasoning-symbolic' → '/concepts/reasoning/symbolic' */
+function routeKeyToPath(routeKey) {
+  if (!routeKey) return null;
+  if (!routeKey.startsWith('concept:')) return `/${routeKey}`;
+  const rest = routeKey.replace('concept:', '');
+  const subMatch = rest.match(/^(reasoning|prompting)-(.+)$/);
+  if (subMatch) return `/concepts/${subMatch[1]}/${subMatch[2]}`;
+  return `/concepts/${rest}`;
 }
 
 /* ═══════════════════════════════════════════
- *  Rich Text Area with Formatting Toolbar
+ *  Status Chip Colors
  * ═══════════════════════════════════════════ */
-function RichTextArea({ value, onChange, placeholder, rows = 4 }) {
-  const textareaRef = useRef(null);
-
-  const wrapSelection = (before, after) => {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    const start = ta.selectionStart;
-    const end = ta.selectionEnd;
-    const selected = value.substring(start, end);
-    const newValue =
-      value.substring(0, start) +
-      before + selected + after +
-      value.substring(end);
-    onChange(newValue);
-    // Restore cursor after the wrapped text
-    requestAnimationFrame(() => {
-      ta.focus();
-      const newCursor = start + before.length + selected.length + after.length;
-      ta.setSelectionRange(newCursor, newCursor);
-    });
-  };
-
-  const FORMAT_BUTTONS = [
-    { label: 'B', title: 'Bold', before: '<strong>', after: '</strong>', style: { fontWeight: 800 } },
-    { label: 'I', title: 'Italic', before: '<em>', after: '</em>', style: { fontStyle: 'italic' } },
-    { label: 'U', title: 'Underline', before: '<u>', after: '</u>', style: { textDecoration: 'underline' } },
-    { label: 'H', title: 'Highlight', before: '<Highlight>', after: '</Highlight>', style: { background: 'rgba(8,145,178,0.25)', borderBottom: '2px solid #0891B2', padding: '0 2px' } },
-  ];
-
-  return (
-    <div>
-      <div className="rich-toolbar">
-        {FORMAT_BUTTONS.map(btn => (
-          <button
-            key={btn.label}
-            type="button"
-            className="rich-toolbar-btn"
-            title={btn.title}
-            onClick={() => wrapSelection(btn.before, btn.after)}
-            style={btn.style}
-          >
-            {btn.label}
-          </button>
-        ))}
-        <span className="rich-toolbar-hint">Select text, then click to wrap</span>
-      </div>
-      <textarea
-        ref={textareaRef}
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
-        rows={rows}
-      />
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════
- *  Block Editors
- * ═══════════════════════════════════════════ */
-function SectionEditor({ block, onChange }) {
-  return (
-    <div className="block-card-body">
-      <div className="field-label">Section Title</div>
-      <input type="text" value={block.title} onChange={e => onChange({ ...block, title: e.target.value })} placeholder="e.g. 1. The Core Idea" />
-    </div>
-  );
-}
-
-function ParagraphEditor({ block, onChange }) {
-  const [expanded, setExpanded] = useState(false);
-  const textareaRef = useRef(null);
-
-  const wrapSelection = (before, after) => {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    const start = ta.selectionStart;
-    const end = ta.selectionEnd;
-    const selected = block.content.substring(start, end);
-    const newValue =
-      block.content.substring(0, start) +
-      before + selected + after +
-      block.content.substring(end);
-    onChange({ ...block, content: newValue });
-    requestAnimationFrame(() => {
-      ta.focus();
-      const newCursor = start + before.length + selected.length + after.length;
-      ta.setSelectionRange(newCursor, newCursor);
-    });
-  };
-
-  const FORMAT_BUTTONS = [
-    { label: 'B', title: 'Bold', before: '<strong>', after: '</strong>', style: { fontWeight: 800 } },
-    { label: 'I', title: 'Italic', before: '<em>', after: '</em>', style: { fontStyle: 'italic' } },
-    { label: 'U', title: 'Underline', before: '<u>', after: '</u>', style: { textDecoration: 'underline' } },
-    { label: 'H', title: 'Highlight', before: '<Highlight>', after: '</Highlight>', style: { background: 'rgba(8,145,178,0.25)', borderBottom: '2px solid #0891B2', padding: '0 2px' } },
-  ];
-
-  if (expanded) {
-    const canvasEl = document.querySelector('.editor-canvas');
-    const modalContent = (
-      <div className="block-fullscreen">
-        <div className="block-fullscreen-header">
-          <span className="block-fullscreen-title">¶ Paragraph Editor</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <div className="rich-toolbar" style={{ marginBottom: 0 }}>
-              {FORMAT_BUTTONS.map(btn => (
-                <button
-                  key={btn.label}
-                  type="button"
-                  className="rich-toolbar-btn"
-                  title={btn.title}
-                  onClick={() => wrapSelection(btn.before, btn.after)}
-                  style={btn.style}
-                >{btn.label}</button>
-              ))}
-            </div>
-            <button className="block-fullscreen-close" onClick={() => setExpanded(false)}>✕ Close</button>
-          </div>
-        </div>
-        <div className="block-fullscreen-body">
-          <textarea
-            ref={textareaRef}
-            className="block-fullscreen-textarea prose-input"
-            value={block.content}
-            onChange={e => onChange({ ...block, content: e.target.value })}
-            placeholder="Write your paragraph content here..."
-            autoFocus
-          />
-        </div>
-      </div>
-    );
-    return canvasEl ? createPortal(modalContent, canvasEl) : modalContent;
-  }
-
-  return (
-    <div className="block-card-body">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div className="field-label" style={{ margin: 0 }}>Content</div>
-        <button
-          className="block-action-btn"
-          onClick={() => setExpanded(true)}
-          title="Expand to fullscreen editor"
-          style={{ fontSize: '10px', width: 'auto', height: 'auto', padding: '2px 8px', fontWeight: 700 }}
-        >⛶ Expand</button>
-      </div>
-      <RichTextArea
-        value={block.content}
-        onChange={content => onChange({ ...block, content })}
-        placeholder="Write paragraph text here..."
-        rows={4}
-      />
-    </div>
-  );
-}
-
-function CalloutEditor({ block, onChange }) {
-  return (
-    <div className="block-card-body">
-      <div className="field-label">Type</div>
-      <select className="callout-type-select" value={block.calloutType} onChange={e => onChange({ ...block, calloutType: e.target.value })}>
-        <option value="key">💡 Key Insight</option>
-        <option value="info">ℹ️ Info</option>
-        <option value="warning">⚠️ Warning</option>
-        <option value="accent">↩ Accent</option>
-      </select>
-      <div className="field-label">Content</div>
-      <RichTextArea
-        value={block.content}
-        onChange={content => onChange({ ...block, content })}
-        placeholder="Callout content..."
-        rows={3}
-      />
-    </div>
-  );
-}
-
-function MathBoxEditor({ block, onChange }) {
-  const [expanded, setExpanded] = useState(false);
-
-  if (expanded) {
-    const canvasEl = document.querySelector('.editor-canvas');
-    const modalContent = (
-      <div className="block-fullscreen">
-        <div className="block-fullscreen-header">
-          <span className="block-fullscreen-title">∑ LaTeX Editor</span>
-          <button className="block-fullscreen-close" onClick={() => setExpanded(false)} title="Close fullscreen">✕ Close</button>
-        </div>
-        <div className="block-fullscreen-body">
-          <textarea
-            className="block-fullscreen-textarea"
-            value={block.expression}
-            onChange={e => onChange({ ...block, expression: e.target.value })}
-            placeholder={"\\begin{equation}\n  \\text{your expression here}\n\\end{equation}"}
-            autoFocus
-          />
-        </div>
-      </div>
-    );
-    return canvasEl ? createPortal(modalContent, canvasEl) : modalContent;
-  }
-
-  return (
-    <div className="block-card-body">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div className="field-label" style={{ margin: 0 }}>LaTeX Expression</div>
-        <button
-          className="block-action-btn"
-          onClick={() => setExpanded(true)}
-          title="Expand to fullscreen editor"
-          style={{ fontSize: '10px', width: 'auto', height: 'auto', padding: '2px 8px', fontWeight: 700 }}
-        >⛶ Expand</button>
-      </div>
-      <textarea className="math-input" value={block.expression} onChange={e => onChange({ ...block, expression: e.target.value })} placeholder="\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right) V" rows={2} style={{ marginTop: '4px' }} />
-    </div>
-  );
-}
-
-function CodeBlockEditor({ block, onChange }) {
-  return (
-    <div className="block-card-body">
-      <div className="field-label">Label (optional)</div>
-      <input type="text" value={block.label} onChange={e => onChange({ ...block, label: e.target.value })} placeholder="e.g. prompt example" />
-      <div className="field-label">Content</div>
-      <textarea className="math-input" value={block.content} onChange={e => onChange({ ...block, content: e.target.value })} placeholder="Code or prompt content..." rows={6} />
-    </div>
-  );
-}
-
-function PropTableEditor({ block, onChange }) {
-  const rows = block.rows || [['', '']];
-  const updateRow = (idx, col, val) => {
-    const next = rows.map((r, i) => i === idx ? (col === 0 ? [val, r[1]] : [r[0], val]) : r);
-    onChange({ ...block, rows: next });
-  };
-  const addRow = () => onChange({ ...block, rows: [...rows, ['', '']] });
-  const removeRow = (idx) => onChange({ ...block, rows: rows.filter((_, i) => i !== idx) });
-
-  return (
-    <div className="block-card-body">
-      <div className="field-label">Property Rows</div>
-      {rows.map((row, idx) => (
-        <div className="field-row" key={idx}>
-          <input type="text" value={row[0]} onChange={e => updateRow(idx, 0, e.target.value)} placeholder="Property" style={{ fontWeight: 700 }} />
-          <input type="text" value={row[1]} onChange={e => updateRow(idx, 1, e.target.value)} placeholder="Value" />
-          <button className="row-btn delete" onClick={() => removeRow(idx)} title="Remove row">×</button>
-        </div>
-      ))}
-      <button className="add-row-btn" onClick={addRow}>+ Add row</button>
-    </div>
-  );
-}
-
-function ReferenceEditor({ block, onChange }) {
-  const set = (field, val) => onChange({ ...block, [field]: val });
-  return (
-    <div className="block-card-body">
-      <div className="field-label">Paper Title</div>
-      <input type="text" value={block.title} onChange={e => set('title', e.target.value)} placeholder="Attention Is All You Need" />
-      <div className="field-label">URL</div>
-      <input type="text" value={block.url} onChange={e => set('url', e.target.value)} placeholder="https://arxiv.org/abs/..." />
-      <div className="field-row" style={{ marginTop: '8px' }}>
-        <div style={{ flex: 1 }}>
-          <div className="field-label">Authors</div>
-          <input type="text" value={block.authors} onChange={e => set('authors', e.target.value)} placeholder="Vaswani, A., et al." />
-        </div>
-        <div style={{ width: '120px' }}>
-          <div className="field-label">Venue</div>
-          <input type="text" value={block.venue} onChange={e => set('venue', e.target.value)} placeholder="NeurIPS" />
-        </div>
-        <div style={{ width: '70px' }}>
-          <div className="field-label">Year</div>
-          <input type="text" value={block.year} onChange={e => set('year', e.target.value)} placeholder="2017" />
-        </div>
-      </div>
-      <div className="field-label">Description</div>
-      <textarea value={block.description} onChange={e => set('description', e.target.value)} placeholder="Brief description of the paper's contribution..." rows={2} />
-    </div>
-  );
-}
-
-function AIDisclosureEditor({ block, onChange }) {
-  return (
-    <div className="block-card-body">
-      <div className="field-label">Disclosure Text</div>
-      <textarea value={block.content} onChange={e => onChange({ ...block, content: e.target.value })} rows={3} />
-    </div>
-  );
-}
-
-function ThreeSceneEditor({ block, onChange }) {
-  const [dataError, setDataError] = useState(null);
-  const [parsedData, setParsedData] = useState(() => {
-    try { return JSON.parse(block.data); } catch { return null; }
-  });
-
-  const handleDataChange = (raw) => {
-    onChange({ ...block, data: raw });
-    try {
-      const parsed = JSON.parse(raw);
-      setParsedData(parsed);
-      setDataError(null);
-    } catch (e) {
-      setDataError(e.message);
-      setParsedData(null);
-    }
-  };
-
-  const handleSceneTypeChange = (newType) => {
-    onChange({
-      ...block,
-      sceneType: newType,
-      data: DEFAULT_THREE_DATA[newType] || '[]',
-    });
-    try { setParsedData(JSON.parse(DEFAULT_THREE_DATA[newType])); setDataError(null); } catch { /* */ }
-  };
-
-  return (
-    <div className="block-card-body">
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-        <div style={{ flex: 1 }}>
-          <div className="field-label">Scene Type</div>
-          <select
-            className="callout-type-select"
-            value={block.sceneType}
-            onChange={e => handleSceneTypeChange(e.target.value)}
-            style={{ width: '100%' }}
-          >
-            {THREE_SCENE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-          </select>
-        </div>
-        <div style={{ width: '80px' }}>
-          <div className="field-label">Height</div>
-          <input type="text" value={block.height} onChange={e => onChange({ ...block, height: parseInt(e.target.value) || 280 })} />
-        </div>
-      </div>
-      <div className="field-label">Hint Text</div>
-      <input type="text" value={block.hint || ''} onChange={e => onChange({ ...block, hint: e.target.value })} placeholder="Drag to rotate · Scroll to zoom" />
-      <div className="field-label">Data (JSON)</div>
-      <textarea
-        className="math-input"
-        value={block.data}
-        onChange={e => handleDataChange(e.target.value)}
-        rows={6}
-        style={dataError ? { borderColor: '#ef4444' } : {}}
-      />
-      {dataError && (
-        <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '4px' }}>⚠ {dataError}</div>
-      )}
-
-      {/* Live 3D preview handled dynamically on the right-side LivePreview */}
-    </div>
-  );
-}
-
-const BLOCK_EDITORS = {
-  'section':        SectionEditor,
-  'paragraph':      ParagraphEditor,
-  'callout':        CalloutEditor,
-  'math-box':       MathBoxEditor,
-  'code-block':     CodeBlockEditor,
-  'three-scene':    ThreeSceneEditor,
-  'prop-table':     PropTableEditor,
-  'reference':      ReferenceEditor,
-  'ai-disclosure':  AIDisclosureEditor,
+const STATUS_CHIP_COLORS = {
+  'Draft':       { bg: 'rgba(245,158,11,0.15)', color: '#f59e0b' },
+  'Published':   { bg: 'rgba(16,185,129,0.15)', color: '#10b981' },
+  'Static':      { bg: 'rgba(99,102,241,0.15)', color: '#818cf8' },
+  'Coming Soon': { bg: '#27272a', color: '#52525b' },
 };
 
 /* ═══════════════════════════════════════════
- *  Block Card Wrapper
- * ═══════════════════════════════════════════ */
-function BlockCard({ block, index, onChange, onDelete, onMoveUp, onMoveDown, onDragStart, onDragOver, onDrop, isDragging, isDragOver, isFirst, isLast }) {
-  const Editor = BLOCK_EDITORS[block.type];
-  const typeDef = BLOCK_TYPES.find(t => t.type === block.type);
-
-  return (
-    <div
-      className={`block-card${isDragging ? ' dragging' : ''}${isDragOver ? ' drag-over' : ''}`}
-      data-block-id={block.id}
-      draggable
-      onDragStart={e => onDragStart(e, index)}
-      onDragOver={e => onDragOver(e, index)}
-      onDrop={e => onDrop(e, index)}
-    >
-      <div className="block-card-header">
-        <span className="drag-handle">⠿</span>
-        <span className="block-type-badge">{typeDef?.icon} {typeDef?.label || block.type}</span>
-        <div className="block-actions">
-          <button className="block-action-btn" onClick={onMoveUp} disabled={isFirst} title="Move up">↑</button>
-          <button className="block-action-btn" onClick={onMoveDown} disabled={isLast} title="Move down">↓</button>
-          <button className="block-action-btn delete" onClick={onDelete} title="Delete block">✕</button>
-        </div>
-      </div>
-      {Editor && <Editor block={block} onChange={onChange} />}
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════
- *  Live Preview Renderer
- * ═══════════════════════════════════════════ */
-function LivePreview({ meta, blocks, onScrollToBlock }) {
-  const categoryLabel = meta.subcategory || (meta.category === 'concept' ? 'Concept' : meta.category === 'reasoning' ? 'Reasoning' : meta.category === 'prompting' ? 'Prompting' : 'Architecture');
-
-  // Wrap a preview element with a double-click handler that scrolls to the editor block
-  const wrapBlock = (blockId, element) => {
-    if (!element) return null;
-    return (
-      <div
-        key={blockId}
-        className="preview-block-wrapper"
-        onDoubleClick={() => onScrollToBlock?.(blockId)}
-        title="Double-click to jump to editor"
-      >
-        {element}
-      </div>
-    );
-  };
-
-  // Separate references and ai-disclosure from content blocks
-  const contentBlocks = blocks.filter(b => b.type !== 'reference' && b.type !== 'ai-disclosure');
-  const refBlocks = blocks.filter(b => b.type === 'reference');
-  const disclosureBlock = blocks.find(b => b.type === 'ai-disclosure');
-
-  // Group content blocks into sections
-  const elements = [];
-  let sectionKey = 0;
-  let sectionChildren = [];
-  let currentTitle = '';
-
-  const flushSection = (title) => {
-    if (title || sectionChildren.length > 0) {
-      elements.push(
-        <PreviewSection key={`sec-${sectionKey++}`} title={title}>
-          {sectionChildren}
-        </PreviewSection>
-      );
-      sectionChildren = [];
-    }
-  };
-
-  contentBlocks.forEach((block, idx) => {
-    if (block.type === 'section') {
-      if (sectionChildren.length > 0 || currentTitle) {
-        flushSection(currentTitle);
-      }
-      currentTitle = block.title || 'Untitled';
-      return;
-    }
-
-    const el = renderPreviewBlock(block, idx);
-    if (el) {
-      const wrapped = wrapBlock(block.id, el);
-      if (currentTitle) {
-        sectionChildren.push(wrapped);
-      } else {
-        elements.push(wrapped);
-      }
-    }
-  });
-  if (sectionChildren.length > 0 || currentTitle) {
-    flushSection(currentTitle);
-  }
-
-  return (
-    <div style={{ width: '90%', maxWidth: '1000px', margin: '0 auto' }}>
-      {/* Header */}
-      <div style={{ marginBottom: '48px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#9CA3AF', marginBottom: '8px' }}>
-          {categoryLabel}
-        </div>
-        <h1 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-1px', marginBottom: '12px', color: '#111827' }}>
-          {meta.title || 'Page Title'}
-        </h1>
-        <p style={{ fontSize: '16px', color: '#6B7280', lineHeight: 1.6 }}>
-          {meta.subtitle || 'Page subtitle goes here...'}
-        </p>
-      </div>
-
-      {/* Content sections */}
-      {elements}
-
-      {/* References section */}
-      {refBlocks.length > 0 && (
-        <PreviewSection title="References & Further Reading">
-          <ul style={{ fontSize: '14px', lineHeight: 2, color: '#4b5563', paddingLeft: '20px', listStyle: 'disc' }}>
-            {refBlocks.map((ref, i) => (
-              <li key={`ref-${i}`} style={{ marginBottom: '4px' }}>
-                <a
-                  href={ref.url || '#'}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{ color: '#0891B2', fontWeight: 600, textDecoration: 'none' }}
-                >
-                  {ref.title || 'Paper Title'}
-                </a>
-                {' '}by {ref.authors || '...'}, {ref.venue || '...'} {ref.year || ''}.{' '}
-                {ref.description || ''}
-              </li>
-            ))}
-          </ul>
-        </PreviewSection>
-      )}
-
-      {/* AI Disclosure */}
-      {disclosureBlock && (
-        <div style={{
-          marginTop: '32px', padding: '16px 20px', background: '#F8F8F8',
-          border: '1px solid #e5e7eb', borderRadius: '4px', fontSize: '13px',
-          color: '#6B7280', lineHeight: 1.6,
-        }}>
-          <strong style={{ color: '#4b5563' }}>A note on this article:</strong> {disclosureBlock.content}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function renderPreviewBlock(block, idx) {
-  switch (block.type) {
-    case 'paragraph':
-      return <PreviewP key={idx}>{block.content || <span style={{ color: '#ccc', fontStyle: 'italic' }}>Empty paragraph</span>}</PreviewP>;
-
-    case 'callout':
-      return <PreviewCallout key={idx} type={block.calloutType}>{block.content || 'Empty callout'}</PreviewCallout>;
-
-    case 'math-box':
-      return block.expression ? (
-        <div key={idx} style={{ padding: '16px 14px', textAlign: 'center', margin: '16px 0', background: '#f8f9fa', border: '1px solid #e5e7eb', borderRadius: '4px', color: '#111' }}>
-          <Latex math={block.expression} block />
-        </div>
-      ) : null;
-
-    case 'code-block':
-      return (
-        <div key={idx} style={{
-          background: '#1e1e24', padding: '16px 18px',
-          fontFamily: 'var(--font-mono)', fontSize: '12.5px', lineHeight: 1.65,
-          color: '#e5c07b', borderRadius: '6px', border: '1px solid #333',
-          overflowX: 'auto', position: 'relative', margin: '16px 0',
-        }}>
-          {block.label && (
-            <div style={{ position: 'absolute', top: '8px', right: '12px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#0891B2', opacity: 0.7 }}>
-              {block.label}
-            </div>
-          )}
-          <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{block.content || '...'}</pre>
-        </div>
-      );
-
-    case 'three-scene': {
-      let parsedData = null;
-      try { parsedData = JSON.parse(block.data); } catch { /* */ }
-      if (!parsedData) return null;
-      return (
-        <div key={idx} style={{ margin: '16px 0' }}>
-          {block.sceneType === 'bar-chart' && Array.isArray(parsedData) && (
-            <BarChart3D data={parsedData} height={block.height || 280} hint={block.hint} />
-          )}
-          {block.sceneType === 'scatter-plot' && parsedData.points && (
-            <ScatterPlot3D
-              points={parsedData.points}
-              connections={parsedData.connections}
-              height={block.height || 280}
-              hint={block.hint}
-            />
-          )}
-        </div>
-      );
-    }
-
-    case 'prop-table': {
-      const rows = (block.rows || []).filter(([k, v]) => k || v);
-      if (rows.length === 0) return null;
-      return (
-        <table key={idx} style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px', fontSize: '13px', border: '1px solid #e5e7eb', color: '#374151' }}>
-          <tbody>
-            {rows.map(([k, v], i) => (
-              <tr key={i}>
-                <td style={{ padding: '8px 12px', fontWeight: 700, borderBottom: '1px solid #e5e7eb', width: '40%', background: '#F9FAFB', color: '#1f2937' }}>{k}</td>
-                <td style={{ padding: '8px 12px', borderBottom: '1px solid #e5e7eb', color: '#374151' }}>{v}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      );
-    }
-
-    case 'reference':
-      return null;  // handled by LivePreview grouping
-
-    case 'ai-disclosure':
-      return null;  // handled by LivePreview footer
-
-    default:
-      return null;
-  }
-}
-
-/* ═══════════════════════════════════════════
- *  Main Editor Page
+ *  Main Editor Page Component
  * ═══════════════════════════════════════════ */
 export default function EditorPage() {
   const [meta, setMeta] = useState({
     title: '', subtitle: '', category: 'concept', subcategory: '', route: '', ready: false,
   });
   const [blocks, setBlocks] = useState([]);
-  const [showPreview, setShowPreview] = useState(true);
   const [toast, setToast] = useState(null);
   const [dragIdx, setDragIdx] = useState(null);
   const [dragOverIdx, setDragOverIdx] = useState(null);
   const toastTimer = useRef(null);
 
-  const [canvasWidth, setCanvasWidth] = useState(50); // percentage
+  const [canvasWidth, setCanvasWidth] = useState(55);
   const mainBodyRef = useRef(null);
 
-  const handleCanvasResize = (e) => {
-    e.preventDefault();
-    const handleMouseMove = (moveEvent) => {
-      if (!mainBodyRef.current) return;
-      const rect = mainBodyRef.current.getBoundingClientRect();
-      const paletteEl = mainBodyRef.current.querySelector('.editor-palette');
-      const paletteWidth = paletteEl ? paletteEl.getBoundingClientRect().width : 180;
-      
-      const totalSplitWidth = rect.width - paletteWidth;
-      if (totalSplitWidth <= 0) return;
+  const [selectedRoute, setSelectedRoute] = useState(null);
+  const [draftKey, setDraftKey] = useState(null);
 
-      const relativeX = moveEvent.clientX - rect.left - paletteWidth;
-      const percentage = (relativeX / totalSplitWidth) * 100;
-      setCanvasWidth(Math.min(80, Math.max(20, percentage)));
-    };
-    
-    const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.userSelect = '';
-      document.body.style.cursor = '';
-    };
+  // Dirty tracking: snapshot of last-saved state
+  const lastSavedRef = useRef(null);
+  const [pendingNavAction, setPendingNavAction] = useState(null); // modal state
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    document.body.style.userSelect = 'none';
-    document.body.style.cursor = 'col-resize';
-  };
+  const isEditing = !!draftKey;
 
-  // Auto-generate route from category + title
-  useEffect(() => {
-    if (meta.title) {
-      const slug = meta.title.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, '-');
-      const prefix = meta.category === 'architecture' ? '' : 'concept:';
-      const sub = meta.subcategory ? meta.subcategory.toLowerCase().replace(/\s+/g, '-') + '-' : '';
-      setMeta(prev => ({ ...prev, route: `${prefix}${meta.category === 'concept' ? '' : meta.category + '-'}${sub}${slug}` }));
-    }
-  }, [meta.title, meta.category, meta.subcategory]);
+  const isDirty = (() => {
+    if (!isEditing || !lastSavedRef.current) return false;
+    return JSON.stringify({ meta, blocks }) !== lastSavedRef.current;
+  })();
 
+  // ── Toast ──
   const flash = useCallback((msg) => {
     setToast(msg);
     if (toastTimer.current) clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToast(null), 2500);
   }, []);
 
-  // ── Block CRUD ──
-  const addBlock = (type) => {
-    setBlocks(prev => [...prev, createBlock(type)]);
+  // ── Resizer ──
+  const handleCanvasResize = (e) => {
+    e.preventDefault();
+    const handleMouseMove = (moveEvent) => {
+      if (!mainBodyRef.current) return;
+      const rect = mainBodyRef.current.getBoundingClientRect();
+      const totalWidth = rect.width;
+      if (totalWidth <= 0) return;
+      setCanvasWidth(Math.min(80, Math.max(20, (moveEvent.clientX - rect.left) / totalWidth * 100)));
+    };
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    };
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
   };
 
-  const updateBlock = useCallback((id, updated) => {
-    setBlocks(prev => prev.map(b => b.id === id ? updated : b));
-  }, []);
+  // ── Route Selection ──
+  const handleSelectRoute = (route) => {
+    setSelectedRoute(route);
+    if (route && route.startsWith('__draft__')) {
+      const key = route.replace('__draft__', '');
+      setDraftKey(key);
+      const data = localStorage.getItem(key);
+      if (data) {
+        try {
+          const parsed = JSON.parse(data);
+          setMeta(parsed.meta || {});
+          setBlocks(parsed.blocks || []);
+          // Snapshot for dirty tracking
+          lastSavedRef.current = JSON.stringify({ meta: parsed.meta || {}, blocks: parsed.blocks || [] });
+        } catch {
+          flash('Failed to parse draft data');
+        }
+      }
+    } else {
+      setDraftKey(null);
+      setMeta({ title: '', subtitle: '', category: 'concept', subcategory: '', route: '', ready: false });
+      setBlocks([]);
+      lastSavedRef.current = null;
+    }
+  };
 
-  const deleteBlock = useCallback((id) => {
-    setBlocks(prev => prev.filter(b => b.id !== id));
-  }, []);
+  // ── Leave edit mode (with save guard) ──
+  const leaveEditMode = () => {
+    setDraftKey(null);
+    setSelectedRoute(null);
+    setMeta({ title: '', subtitle: '', category: 'concept', subcategory: '', route: '', ready: false });
+    setBlocks([]);
+    lastSavedRef.current = null;
+  };
 
+  const tryLeaveEdit = (action) => {
+    if (!isEditing) { action(); return; }
+    if (isDirty) {
+      setPendingNavAction(() => action);
+    } else {
+      leaveEditMode();
+      action();
+    }
+  };
+
+  const handleConfirmLeave = (shouldSave) => {
+    if (shouldSave) {
+      saveDraft();
+    } else if (draftKey) {
+      // Discard: delete the draft from localStorage entirely
+      localStorage.removeItem(draftKey);
+    }
+    const action = pendingNavAction;
+    setPendingNavAction(null);
+    leaveEditMode();
+    if (action) action();
+  };
+
+  // ── Breadcrumb click (parent crumb navigates back) ──
+  const handleBreadcrumbClick = (crumbIndex) => {
+    // Only parent crumbs are clickable (not the last one)
+    if (crumbIndex >= breadcrumb.crumbs.length - 1) return;
+    tryLeaveEdit(() => { /* back to ToC home */ });
+  };
+
+  // ── Clone page into draft ──
+  const handleEditActivePage = () => {
+    if (!selectedRoute) return;
+
+    if (selectedRoute.startsWith('__pub__')) {
+      const urlPath = selectedRoute.replace('__pub__', '');
+      let published = {};
+      try { published = JSON.parse(localStorage.getItem('itseze-published') || '{}'); } catch { /* */ }
+      const pageData = published[urlPath];
+      if (pageData) {
+        const slug = pageData.meta.title
+          ? pageData.meta.title.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, '-')
+          : 'untitled';
+        const key = `itseze-draft-${slug}`;
+        localStorage.setItem(key, JSON.stringify({ meta: pageData.meta, blocks: pageData.blocks, savedAt: new Date().toISOString() }));
+        handleSelectRoute(`__draft__${key}`);
+        flash('Loaded published page into draft editor');
+      }
+    } else {
+      const rawText = RAW_PAGES[selectedRoute];
+      if (rawText) {
+        const { meta: parsedMeta, blocks: parsedBlocks } = parseJSX(rawText, selectedRoute);
+        const slug = parsedMeta.title
+          ? parsedMeta.title.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, '-')
+          : selectedRoute.replace(/:/g, '-');
+        const key = `itseze-draft-${slug}`;
+        localStorage.setItem(key, JSON.stringify({ meta: parsedMeta, blocks: parsedBlocks, savedAt: new Date().toISOString() }));
+        handleSelectRoute(`__draft__${key}`);
+        flash('Parsed static page content into draft editor');
+      } else {
+        flash('Source code not found for this page');
+      }
+    }
+  };
+
+  // ── New Page ──
+  const onCreateNewPage = (category, subcategory) => {
+    const defaultMeta = { title: 'New Page', subtitle: 'Write your page subtitle here...', category, subcategory, route: '', ready: true };
+    const defaultBlocks = [
+      { id: 'parsed-1-' + Date.now(), type: 'section', title: '1. Introduction' },
+      { id: 'parsed-2-' + Date.now(), type: 'paragraph', content: 'Start writing your content here...' },
+    ];
+    const newKey = `itseze-draft-new-page-${Date.now()}`;
+    localStorage.setItem(newKey, JSON.stringify({ meta: defaultMeta, blocks: defaultBlocks, savedAt: new Date().toISOString() }));
+    handleSelectRoute(`__draft__${newKey}`);
+    flash('Created new blank page draft');
+  };
+
+  // ── Auto-generate route slug ──
+  useEffect(() => {
+    if (draftKey && meta.title) {
+      const slug = meta.title.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, '-');
+      const prefix = meta.category === 'architecture' ? '' : 'concept:';
+      const sub = meta.subcategory ? meta.subcategory.toLowerCase().replace(/\s+/g, '-') + '-' : '';
+      setMeta(prev => ({ ...prev, route: `${prefix}${meta.category === 'concept' ? '' : meta.category + '-'}${sub}${slug}` }));
+    }
+  }, [meta.title, meta.category, meta.subcategory, draftKey]);
+
+  // ── Block CRUD ──
+  const addBlock = (type) => setBlocks(prev => [...prev, createBlock(type)]);
+  const updateBlock = useCallback((id, updated) => setBlocks(prev => prev.map(b => b.id === id ? updated : b)), []);
+  const deleteBlock = useCallback((id) => setBlocks(prev => prev.filter(b => b.id !== id)), []);
   const moveBlock = useCallback((from, to) => {
-    setBlocks(prev => {
-      const next = [...prev];
-      const [item] = next.splice(from, 1);
-      next.splice(to, 0, item);
-      return next;
-    });
+    setBlocks(prev => { const next = [...prev]; const [item] = next.splice(from, 1); next.splice(to, 0, item); return next; });
   }, []);
 
   // ── Drag & Drop ──
-  const handleDragStart = (e, idx) => {
-    setDragIdx(idx);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDragOver = (e, idx) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setDragOverIdx(idx);
-  };
-
+  const handleDragStart = (e, idx) => { setDragIdx(idx); e.dataTransfer.effectAllowed = 'move'; };
+  const handleDragOver = (e, idx) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDragOverIdx(idx); };
   const handleDrop = (e, idx) => {
     e.preventDefault();
-    if (dragIdx !== null && dragIdx !== idx) {
-      moveBlock(dragIdx, idx);
-    }
+    if (dragIdx !== null && dragIdx !== idx) moveBlock(dragIdx, idx);
     setDragIdx(null);
     setDragOverIdx(null);
   };
 
   // ── Persistence ──
   const saveDraft = () => {
-    const slug = meta.title
-      ? meta.title.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, '-')
-      : 'untitled';
-    const key = `itseze-draft-${slug}`;
-    const payload = {
-      meta,
-      blocks,
-      savedAt: new Date().toISOString(),
-    };
-    localStorage.setItem(key, JSON.stringify(payload));
-    flash('✓ Draft saved');
+    if (!draftKey) return;
+    const payload = { meta, blocks, savedAt: new Date().toISOString() };
+    localStorage.setItem(draftKey, JSON.stringify(payload));
+    lastSavedRef.current = JSON.stringify({ meta, blocks });
+    flash('Draft saved');
   };
 
   // ── Publish ──
   const publishPage = () => {
-    if (!meta.title) { flash('✗ Add a title before publishing'); return; }
-    if (blocks.length === 0) { flash('✗ Add some content before publishing'); return; }
-
+    if (!meta.title) { flash('Add a title before publishing'); return; }
+    if (blocks.length === 0) { flash('Add some content before publishing'); return; }
     const urlPath = routeKeyToPath(meta.route);
-    if (!urlPath) { flash('✗ Cannot determine URL path'); return; }
+    if (!urlPath) { flash('Cannot determine URL path'); return; }
 
-    // Load existing published pages
     let published = {};
     try { published = JSON.parse(localStorage.getItem('itseze-published') || '{}'); } catch { /* */ }
-
     const existing = published[urlPath];
     const now = new Date().toISOString();
-
-    published[urlPath] = {
-      meta: { ...meta, ready: true },
-      blocks,
-      firstPublishedAt: existing?.firstPublishedAt || now,
-      publishedAt: now,
-    };
-
+    published[urlPath] = { meta: { ...meta, ready: true }, blocks, firstPublishedAt: existing?.firstPublishedAt || now, publishedAt: now };
     localStorage.setItem('itseze-published', JSON.stringify(published));
-    flash(`✓ Published at ${urlPath}`);
+    saveDraft();
+    flash(`Published at ${urlPath}`);
   };
 
-  const [savedDrafts, setSavedDrafts] = useState([]);
-  useEffect(() => {
-    const drafts = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('itseze-draft-')) {
-        try {
-          const data = JSON.parse(localStorage.getItem(key));
-          drafts.push({
-            key,
-            title: data.meta?.title || key.replace('itseze-draft-', ''),
-            savedAt: data.savedAt,
-          });
-        } catch {
-          drafts.push({ key, title: key.replace('itseze-draft-', ''), savedAt: '' });
-        }
-      }
-    }
-    drafts.sort((a, b) => (b.savedAt || '').localeCompare(a.savedAt || ''));
-    setSavedDrafts(drafts);
-  }, [toast]); // refresh on save
+  // ── Breadcrumb ──
+  const breadcrumb = getBreadcrumb(selectedRoute);
 
-  const loadDraft = (draftKey) => {
-    const data = localStorage.getItem(draftKey);
-    if (data) {
-      try {
-        const parsed = JSON.parse(data);
-        setMeta(parsed.meta || {});
-        setBlocks(parsed.blocks || []);
-        flash(`✓ Loaded draft`);
-      } catch { flash('✗ Failed to parse'); }
-    }
-  };
-
-  const deleteDraft = (draftKey) => {
-    localStorage.removeItem(draftKey);
-    flash('✓ Draft deleted');
-  };
-
+  /* ═══════════════════════════════════════════
+   *  Render
+   * ═══════════════════════════════════════════ */
   return (
-    <div className="editor-root">
-      {/* ── Toolbar ── */}
-      <div className="editor-toolbar">
+    <div className="editor-root" style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+      {/* ── Toolbar (always visible, disabled when not editing) ── */}
+      <div className="editor-toolbar" style={{ opacity: isEditing ? 1 : 0.5 }}>
         <span className="logo">itseze editor</span>
         <div className="toolbar-separator" />
 
-        <input className="title-input" type="text" value={meta.title} onChange={e => setMeta(prev => ({ ...prev, title: e.target.value }))} placeholder="Page title" />
-        <input className="subtitle-input" type="text" value={meta.subtitle} onChange={e => setMeta(prev => ({ ...prev, subtitle: e.target.value }))} placeholder="Subtitle" />
+        <input className="title-input" type="text" value={meta.title} onChange={e => setMeta(prev => ({ ...prev, title: e.target.value }))} placeholder="Page title" disabled={!isEditing} />
+        <input className="subtitle-input" type="text" value={meta.subtitle} onChange={e => setMeta(prev => ({ ...prev, subtitle: e.target.value }))} placeholder="Subtitle" disabled={!isEditing} />
 
         <div className="toolbar-separator" />
 
-        <button className="toolbar-btn" onClick={() => setShowPreview(p => !p)}>
-          {showPreview ? '◨ Hide Preview' : '◧ Show Preview'}
-        </button>
-        <button className="toolbar-btn" onClick={saveDraft} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+        <button className="toolbar-btn" onClick={saveDraft} disabled={!isEditing} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
           Save Draft
         </button>
-        <button className="toolbar-btn primary" onClick={publishPage} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+        <button className="toolbar-btn primary" onClick={publishPage} disabled={!isEditing} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
           Publish
         </button>
       </div>
 
       {/* ── Main Body ── */}
-      <div className="editor-body" ref={mainBodyRef}>
-        {/* ── Block Palette ── */}
-        <div className="editor-palette">
-          <div className="palette-label">Add Block</div>
-          {BLOCK_TYPES.map(bt => (
-            <button key={bt.type} className="palette-item" onClick={() => addBlock(bt.type)}>
-              <span className="palette-icon">{bt.icon}</span>
-              {bt.label}
-            </button>
-          ))}
-
-          {savedDrafts.length > 0 && (
-            <>
-              <div className="palette-label" style={{ marginTop: '24px' }}>Saved Drafts</div>
-              {savedDrafts.map(d => (
-                <button key={d} className="palette-item" onClick={() => loadDraft(d)} style={{ fontSize: '11px' }}>
-                  <span className="palette-icon" style={{ background: 'transparent' }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                  </span>
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d}</span>
+      <div className="editor-body" ref={mainBodyRef} style={{ display: 'flex', flex: 1, overflow: 'hidden', height: '100%' }}>
+        {/* ── Left Edit Pane ── */}
+        <div className="editor-left-pane" style={{ width: `${canvasWidth}%`, minWidth: '300px', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+          {/* ── Breadcrumb Bar ── */}
+          {selectedRoute && breadcrumb.crumbs.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderBottom: '1px solid #27272a', background: '#1c1c20', flexShrink: 0, gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', minWidth: 0 }}>
+                {breadcrumb.crumbs.map((crumb, i) => {
+                  const isLast = i === breadcrumb.crumbs.length - 1;
+                  const isClickable = !isLast;
+                  return (
+                    <span key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {i > 0 && <span style={{ color: '#3f3f46', fontSize: '11px' }}>›</span>}
+                      <span
+                        onClick={isClickable ? () => handleBreadcrumbClick(i) : undefined}
+                        style={{
+                          fontSize: '12px', fontWeight: isLast ? 700 : 500,
+                          color: isLast ? '#e4e4e7' : '#71717a',
+                          cursor: isClickable ? 'pointer' : 'default',
+                          transition: 'color 0.15s ease',
+                        }}
+                        onMouseEnter={isClickable ? (e) => { e.currentTarget.style.color = '#0891B2'; } : undefined}
+                        onMouseLeave={isClickable ? (e) => { e.currentTarget.style.color = '#71717a'; } : undefined}
+                      >{crumb}</span>
+                    </span>
+                  );
+                })}
+                {breadcrumb.status && (
+                  <span style={{
+                    fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
+                    padding: '2px 8px', borderRadius: '3px', marginLeft: '8px',
+                    background: (STATUS_CHIP_COLORS[breadcrumb.status] || STATUS_CHIP_COLORS['Static']).bg,
+                    color: (STATUS_CHIP_COLORS[breadcrumb.status] || STATUS_CHIP_COLORS['Static']).color,
+                  }}>{breadcrumb.status}</span>
+                )}
+              </div>
+              {!isEditing && breadcrumb.status !== 'Coming Soon' && (
+                <button
+                  onClick={handleEditActivePage}
+                  style={{ background: '#0891B2', color: '#fff', border: 'none', padding: '5px 14px', borderRadius: '4px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'filter 0.15s ease', flexShrink: 0 }}
+                  onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.15)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.filter = 'none'; }}
+                >
+                  Edit Page
                 </button>
-              ))}
-            </>
+              )}
+            </div>
           )}
-        </div>
 
-        {/* ── Editor Canvas ── */}
-        <div 
-          className="editor-canvas"
-          style={showPreview ? { width: `calc((100% - 186px) * ${canvasWidth} / 100)`, flex: 'none' } : { flex: 1 }}
-        >
-          {blocks.length === 0 ? (
-            <div className="canvas-empty">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4, marginBottom: '8px' }}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
-              <p>Click a block type from the left palette to start building your page.</p>
+          {/* ── Editor content ── */}
+          {isEditing ? (
+            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+              {/* Block Palette */}
+              <div className="editor-palette">
+                <div className="palette-label">Add Block</div>
+                {BLOCK_TYPES.map(bt => (
+                  <button key={bt.type} className="palette-item" onClick={() => addBlock(bt.type)}>
+                    <span className="palette-icon">{bt.icon}</span>
+                    {bt.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Editor Canvas */}
+              <div className="editor-canvas" style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+                {blocks.length === 0 ? (
+                  <div className="canvas-empty">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4, marginBottom: '8px' }}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+                    <p>Click a block type from the left palette to start building your page.</p>
+                  </div>
+                ) : (
+                  blocks.map((block, idx) => (
+                    <BlockCard
+                      key={block.id}
+                      block={block}
+                      index={idx}
+                      onChange={updated => updateBlock(block.id, updated)}
+                      onDelete={() => deleteBlock(block.id)}
+                      onMoveUp={() => idx > 0 && moveBlock(idx, idx - 1)}
+                      onMoveDown={() => idx < blocks.length - 1 && moveBlock(idx, idx + 1)}
+                      onDragStart={handleDragStart}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                      isDragging={dragIdx === idx}
+                      isDragOver={dragOverIdx === idx}
+                      isFirst={idx === 0}
+                      isLast={idx === blocks.length - 1}
+                    />
+                  ))
+                )}
+              </div>
             </div>
           ) : (
-            blocks.map((block, idx) => (
-              <BlockCard
-                key={block.id}
-                block={block}
-                index={idx}
-                onChange={updated => updateBlock(block.id, updated)}
-                onDelete={() => deleteBlock(block.id)}
-                onMoveUp={() => idx > 0 && moveBlock(idx, idx - 1)}
-                onMoveDown={() => idx < blocks.length - 1 && moveBlock(idx, idx + 1)}
-                onDragStart={handleDragStart}
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                isDragging={dragIdx === idx}
-                isDragOver={dragOverIdx === idx}
-                isFirst={idx === 0}
-                isLast={idx === blocks.length - 1}
-              />
-            ))
+            /* Welcome note when not editing */
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '48px 32px', color: '#71717a' }}>
+              <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.25, marginBottom: '20px' }}>
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <path d="M12 18v-6M9 15l3 3 3-3"/>
+              </svg>
+              <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#a1a1aa', marginBottom: '10px', letterSpacing: '-0.3px' }}>
+                itseze admin panel
+              </h3>
+              <p style={{ fontSize: '13px', color: '#71717a', maxWidth: '400px', lineHeight: 1.6 }}>
+                Select a page from the site structure on the right to view its path, or click
+                <strong style={{ color: '#a1a1aa' }}> "Edit Page" </strong>
+                to clone it into a draft. Use the <strong style={{ color: '#a1a1aa' }}> + </strong> buttons to create new pages.
+              </p>
+            </div>
           )}
         </div>
 
         {/* ── Splitter ── */}
-        {showPreview && (
-          <div 
-            className="main-editor-splitter"
-            onMouseDown={handleCanvasResize}
-          />
-        )}
+        <div className="main-editor-splitter" onMouseDown={handleCanvasResize} style={{ width: '6px', cursor: 'col-resize', background: '#27272a', flexShrink: 0 }} />
 
-        {/* ── Live Preview ── */}
-        {showPreview && (
-          <div 
-            className="editor-preview"
-            style={{ width: `calc((100% - 186px) * ${100 - canvasWidth} / 100)`, flex: 'none' }}
-          >
-            <div className="preview-label">Live Preview</div>
-            <div className="preview-content">
+        {/* ── Right Pane: LivePreview when editing, ToC when browsing ── */}
+        <div className="editor-right-pane" style={{ width: `${100 - canvasWidth}%`, height: '100%', overflow: 'hidden' }}>
+          {isEditing ? (
+            <div style={{ height: '100%', overflowY: 'auto', background: '#fff', padding: '32px 0' }}>
               <LivePreview meta={meta} blocks={blocks} />
             </div>
-          </div>
-        )}
+          ) : (
+            <SiteStructureToC selectedRoute={selectedRoute} onSelectRoute={handleSelectRoute} onCreateNewPage={onCreateNewPage} />
+          )}
+        </div>
       </div>
+
+      {/* ── Unsaved Changes Modal ── */}
+      {pendingNavAction && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+        }}>
+          <div style={{
+            background: '#1c1c20', border: '1px solid #27272a', borderRadius: '12px',
+            padding: '28px 32px', maxWidth: '400px', width: '90%',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+          }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#e4e4e7', marginBottom: '8px' }}>Discard Changes?</h3>
+            <p style={{ fontSize: '13px', color: '#a1a1aa', lineHeight: 1.6, marginBottom: '24px' }}>
+              This will revert <strong style={{ color: '#e4e4e7' }}>{meta.title || 'this page'}</strong> to the latest published version and discard all your drafted edits.
+            </p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => { setPendingNavAction(null); }}
+                style={{ padding: '7px 16px', fontSize: '12px', fontWeight: 600, border: '1px solid #3f3f46', background: '#27272a', color: '#a1a1aa', borderRadius: '6px', cursor: 'pointer', transition: 'all 0.15s ease' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#52525b'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#3f3f46'; }}
+              >Cancel</button>
+              <button
+                onClick={() => handleConfirmLeave(false)}
+                style={{ padding: '7px 16px', fontSize: '12px', fontWeight: 600, border: '1px solid #ef4444', background: 'rgba(239,68,68,0.1)', color: '#f87171', borderRadius: '6px', cursor: 'pointer', transition: 'all 0.15s ease' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.2)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; }}
+              >Discard</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Toast ── */}
       {toast && <div className="editor-toast">{toast}</div>}

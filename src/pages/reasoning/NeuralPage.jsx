@@ -34,7 +34,7 @@ function Callout({ type = 'info', children }) {
 }
 
 
-function AttentionFlowWidget() {
+export function AttentionFlowWidget() {
   const [inputText, setInputText] = useState('The cat sat on the mat');
   const [selectedTokenIndex, setSelectedTokenIndex] = useState(0);
   const [layer, setLayer] = useState(2);

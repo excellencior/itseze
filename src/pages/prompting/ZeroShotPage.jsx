@@ -38,7 +38,7 @@ function Callout({ type = 'info', children }) {
 /* ────────────────────────────────────────────────────────
    PromptAnatomyWidget — interactive zero-shot prompt diagram
    ──────────────────────────────────────────────────────── */
-function PromptAnatomyWidget() {
+export function PromptAnatomyWidget() {
   const tasks = {
     Translation: {
       instruction: 'Translate the following English text to French:',

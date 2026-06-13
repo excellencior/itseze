@@ -46,7 +46,7 @@ const mockDatabase = [
   { id: 8, title: 'Program-Aided Language Models', field: 'Neuro-Symbolic', year: 2023, rating: 8.9 },
 ];
 
-function TextToSqlCompiler() {
+export function TextToSqlCompiler() {
   const queries = [
     { label: 'Find papers published after 2018', sql: 'SELECT * FROM papers WHERE year > 2018', filter: (p) => p.year > 2018 },
     { label: 'Get high-rated Neural papers (rating >= 9.0)', sql: "SELECT * FROM papers WHERE field = 'Neural' AND rating >= 9.0", filter: (p) => p.field === 'Neural' && p.rating >= 9.0 },

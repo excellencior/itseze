@@ -69,7 +69,7 @@ function evaluateExpression(expr, a, b) {
   }
 }
 
-function PropositionalEvaluator() {
+export function PropositionalEvaluator() {
   const [valA, setValA] = useState(true);
   const [valB, setValB] = useState(false);
   const [expression, setExpression] = useState('A AND (NOT B)');

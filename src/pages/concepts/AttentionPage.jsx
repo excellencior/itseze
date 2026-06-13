@@ -65,7 +65,7 @@ function PropTable({ rows }) {
 }
 
 // ── Attention Heatmap ──
-function AttentionHeatmap({ tokens, weights }) {
+export function AttentionHeatmap({ tokens, weights }) {
   const [hoveredCell, setHoveredCell] = useState(null);
   return (
     <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start', marginTop: '16px', marginBottom: '20px', overflowX: 'auto' }}>
@@ -259,7 +259,7 @@ function MiniMatrix({ data, label, highlightRow, highlightCol, accentColor = 'va
 }
 
 // ── Full walkthrough ──
-function AttentionWalkthrough({ tokens }) {
+export function AttentionWalkthrough({ tokens }) {
   const dk = 4;
   const [steps] = useState(() => computeAttentionSteps(tokens, dk));
   const [activeStep, setActiveStep] = useState(0);

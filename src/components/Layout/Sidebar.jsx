@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import theme from '../../theme';
-import { CONCEPTS, ARCHITECTURES, getPublishedNavItems } from '../../navigation';
+import { CONCEPTS, ARCHITECTURES, getPublishedNavItems, getDraftNavItems } from '../../navigation';
 
 /* ── Color Palette ── */
 const SB = {
@@ -89,7 +89,7 @@ function NavItem({ label, isActive, isReady = true, onClick, indent = 0, badge, 
         fontSize: '9px',
         fontWeight: 700,
         background: badgeColor === 'accent' ? 'rgba(8,145,178,0.15)' : SB.bgActive,
-        color: badgeColor === 'accent' ? theme.accent : SB.textMuted,
+        color: badgeColor === 'accent' ? theme.accent : (badge === 'Draft' ? '#E59866' : SB.textMuted),
         padding: '2px 7px',
         borderRadius: '4px',
         textTransform: 'uppercase',
@@ -101,12 +101,11 @@ function NavItem({ label, isActive, isReady = true, onClick, indent = 0, badge, 
 }
 
 /* ── Section header toggle ── */
-function SectionToggle({ label, isOpen, onToggle }) {
+function SectionToggle({ label, isOpen, onToggle, isAdminMode, onAddClick }) {
   const [hovered, setHovered] = useState(false);
 
   return (
-    <button
-      onClick={onToggle}
+    <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -114,55 +113,90 @@ function SectionToggle({ label, isOpen, onToggle }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '10px 14px',
-        border: 'none',
         borderRadius: '8px',
         background: hovered ? SB.bgHover : 'transparent',
-        color: hovered ? theme.accent : SB.textBright,
-        fontSize: '11.5px',
-        fontWeight: 700,
-        letterSpacing: '0.1em',
-        textTransform: 'uppercase',
-        cursor: 'pointer',
-        transition: 'background 0.15s ease, color 0.15s ease',
-        textAlign: 'left',
-        fontFamily: 'inherit',
-        outline: 'none',
         marginBottom: '4px',
       }}
     >
-      <span>{label}</span>
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 16 16"
-        fill="none"
+      <button
+        onClick={onToggle}
         style={{
-          transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-          transition: 'transform 0.25s ease',
-          flexShrink: 0,
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '10px 14px',
+          border: 'none',
+          background: 'transparent',
+          color: hovered ? theme.accent : SB.textBright,
+          fontSize: '11.5px',
+          fontWeight: 700,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          cursor: 'pointer',
+          transition: 'color 0.15s ease',
+          textAlign: 'left',
+          fontFamily: 'inherit',
+          outline: 'none',
         }}
       >
-        <path
-          d="M4 6L8 10L12 6"
-          stroke={hovered ? theme.accent : SB.textMuted}
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{ transition: 'stroke 0.15s ease' }}
-        />
-      </svg>
-    </button>
+        <span>{label}</span>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          style={{
+            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform 0.25s ease',
+            flexShrink: 0,
+          }}
+        >
+          <path
+            d="M4 6L8 10L12 6"
+            stroke={hovered ? theme.accent : SB.textMuted}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ transition: 'stroke 0.15s ease' }}
+          />
+        </svg>
+      </button>
+      {isAdminMode && onAddClick && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onAddClick();
+          }}
+          title={`Add new page under ${label}`}
+          style={{
+            padding: '10px 14px',
+            border: 'none',
+            background: 'transparent',
+            color: SB.textMuted,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            outline: 'none',
+            transition: 'color 0.15s ease',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = theme.accent; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = SB.textMuted; }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+      )}
+    </div>
   );
 }
 
 /* ── Subcategory toggle (e.g. Reasoning) ── */
-function SubcategoryToggle({ label, isOpen, isActive, onToggle }) {
+function SubcategoryToggle({ label, isOpen, isActive, onToggle, isAdminMode, onAddClick }) {
   const [hovered, setHovered] = useState(false);
 
   return (
-    <button
-      onClick={onToggle}
+    <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -171,57 +205,93 @@ function SubcategoryToggle({ label, isOpen, isActive, onToggle }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '9px 12px',
-        border: 'none',
         borderRadius: '8px',
         background: hovered ? SB.bgHover : 'transparent',
-        color: isActive ? theme.accent : hovered ? SB.textBright : SB.text,
-        fontSize: '13.5px',
-        fontWeight: 650,
-        cursor: 'pointer',
-        transition: 'background 0.15s ease, color 0.15s ease',
-        textAlign: 'left',
-        fontFamily: 'inherit',
-        outline: 'none',
         marginBottom: '2px',
       }}
     >
-      <span>{label}</span>
-      <svg
-        width="14"
-        height="14"
-        viewBox="0 0 16 16"
-        fill="none"
+      <button
+        onClick={onToggle}
         style={{
-          transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-          transition: 'transform 0.2s ease',
-          flexShrink: 0,
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '9px 12px',
+          border: 'none',
+          background: 'transparent',
+          color: isActive ? theme.accent : hovered ? SB.textBright : SB.text,
+          fontSize: '13.5px',
+          fontWeight: 650,
+          cursor: 'pointer',
+          transition: 'color 0.15s ease',
+          textAlign: 'left',
+          fontFamily: 'inherit',
+          outline: 'none',
         }}
       >
-        <path
-          d="M4 6L8 10L12 6"
-          stroke={isActive ? theme.accent : hovered ? SB.textBright : SB.textMuted}
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{ transition: 'stroke 0.15s ease' }}
-        />
-      </svg>
-    </button>
+        <span>{label}</span>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 16 16"
+          fill="none"
+          style={{
+            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform 0.2s ease',
+            flexShrink: 0,
+          }}
+        >
+          <path
+            d="M4 6L8 10L12 6"
+            stroke={isActive ? theme.accent : hovered ? SB.textBright : SB.textMuted}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ transition: 'stroke 0.15s ease' }}
+          />
+        </svg>
+      </button>
+      {isAdminMode && onAddClick && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onAddClick();
+          }}
+          title={`Add new page under ${label}`}
+          style={{
+            padding: '9px 12px',
+            border: 'none',
+            background: 'transparent',
+            color: SB.textMuted,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            outline: 'none',
+            transition: 'color 0.15s ease',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = theme.accent; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = SB.textMuted; }}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+      )}
+    </div>
   );
 }
 
-
-export default function Sidebar({ selectedModel, onSelectModel, width = 280, collapsed = false, onToggleCollapse }) {
-  const isConcept = selectedModel.startsWith('concept:') || selectedModel.startsWith('__pub__/concepts/');
+export default function Sidebar({ selectedModel, onSelectModel, width = 280, collapsed = false, onToggleCollapse, isAdminMode = false, onCreateNewPage }) {
+  const isConcept = selectedModel ? (selectedModel.startsWith('concept:') || selectedModel.startsWith('__pub__/concepts/') || selectedModel.startsWith('__draft__/itseze-draft-')) : false;
   
   const [lastSelectedModel, setLastSelectedModel] = useState(selectedModel);
   const [archOpen, setArchOpen] = useState(!isConcept);
   const [conceptsOpen, setConceptsOpen] = useState(isConcept);
   const [reasoningSubOpen, setReasoningSubOpen] = useState(() => {
+    if (!selectedModel) return false;
     return CONCEPTS.some(
       c => c.children && c.children.some(child => selectedModel === child.route)
-    ) || selectedModel.includes('/reasoning/') || selectedModel.includes('/prompting/');
+    ) || selectedModel.includes('/reasoning/') || selectedModel.includes('/prompting/') || selectedModel.includes('reasoning') || selectedModel.includes('prompting');
   });
   const [collapseBtnHovered, setCollapseBtnHovered] = useState(false);
 
@@ -230,30 +300,34 @@ export default function Sidebar({ selectedModel, onSelectModel, width = 280, col
     setLastSelectedModel(selectedModel);
     if (isConcept) {
       setConceptsOpen(true);
-      const hasChildActive = CONCEPTS.some(
+      const hasChildActive = selectedModel && CONCEPTS.some(
         c => c.children && c.children.some(child => selectedModel === child.route)
       );
-      // Also expand for published pages under reasoning/prompting
-      if (hasChildActive || selectedModel.includes('/reasoning/') || selectedModel.includes('/prompting/')) {
+      if (hasChildActive || (selectedModel && (selectedModel.includes('/reasoning/') || selectedModel.includes('/prompting/') || selectedModel.includes('reasoning') || selectedModel.includes('prompting')))) {
         setReasoningSubOpen(true);
       }
     } else {
-      setArchOpen(true);
+      if (selectedModel) {
+        setArchOpen(true);
+      }
     }
   }
 
   const renderConceptsList = () => {
     const rendered = [];
     const publishedItems = getPublishedNavItems();
+    const draftItems = isAdminMode ? getDraftNavItems() : [];
 
     CONCEPTS.forEach((c) => {
       if (c.children) {
         // Merge published pages that belong to this subcategory
         const subcatName = c.name; // e.g. 'Reasoning', 'Prompting'
         const pubChildren = publishedItems.filter(p => p.parentCategory === subcatName);
+        const draftChildren = draftItems.filter(d => d.parentCategory === subcatName);
 
         const isAnyChildActive = c.children.some(child => selectedModel === child.route)
-          || pubChildren.some(p => selectedModel === p.route);
+          || pubChildren.some(p => selectedModel === p.route)
+          || draftChildren.some(d => selectedModel === d.route);
         
         rendered.push(
           <div key={`sub-${c.name}`}>
@@ -262,6 +336,8 @@ export default function Sidebar({ selectedModel, onSelectModel, width = 280, col
               isOpen={reasoningSubOpen}
               isActive={isAnyChildActive}
               onToggle={() => setReasoningSubOpen(!reasoningSubOpen)}
+              isAdminMode={isAdminMode}
+              onAddClick={() => onCreateNewPage?.('concept', c.name)}
             />
 
             <div style={{
@@ -295,17 +371,32 @@ export default function Sidebar({ selectedModel, onSelectModel, width = 280, col
                       badgeColor="accent"
                     />
                   ))}
+                  {draftChildren.map((draft) => (
+                    <NavItem
+                      key={draft.route}
+                      label={draft.name}
+                      isActive={selectedModel === draft.route}
+                      isReady={true}
+                      onClick={() => onSelectModel(draft.route)}
+                      indent={20}
+                      badge="Draft"
+                    />
+                  ))}
                 </div>
               </div>
             </div>
           </div>
         );
       } else {
+        // Flat concept
+        const pubEquivalent = publishedItems.find(p => !p.parentCategory && p.category === 'concept' && selectedModel === p.route);
+        const draftEquivalent = draftItems.find(d => !d.parentCategory && d.category === 'concept' && selectedModel === d.route);
+        
         rendered.push(
           <NavItem
             key={c.name}
             label={c.name}
-            isActive={selectedModel === c.route}
+            isActive={selectedModel === c.route || (pubEquivalent && pubEquivalent.name === c.name) || (draftEquivalent && draftEquivalent.name === c.name)}
             isReady={c.ready}
             onClick={() => onSelectModel(c.route)}
             badge={!c.ready ? 'Soon' : null}
@@ -317,21 +408,42 @@ export default function Sidebar({ selectedModel, onSelectModel, width = 280, col
     // Add flat published concepts (no subcategory) at the end
     const flatPubConcepts = publishedItems.filter(p => !p.parentCategory && p.category !== 'architecture');
     flatPubConcepts.forEach(pub => {
+      // Avoid duplicate listing if it matches standard ready routes
+      if (!CONCEPTS.some(c => c.route === pub.route)) {
+        rendered.push(
+          <NavItem
+            key={pub.route}
+            label={pub.name}
+            isActive={selectedModel === pub.route}
+            isReady={true}
+            onClick={() => onSelectModel(pub.route)}
+            badge={isNew(pub.firstPublishedAt) ? 'New' : null}
+            badgeColor="accent"
+          />
+        );
+      }
+    });
+
+    // Add flat draft concepts at the end
+    const flatDraftConcepts = draftItems.filter(d => !d.parentCategory && d.category !== 'architecture');
+    flatDraftConcepts.forEach(draft => {
       rendered.push(
         <NavItem
-          key={pub.route}
-          label={pub.name}
-          isActive={selectedModel === pub.route}
+          key={draft.route}
+          label={draft.name}
+          isActive={selectedModel === draft.route}
           isReady={true}
-          onClick={() => onSelectModel(pub.route)}
-          badge={isNew(pub.firstPublishedAt) ? 'New' : null}
-          badgeColor="accent"
+          onClick={() => onSelectModel(draft.route)}
+          badge="Draft"
         />
       );
     });
 
     return rendered;
   };
+
+  const draftItems = isAdminMode ? getDraftNavItems() : [];
+  const draftArchitectures = draftItems.filter(d => d.category === 'architecture');
 
   return (
     <aside style={{
@@ -421,6 +533,8 @@ export default function Sidebar({ selectedModel, onSelectModel, width = 280, col
           label="Architecture"
           isOpen={archOpen}
           onToggle={() => setArchOpen(!archOpen)}
+          isAdminMode={isAdminMode}
+          onAddClick={() => onCreateNewPage?.('architecture', '')}
         />
 
         <div style={{
@@ -441,6 +555,16 @@ export default function Sidebar({ selectedModel, onSelectModel, width = 280, col
                   badge={!a.ready ? 'Soon' : null}
                 />
               ))}
+              {draftArchitectures.map((draft) => (
+                <NavItem
+                  key={draft.route}
+                  label={draft.name}
+                  isActive={selectedModel === draft.route}
+                  isReady={true}
+                  onClick={() => onSelectModel(draft.route)}
+                  badge="Draft"
+                />
+              ))}
             </div>
           </div>
         </div>
@@ -451,6 +575,8 @@ export default function Sidebar({ selectedModel, onSelectModel, width = 280, col
             label="Concepts"
             isOpen={conceptsOpen}
             onToggle={() => setConceptsOpen(!conceptsOpen)}
+            isAdminMode={isAdminMode}
+            onAddClick={() => onCreateNewPage?.('concept', '')}
           />
 
           <div style={{

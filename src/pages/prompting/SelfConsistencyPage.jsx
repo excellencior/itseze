@@ -47,7 +47,7 @@ const PATHS = [
   { id: 10, chain: 'Eggs: 16, used: 3+4=7, sold: 9, income: $18', answer: '$18', correct: true },
 ];
 
-function SampleAndVoteWidget() {
+export function SampleAndVoteWidget() {
   const [revealed, setRevealed] = useState([]);
   const [justAdded, setJustAdded] = useState(null);
 

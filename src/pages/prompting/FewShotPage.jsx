@@ -52,7 +52,7 @@ function estimateTokens(text) {
   return Math.ceil(text.length / 3.8);
 }
 
-function DemonstrationBuilderWidget() {
+export function DemonstrationBuilderWidget() {
   const [k, setK] = useState(0);
   const maxCtx = 4096;
 

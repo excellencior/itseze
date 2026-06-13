@@ -35,7 +35,7 @@ function Callout({ type = 'info', children }) {
 
 
 
-function DebuggingLoopSimulator() {
+export function DebuggingLoopSimulator() {
   const [stage, setStage] = useState(0);
 
   const stages = [

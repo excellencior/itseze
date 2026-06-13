@@ -94,7 +94,7 @@ function MiniTable({ rows, draftToken, accepted }) {
   );
 }
 
-function SpecDecodingWalkthrough() {
+export function SpecDecodingWalkthrough() {
   const [step, setStep] = useState(0);
   const STEPS = [
     { title: 'The analogy' },

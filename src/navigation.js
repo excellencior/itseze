@@ -67,7 +67,8 @@ export const CONCEPTS = [
  * scoped to the same category (architectures or concepts).
  */
 export function getPageNeighbors(route) {
-  const isConcept = route.startsWith('concept:') || route.startsWith('__pub__/concepts/');
+  if (!route || typeof route !== 'string') return { prev: null, next: null };
+  const isConcept = route.startsWith('concept:') || route.startsWith('__pub__/concepts/') || route.startsWith('__draft__/');
   const list = isConcept ? CONCEPTS : ARCHITECTURES;
   
   // Flatten concept categories containing nested children
@@ -130,8 +131,49 @@ export function getPublishedNavItems() {
   } catch { return []; }
 }
 
+/**
+ * Reads draft pages from localStorage and returns them as nav items.
+ * Each item has { name, route, ready, isDraft, savedAt, category, subcategory, parentCategory }.
+ */
+export function getDraftNavItems() {
+  const drafts = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('itseze-draft-')) {
+        try {
+          const data = JSON.parse(localStorage.getItem(key));
+          if (data && data.meta) {
+            drafts.push({
+              name: data.meta.title || key.replace('itseze-draft-', ''),
+              route: `__draft__${key}`,
+              ready: true,
+              isDraft: true,
+              savedAt: data.savedAt,
+              category: data.meta.category || 'concept',
+              subcategory: data.meta.subcategory || '',
+              parentCategory: detectParentCategoryForDraft(data.meta.category, data.meta.subcategory)
+            });
+          }
+        } catch { /* */ }
+      }
+    }
+  } catch { /* */ }
+  drafts.sort((a, b) => (b.savedAt || '').localeCompare(a.savedAt || ''));
+  return drafts;
+}
+
+function detectParentCategoryForDraft(category, subcategory) {
+  if (!subcategory) return null;
+  const sub = subcategory.toLowerCase();
+  if (sub === 'reasoning') return 'Reasoning';
+  if (sub === 'prompting') return 'Prompting';
+  return null;
+}
+
 /** Detect which subcategory group a published URL belongs to */
 function detectParentCategory(urlPath) {
+  if (!urlPath || typeof urlPath !== 'string') return null;
   if (urlPath.startsWith('/concepts/reasoning/')) return 'Reasoning';
   if (urlPath.startsWith('/concepts/prompting/')) return 'Prompting';
   if (urlPath.startsWith('/concepts/')) return null; // flat concept
@@ -140,7 +182,7 @@ function detectParentCategory(urlPath) {
 
 /** Get category, subcategory, and publish dates for any route */
 export function getRouteHeaderInfo(route) {
-  if (!route || route === 'gpt3') return null;
+  if (!route || typeof route !== 'string' || route === 'gpt3') return null;
 
   let category = '';
   let subcategory = '';

@@ -42,7 +42,7 @@ const mockKnowledgeBase = [
   { id: 'chunk5', text: 'Large language models process text by converting inputs into token embeddings, then applying attention layers and feed-forward networks. They generate tokens autoregressively from P(x_t | x_{<t}).', keywords: ['models', 'token', 'embeddings', 'ffn', 'autoregressive'], similarity: 0.35 },
 ];
 
-function RagPipelineSimulator() {
+export function RagPipelineSimulator() {
   const [query, setQuery] = useState('What is DeepProbLog and when was it proposed?');
   const [similarityThreshold, setSimilarityThreshold] = useState(0.5);
   const [manualExclusions, setManualExclusions] = useState({});
