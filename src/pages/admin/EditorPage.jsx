@@ -1,5 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import Latex from '../../components/Latex';
+import { BarChart3D, ScatterPlot3D } from '../../components/three';
+import { ARCHITECTURES, CONCEPTS } from '../../navigation';
 import { exportToJSX, exportToJSON } from './exportPage';
 import './editor.css';
 
@@ -12,25 +14,85 @@ const BLOCK_TYPES = [
   { type: 'callout', icon: '💡', label: 'Callout' },
   { type: 'math-box', icon: '∑', label: 'Display Math' },
   { type: 'code-block', icon: '</>', label: 'Code Block' },
+  { type: 'three-scene', icon: '🧊', label: '3D Scene' },
   { type: 'prop-table', icon: '⊞', label: 'Prop Table' },
   { type: 'reference', icon: '📄', label: 'Reference' },
   { type: 'ai-disclosure', icon: '🤖', label: 'AI Note' },
 ];
 
-const CATEGORIES = [
-  { value: 'concept', label: 'Concept' },
-  { value: 'reasoning', label: 'Reasoning' },
-  { value: 'prompting', label: 'Prompting' },
-  { value: 'architecture', label: 'Architecture' },
-];
+/* ═══════════════════════════════════════════
+ *  Section / Subsection hierarchy from navigation.js
+ * ═══════════════════════════════════════════ */
+function buildSectionTree() {
+  // Build: Architecture (flat), Concepts (flat items + grouped children)
+  const sections = [
+    {
+      key: 'architecture',
+      label: 'Architectures',
+      items: ARCHITECTURES.map(a => ({ name: a.name, route: a.route })),
+      children: [],
+    },
+    {
+      key: 'concept',
+      label: 'Concepts',
+      items: [],
+      children: [],
+    },
+  ];
 
-const SUBCATEGORIES = {
-  reasoning: ['Symbolic', 'Probabilistic', 'Neural', 'Neuro-Symbolic', 'Chain-of-Thought', 'RAG', 'Program Synthesis'],
-  prompting: ['Zero-Shot', 'Few-Shot', 'CoT', 'Zero-CoT', 'Least-to-Most', 'Self-Consistency'],
-};
+  const conceptSection = sections[1];
+  CONCEPTS.forEach(item => {
+    if (item.children) {
+      conceptSection.children.push({
+        key: item.name.toLowerCase().replace(/\s+/g, '-'),
+        label: item.name,
+        items: item.children.map(c => ({ name: c.name, route: c.route })),
+      });
+    } else {
+      conceptSection.items.push({ name: item.name, route: item.route });
+    }
+  });
+
+  return sections;
+}
+
+const SECTION_TREE = buildSectionTree();
 
 let _idCounter = 0;
 function uid() { return `b-${++_idCounter}-${Date.now()}`; }
+
+/** Convert a route key like 'concept:reasoning-symbolic' → '/concepts/reasoning/symbolic' */
+function routeKeyToPath(routeKey) {
+  if (!routeKey) return null;
+  if (!routeKey.startsWith('concept:')) return `/${routeKey}`;
+  const rest = routeKey.replace('concept:', '');
+  // subcategory patterns: reasoning-X, prompting-X
+  const subMatch = rest.match(/^(reasoning|prompting)-(.+)$/);
+  if (subMatch) return `/concepts/${subMatch[1]}/${subMatch[2]}`;
+  return `/concepts/${rest}`;
+}
+
+const THREE_SCENE_TYPES = [
+  { value: 'bar-chart', label: 'Bar Chart 3D' },
+  { value: 'scatter-plot', label: 'Scatter Plot 3D' },
+];
+
+const DEFAULT_THREE_DATA = {
+  'bar-chart': JSON.stringify([
+    { label: 'A', value: 0.8, color: '#6366f1' },
+    { label: 'B', value: 0.6, color: '#3b82f6' },
+    { label: 'C', value: 0.9, color: '#10b981' },
+  ], null, 2),
+  'scatter-plot': JSON.stringify({
+    points: [
+      { label: 'king', position: [1.2, 1.5, 0], color: '#6366f1' },
+      { label: 'queen', position: [1.0, 1.3, 0.5], color: '#a855f7' },
+      { label: 'man', position: [-0.5, 0.2, 0], color: '#3b82f6' },
+      { label: 'woman', position: [-0.7, 0.0, 0.5], color: '#ec4899' },
+    ],
+    connections: [[0, 1], [2, 3]],
+  }, null, 2),
+};
 
 function createBlock(type) {
   const base = { type, id: uid() };
@@ -40,6 +102,7 @@ function createBlock(type) {
     case 'callout':        return { ...base, calloutType: 'key', content: '' };
     case 'math-box':       return { ...base, expression: '' };
     case 'code-block':     return { ...base, label: '', content: '' };
+    case 'three-scene':    return { ...base, sceneType: 'bar-chart', data: DEFAULT_THREE_DATA['bar-chart'], height: 280, hint: 'Drag to rotate · Scroll to zoom' };
     case 'prop-table':     return { ...base, rows: [['', '']] };
     case 'reference':      return { ...base, title: '', url: '', authors: '', venue: '', year: '', description: '' };
     case 'ai-disclosure':  return { ...base, content: 'This post was written with the help of AI. All content has been reviewed, verified against the original papers, and checked to ensure it is accurate and up to date.' };
@@ -53,14 +116,31 @@ function createBlock(type) {
 function PreviewSection({ title, children }) {
   return (
     <div style={{ marginBottom: '48px', scrollMarginTop: '24px' }}>
-      <h2 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '16px', letterSpacing: '-0.5px' }}>{title}</h2>
+      <h2 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '16px', letterSpacing: '-0.5px', color: '#111827' }}>{title}</h2>
       {children}
     </div>
   );
 }
 
+/**
+ * Converts editor content strings containing HTML tags + <Highlight> into
+ * safe HTML that can be rendered via dangerouslySetInnerHTML.
+ * Replaces <Highlight>...</Highlight> with styled <span> matching the project component.
+ */
+function richContentToHtml(raw) {
+  if (!raw) return '';
+  // Convert <Highlight>...</Highlight> to styled spans
+  return raw.replace(
+    /<Highlight>(.*?)<\/Highlight>/g,
+    '<span style="background:rgba(8,145,178,0.2);border-bottom:2px solid #0891B2;padding:1px 4px">$1</span>'
+  );
+}
+
 function PreviewP({ children }) {
-  return <p style={{ fontSize: '15px', lineHeight: 1.75, color: '#333', marginBottom: '16px' }}>{children}</p>;
+  if (typeof children === 'string') {
+    return <p style={{ fontSize: '15px', lineHeight: 1.75, color: '#374151', marginBottom: '16px' }} dangerouslySetInnerHTML={{ __html: richContentToHtml(children) }} />;
+  }
+  return <p style={{ fontSize: '15px', lineHeight: 1.75, color: '#374151', marginBottom: '16px' }}>{children}</p>;
 }
 
 function PreviewCallout({ type = 'info', children }) {
@@ -71,13 +151,85 @@ function PreviewCallout({ type = 'info', children }) {
     accent:  { bg: 'rgba(8,145,178,0.08)', border: '#0891B2', icon: '↩' },
   };
   const c = colors[type] || colors.info;
+  if (typeof children === 'string') {
+    return (
+      <div style={{
+        background: c.bg, borderLeft: `4px solid ${c.border}`,
+        padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0',
+        fontSize: '14px', lineHeight: 1.6, color: '#374151',
+      }}>
+        <span style={{ marginRight: '8px' }}>{c.icon}</span>
+        <span dangerouslySetInnerHTML={{ __html: richContentToHtml(children) }} />
+      </div>
+    );
+  }
   return (
     <div style={{
       background: c.bg, borderLeft: `4px solid ${c.border}`,
       padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0',
-      fontSize: '14px', lineHeight: 1.6, color: '#333',
+      fontSize: '14px', lineHeight: 1.6, color: '#374151',
     }}>
       <span style={{ marginRight: '8px' }}>{c.icon}</span>{children}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+ *  Rich Text Area with Formatting Toolbar
+ * ═══════════════════════════════════════════ */
+function RichTextArea({ value, onChange, placeholder, rows = 4 }) {
+  const textareaRef = useRef(null);
+
+  const wrapSelection = (before, after) => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const selected = value.substring(start, end);
+    const newValue =
+      value.substring(0, start) +
+      before + selected + after +
+      value.substring(end);
+    onChange(newValue);
+    // Restore cursor after the wrapped text
+    requestAnimationFrame(() => {
+      ta.focus();
+      const newCursor = start + before.length + selected.length + after.length;
+      ta.setSelectionRange(newCursor, newCursor);
+    });
+  };
+
+  const FORMAT_BUTTONS = [
+    { label: 'B', title: 'Bold', before: '<strong>', after: '</strong>', style: { fontWeight: 800 } },
+    { label: 'I', title: 'Italic', before: '<em>', after: '</em>', style: { fontStyle: 'italic' } },
+    { label: 'U', title: 'Underline', before: '<u>', after: '</u>', style: { textDecoration: 'underline' } },
+    { label: 'H', title: 'Highlight', before: '<Highlight>', after: '</Highlight>', style: { background: 'rgba(8,145,178,0.25)', borderBottom: '2px solid #0891B2', padding: '0 2px' } },
+  ];
+
+  return (
+    <div>
+      <div className="rich-toolbar">
+        {FORMAT_BUTTONS.map(btn => (
+          <button
+            key={btn.label}
+            type="button"
+            className="rich-toolbar-btn"
+            title={btn.title}
+            onClick={() => wrapSelection(btn.before, btn.after)}
+            style={btn.style}
+          >
+            {btn.label}
+          </button>
+        ))}
+        <span className="rich-toolbar-hint">Select text, then click to wrap</span>
+      </div>
+      <textarea
+        ref={textareaRef}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        rows={rows}
+      />
     </div>
   );
 }
@@ -95,10 +247,86 @@ function SectionEditor({ block, onChange }) {
 }
 
 function ParagraphEditor({ block, onChange }) {
+  const [expanded, setExpanded] = useState(false);
+  const textareaRef = useRef(null);
+
+  const wrapSelection = (before, after) => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const selected = block.content.substring(start, end);
+    const newValue =
+      block.content.substring(0, start) +
+      before + selected + after +
+      block.content.substring(end);
+    onChange({ ...block, content: newValue });
+    requestAnimationFrame(() => {
+      ta.focus();
+      const newCursor = start + before.length + selected.length + after.length;
+      ta.setSelectionRange(newCursor, newCursor);
+    });
+  };
+
+  const FORMAT_BUTTONS = [
+    { label: 'B', title: 'Bold', before: '<strong>', after: '</strong>', style: { fontWeight: 800 } },
+    { label: 'I', title: 'Italic', before: '<em>', after: '</em>', style: { fontStyle: 'italic' } },
+    { label: 'U', title: 'Underline', before: '<u>', after: '</u>', style: { textDecoration: 'underline' } },
+    { label: 'H', title: 'Highlight', before: '<Highlight>', after: '</Highlight>', style: { background: 'rgba(8,145,178,0.25)', borderBottom: '2px solid #0891B2', padding: '0 2px' } },
+  ];
+
+  if (expanded) {
+    return (
+      <div className="block-fullscreen">
+        <div className="block-fullscreen-header">
+          <span className="block-fullscreen-title">¶ Paragraph Editor</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div className="rich-toolbar" style={{ marginBottom: 0 }}>
+              {FORMAT_BUTTONS.map(btn => (
+                <button
+                  key={btn.label}
+                  type="button"
+                  className="rich-toolbar-btn"
+                  title={btn.title}
+                  onClick={() => wrapSelection(btn.before, btn.after)}
+                  style={btn.style}
+                >{btn.label}</button>
+              ))}
+            </div>
+            <button className="block-fullscreen-close" onClick={() => setExpanded(false)}>✕ Close</button>
+          </div>
+        </div>
+        <div className="block-fullscreen-body">
+          <textarea
+            ref={textareaRef}
+            className="block-fullscreen-textarea prose-input"
+            value={block.content}
+            onChange={e => onChange({ ...block, content: e.target.value })}
+            placeholder="Write your paragraph content here..."
+            autoFocus
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="block-card-body">
-      <div className="field-label">Content (supports inline HTML + {'<Latex math="..." />'})</div>
-      <textarea value={block.content} onChange={e => onChange({ ...block, content: e.target.value })} placeholder="Write paragraph text here..." rows={4} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="field-label" style={{ margin: 0 }}>Content</div>
+        <button
+          className="block-action-btn"
+          onClick={() => setExpanded(true)}
+          title="Expand to fullscreen editor"
+          style={{ fontSize: '10px', width: 'auto', height: 'auto', padding: '2px 8px', fontWeight: 700 }}
+        >⛶ Expand</button>
+      </div>
+      <RichTextArea
+        value={block.content}
+        onChange={content => onChange({ ...block, content })}
+        placeholder="Write paragraph text here..."
+        rows={4}
+      />
     </div>
   );
 }
@@ -114,21 +342,61 @@ function CalloutEditor({ block, onChange }) {
         <option value="accent">↩ Accent</option>
       </select>
       <div className="field-label">Content</div>
-      <textarea value={block.content} onChange={e => onChange({ ...block, content: e.target.value })} placeholder="Callout content..." rows={3} />
+      <RichTextArea
+        value={block.content}
+        onChange={content => onChange({ ...block, content })}
+        placeholder="Callout content..."
+        rows={3}
+      />
     </div>
   );
 }
 
 function MathBoxEditor({ block, onChange }) {
+  const [expanded, setExpanded] = useState(false);
+
+  if (expanded) {
+    return (
+      <div className="block-fullscreen">
+        <div className="block-fullscreen-header">
+          <span className="block-fullscreen-title">∑ LaTeX Editor</span>
+          <button className="block-fullscreen-close" onClick={() => setExpanded(false)} title="Close fullscreen">✕ Close</button>
+        </div>
+        <div className="block-fullscreen-body">
+          <textarea
+            className="block-fullscreen-textarea"
+            value={block.expression}
+            onChange={e => onChange({ ...block, expression: e.target.value })}
+            placeholder={"\\begin{equation}\n  \\text{your expression here}\n\\end{equation}"}
+            autoFocus
+          />
+          <div className="block-fullscreen-preview">
+            <div className="block-fullscreen-preview-label">Live Preview</div>
+            <div className="block-fullscreen-preview-content">
+              {block.expression ? (
+                <Latex math={block.expression} block />
+              ) : (
+                <span style={{ color: '#52525b', fontStyle: 'italic', fontSize: '13px' }}>Preview appears here...</span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="block-card-body">
-      <div className="field-label">LaTeX Expression</div>
-      <textarea className="math-input" value={block.expression} onChange={e => onChange({ ...block, expression: e.target.value })} placeholder="\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right) V" rows={2} />
-      {block.expression && (
-        <div style={{ marginTop: '8px', padding: '10px 14px', background: '#1a1a22', borderRadius: '4px', textAlign: 'center' }}>
-          <Latex math={block.expression} />
-        </div>
-      )}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="field-label" style={{ margin: 0 }}>LaTeX Expression</div>
+        <button
+          className="block-action-btn"
+          onClick={() => setExpanded(true)}
+          title="Expand to fullscreen editor"
+          style={{ fontSize: '10px', width: 'auto', height: 'auto', padding: '2px 8px', fontWeight: 700 }}
+        >⛶ Expand</button>
+      </div>
+      <textarea className="math-input" value={block.expression} onChange={e => onChange({ ...block, expression: e.target.value })} placeholder="\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right) V" rows={2} style={{ marginTop: '4px' }} />
     </div>
   );
 }
@@ -205,12 +473,93 @@ function AIDisclosureEditor({ block, onChange }) {
   );
 }
 
+function ThreeSceneEditor({ block, onChange }) {
+  const [dataError, setDataError] = useState(null);
+  const [parsedData, setParsedData] = useState(() => {
+    try { return JSON.parse(block.data); } catch { return null; }
+  });
+
+  const handleDataChange = (raw) => {
+    onChange({ ...block, data: raw });
+    try {
+      const parsed = JSON.parse(raw);
+      setParsedData(parsed);
+      setDataError(null);
+    } catch (e) {
+      setDataError(e.message);
+      setParsedData(null);
+    }
+  };
+
+  const handleSceneTypeChange = (newType) => {
+    onChange({
+      ...block,
+      sceneType: newType,
+      data: DEFAULT_THREE_DATA[newType] || '[]',
+    });
+    try { setParsedData(JSON.parse(DEFAULT_THREE_DATA[newType])); setDataError(null); } catch { /* */ }
+  };
+
+  return (
+    <div className="block-card-body">
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+        <div style={{ flex: 1 }}>
+          <div className="field-label">Scene Type</div>
+          <select
+            className="callout-type-select"
+            value={block.sceneType}
+            onChange={e => handleSceneTypeChange(e.target.value)}
+            style={{ width: '100%' }}
+          >
+            {THREE_SCENE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
+        </div>
+        <div style={{ width: '80px' }}>
+          <div className="field-label">Height</div>
+          <input type="text" value={block.height} onChange={e => onChange({ ...block, height: parseInt(e.target.value) || 280 })} />
+        </div>
+      </div>
+      <div className="field-label">Hint Text</div>
+      <input type="text" value={block.hint || ''} onChange={e => onChange({ ...block, hint: e.target.value })} placeholder="Drag to rotate · Scroll to zoom" />
+      <div className="field-label">Data (JSON)</div>
+      <textarea
+        className="math-input"
+        value={block.data}
+        onChange={e => handleDataChange(e.target.value)}
+        rows={6}
+        style={dataError ? { borderColor: '#ef4444' } : {}}
+      />
+      {dataError && (
+        <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '4px' }}>⚠ {dataError}</div>
+      )}
+
+      {/* Live 3D preview inside the editor card */}
+      {parsedData && (
+        <div style={{ marginTop: '10px', borderRadius: '6px', overflow: 'hidden', border: '1px solid #27272a' }}>
+          {block.sceneType === 'bar-chart' && Array.isArray(parsedData) && (
+            <BarChart3D data={parsedData} height={Math.min(block.height || 280, 220)} hint={block.hint} />
+          )}
+          {block.sceneType === 'scatter-plot' && parsedData.points && (
+            <ScatterPlot3D
+              points={parsedData.points}
+              connections={parsedData.connections}
+              height={Math.min(block.height || 280, 220)}
+              hint={block.hint}
+            />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const BLOCK_EDITORS = {
   'section':        SectionEditor,
   'paragraph':      ParagraphEditor,
   'callout':        CalloutEditor,
   'math-box':       MathBoxEditor,
   'code-block':     CodeBlockEditor,
+  'three-scene':    ThreeSceneEditor,
   'prop-table':     PropTableEditor,
   'reference':      ReferenceEditor,
   'ai-disclosure':  AIDisclosureEditor,
@@ -226,6 +575,7 @@ function BlockCard({ block, index, onChange, onDelete, onMoveUp, onMoveDown, onD
   return (
     <div
       className={`block-card${isDragging ? ' dragging' : ''}${isDragOver ? ' drag-over' : ''}`}
+      data-block-id={block.id}
       draggable
       onDragStart={e => onDragStart(e, index)}
       onDragOver={e => onDragOver(e, index)}
@@ -248,44 +598,47 @@ function BlockCard({ block, index, onChange, onDelete, onMoveUp, onMoveDown, onD
 /* ═══════════════════════════════════════════
  *  Live Preview Renderer
  * ═══════════════════════════════════════════ */
-function LivePreview({ meta, blocks }) {
+function LivePreview({ meta, blocks, onScrollToBlock }) {
   const categoryLabel = meta.subcategory || (meta.category === 'concept' ? 'Concept' : meta.category === 'reasoning' ? 'Reasoning' : meta.category === 'prompting' ? 'Prompting' : 'Architecture');
 
-  // Group blocks into sections for rendering
-  const renderBlocks = [];
-  let currentSectionChildren = null;
+  // Wrap a preview element with a double-click handler that scrolls to the editor block
+  const wrapBlock = (blockId, element) => {
+    if (!element) return null;
+    return (
+      <div
+        key={blockId}
+        className="preview-block-wrapper"
+        onDoubleClick={() => onScrollToBlock?.(blockId)}
+        title="Double-click to jump to editor"
+      >
+        {element}
+      </div>
+    );
+  };
 
-  blocks.forEach((block, idx) => {
-    if (block.type === 'section') {
-      if (currentSectionChildren !== null) {
-        renderBlocks.push({ type: '_section_end' });
-      }
-      renderBlocks.push({ type: '_section_start', title: block.title || 'Untitled' });
-      currentSectionChildren = [];
-    } else {
-      renderBlocks.push(block);
-    }
-  });
-  if (currentSectionChildren !== null) {
-    renderBlocks.push({ type: '_section_end' });
-  }
+  // Separate references and ai-disclosure from content blocks
+  const contentBlocks = blocks.filter(b => b.type !== 'reference' && b.type !== 'ai-disclosure');
+  const refBlocks = blocks.filter(b => b.type === 'reference');
+  const disclosureBlock = blocks.find(b => b.type === 'ai-disclosure');
 
-  let sectionDepth = 0;
+  // Group content blocks into sections
   const elements = [];
   let sectionKey = 0;
   let sectionChildren = [];
+  let currentTitle = '';
 
   const flushSection = (title) => {
-    elements.push(
-      <PreviewSection key={`sec-${sectionKey++}`} title={title}>
-        {sectionChildren}
-      </PreviewSection>
-    );
-    sectionChildren = [];
+    if (title || sectionChildren.length > 0) {
+      elements.push(
+        <PreviewSection key={`sec-${sectionKey++}`} title={title}>
+          {sectionChildren}
+        </PreviewSection>
+      );
+      sectionChildren = [];
+    }
   };
 
-  let currentTitle = '';
-  blocks.forEach((block, idx) => {
+  contentBlocks.forEach((block, idx) => {
     if (block.type === 'section') {
       if (sectionChildren.length > 0 || currentTitle) {
         flushSection(currentTitle);
@@ -296,10 +649,11 @@ function LivePreview({ meta, blocks }) {
 
     const el = renderPreviewBlock(block, idx);
     if (el) {
+      const wrapped = wrapBlock(block.id, el);
       if (currentTitle) {
-        sectionChildren.push(el);
+        sectionChildren.push(wrapped);
       } else {
-        elements.push(el);
+        elements.push(wrapped);
       }
     }
   });
@@ -314,14 +668,49 @@ function LivePreview({ meta, blocks }) {
         <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#9CA3AF', marginBottom: '8px' }}>
           {categoryLabel}
         </div>
-        <h1 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-1px', marginBottom: '12px', color: '#111' }}>
+        <h1 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-1px', marginBottom: '12px', color: '#111827' }}>
           {meta.title || 'Page Title'}
         </h1>
         <p style={{ fontSize: '16px', color: '#6B7280', lineHeight: 1.6 }}>
           {meta.subtitle || 'Page subtitle goes here...'}
         </p>
       </div>
+
+      {/* Content sections */}
       {elements}
+
+      {/* References section */}
+      {refBlocks.length > 0 && (
+        <PreviewSection title="References & Further Reading">
+          <ul style={{ fontSize: '14px', lineHeight: 2, color: '#4b5563', paddingLeft: '20px', listStyle: 'disc' }}>
+            {refBlocks.map((ref, i) => (
+              <li key={`ref-${i}`} style={{ marginBottom: '4px' }}>
+                <a
+                  href={ref.url || '#'}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: '#0891B2', fontWeight: 600, textDecoration: 'none' }}
+                >
+                  {ref.title || 'Paper Title'}
+                </a>
+                {' '}by {ref.authors || '...'}, {ref.venue || '...'} {ref.year || ''}.{' '}
+                {ref.description || ''}
+              </li>
+            ))}
+          </ul>
+        </PreviewSection>
+      )}
+
+      {/* AI Disclosure */}
+      {disclosureBlock && (
+        <div style={{
+          marginTop: '32px', padding: '16px 20px', background: '#F8F8F8',
+          border: '1px solid #e5e7eb', borderRadius: '4px', fontSize: '13px',
+          color: '#6B7280', lineHeight: 1.6,
+        }}>
+          <strong style={{ color: '#4b5563' }}>A note on this article:</strong> {disclosureBlock.content}
+        </div>
+      )}
     </div>
   );
 }
@@ -336,8 +725,8 @@ function renderPreviewBlock(block, idx) {
 
     case 'math-box':
       return block.expression ? (
-        <div key={idx} style={{ padding: '16px 14px', textAlign: 'center', margin: '16px 0', background: '#f8f8f8', border: '1px solid #e5e7eb', borderRadius: '4px' }}>
-          <Latex math={block.expression} />
+        <div key={idx} style={{ padding: '16px 14px', textAlign: 'center', margin: '16px 0', background: '#f8f9fa', border: '1px solid #e5e7eb', borderRadius: '4px', color: '#111' }}>
+          <Latex math={block.expression} block />
         </div>
       ) : null;
 
@@ -362,12 +751,12 @@ function renderPreviewBlock(block, idx) {
       const rows = (block.rows || []).filter(([k, v]) => k || v);
       if (rows.length === 0) return null;
       return (
-        <table key={idx} style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px', fontSize: '13px', border: '1px solid #e5e7eb' }}>
+        <table key={idx} style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px', fontSize: '13px', border: '1px solid #e5e7eb', color: '#374151' }}>
           <tbody>
             {rows.map(([k, v], i) => (
               <tr key={i}>
-                <td style={{ padding: '8px 12px', fontWeight: 700, borderBottom: '1px solid #e5e7eb', width: '40%', background: '#FAFAFA' }}>{k}</td>
-                <td style={{ padding: '8px 12px', borderBottom: '1px solid #e5e7eb' }}>{v}</td>
+                <td style={{ padding: '8px 12px', fontWeight: 700, borderBottom: '1px solid #e5e7eb', width: '40%', background: '#F9FAFB', color: '#1f2937' }}>{k}</td>
+                <td style={{ padding: '8px 12px', borderBottom: '1px solid #e5e7eb', color: '#374151' }}>{v}</td>
               </tr>
             ))}
           </tbody>
@@ -376,24 +765,10 @@ function renderPreviewBlock(block, idx) {
     }
 
     case 'reference':
-      return (
-        <div key={idx} style={{ padding: '8px 0', fontSize: '14px', color: '#6B7280', lineHeight: 1.8 }}>
-          <a href={block.url || '#'} target="_blank" rel="noreferrer" style={{ color: '#0891B2', fontWeight: 600, textDecoration: 'none' }}>
-            {block.title || 'Paper Title'}
-          </a>{' '}by {block.authors || '...'}, {block.venue || '...'} {block.year || ''}. {block.description || ''}
-        </div>
-      );
+      return null;  // handled by LivePreview grouping
 
     case 'ai-disclosure':
-      return (
-        <div key={idx} style={{
-          marginTop: '32px', padding: '16px 20px', background: '#F8F8F8',
-          border: '1px solid #e5e7eb', borderRadius: '4px', fontSize: '13px',
-          color: '#9CA3AF', lineHeight: 1.6,
-        }}>
-          <strong style={{ color: '#6B7280' }}>A note on this article:</strong> {block.content}
-        </div>
-      );
+      return null;  // handled by LivePreview footer
 
     default:
       return null;
@@ -474,61 +849,79 @@ export default function EditorPage() {
   };
 
   // ── Persistence ──
-  const saveToStorage = () => {
-    const key = meta.route || 'itseze-editor-draft';
-    localStorage.setItem(`itseze-editor-${key}`, JSON.stringify({ meta, blocks }));
-    flash('✓ Saved to localStorage');
+  const saveDraft = () => {
+    const slug = meta.title
+      ? meta.title.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, '-')
+      : 'untitled';
+    const key = `itseze-draft-${slug}`;
+    const payload = {
+      meta,
+      blocks,
+      savedAt: new Date().toISOString(),
+    };
+    localStorage.setItem(key, JSON.stringify(payload));
+    flash('✓ Draft saved');
   };
 
-  const loadFromStorage = () => {
-    const key = meta.route || 'itseze-editor-draft';
-    const data = localStorage.getItem(`itseze-editor-${key}`);
-    if (data) {
-      try {
-        const parsed = JSON.parse(data);
-        setMeta(parsed.meta || meta);
-        setBlocks(parsed.blocks || []);
-        flash('✓ Loaded from localStorage');
-      } catch { flash('✗ Failed to parse saved data'); }
-    } else {
-      flash('No saved data found');
-    }
+  // ── Publish ──
+  const publishPage = () => {
+    if (!meta.title) { flash('✗ Add a title before publishing'); return; }
+    if (blocks.length === 0) { flash('✗ Add some content before publishing'); return; }
+
+    const urlPath = routeKeyToPath(meta.route);
+    if (!urlPath) { flash('✗ Cannot determine URL path'); return; }
+
+    // Load existing published pages
+    let published = {};
+    try { published = JSON.parse(localStorage.getItem('itseze-published') || '{}'); } catch { /* */ }
+
+    published[urlPath] = {
+      meta: { ...meta, ready: true },
+      blocks,
+      publishedAt: new Date().toISOString(),
+    };
+
+    localStorage.setItem('itseze-published', JSON.stringify(published));
+    flash(`✓ Published at ${urlPath}`);
   };
 
-  // ── Export ──
-  const handleExportJSX = () => {
-    const jsx = exportToJSX({ meta, blocks });
-    navigator.clipboard.writeText(jsx).then(() => flash('✓ JSX copied to clipboard'));
-  };
-
-  const handleExportJSON = () => {
-    const json = exportToJSON({ meta, blocks });
-    navigator.clipboard.writeText(json).then(() => flash('✓ JSON copied to clipboard'));
-  };
-
-  // ── List saved drafts ──
   const [savedDrafts, setSavedDrafts] = useState([]);
   useEffect(() => {
     const drafts = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && key.startsWith('itseze-editor-')) {
-        drafts.push(key.replace('itseze-editor-', ''));
+      if (key && key.startsWith('itseze-draft-')) {
+        try {
+          const data = JSON.parse(localStorage.getItem(key));
+          drafts.push({
+            key,
+            title: data.meta?.title || key.replace('itseze-draft-', ''),
+            savedAt: data.savedAt,
+          });
+        } catch {
+          drafts.push({ key, title: key.replace('itseze-draft-', ''), savedAt: '' });
+        }
       }
     }
+    drafts.sort((a, b) => (b.savedAt || '').localeCompare(a.savedAt || ''));
     setSavedDrafts(drafts);
   }, [toast]); // refresh on save
 
   const loadDraft = (draftKey) => {
-    const data = localStorage.getItem(`itseze-editor-${draftKey}`);
+    const data = localStorage.getItem(draftKey);
     if (data) {
       try {
         const parsed = JSON.parse(data);
         setMeta(parsed.meta || {});
         setBlocks(parsed.blocks || []);
-        flash(`✓ Loaded: ${draftKey}`);
+        flash(`✓ Loaded draft`);
       } catch { flash('✗ Failed to parse'); }
     }
+  };
+
+  const deleteDraft = (draftKey) => {
+    localStorage.removeItem(draftKey);
+    flash('✓ Draft deleted');
   };
 
   return (
@@ -541,26 +934,13 @@ export default function EditorPage() {
         <input className="title-input" type="text" value={meta.title} onChange={e => setMeta(prev => ({ ...prev, title: e.target.value }))} placeholder="Page title" />
         <input className="subtitle-input" type="text" value={meta.subtitle} onChange={e => setMeta(prev => ({ ...prev, subtitle: e.target.value }))} placeholder="Subtitle" />
 
-        <select value={meta.category} onChange={e => setMeta(prev => ({ ...prev, category: e.target.value, subcategory: '' }))}>
-          {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-        </select>
-
-        {SUBCATEGORIES[meta.category] && (
-          <select value={meta.subcategory} onChange={e => setMeta(prev => ({ ...prev, subcategory: e.target.value }))}>
-            <option value="">No subcategory</option>
-            {SUBCATEGORIES[meta.category].map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-        )}
-
         <div className="toolbar-separator" />
 
         <button className="toolbar-btn" onClick={() => setShowPreview(p => !p)}>
           {showPreview ? '◨ Hide Preview' : '◧ Show Preview'}
         </button>
-        <button className="toolbar-btn" onClick={saveToStorage}>💾 Save</button>
-        <button className="toolbar-btn" onClick={loadFromStorage}>📂 Load</button>
-        <button className="toolbar-btn" onClick={handleExportJSON}>{ } JSON</button>
-        <button className="toolbar-btn primary" onClick={handleExportJSX}>⬇ Export JSX</button>
+        <button className="toolbar-btn" onClick={saveDraft}>💾 Save Draft</button>
+        <button className="toolbar-btn primary" onClick={publishPage}>▲ Publish</button>
       </div>
 
       {/* ── Main Body ── */}

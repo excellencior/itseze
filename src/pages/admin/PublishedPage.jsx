@@ -1,0 +1,219 @@
+import { useMemo } from 'react';
+import Latex from '../../components/Latex';
+import Highlight from '../../components/Highlight';
+import { BarChart3D, ScatterPlot3D } from '../../components/three';
+
+/**
+ * Renders a published page from localStorage block data.
+ * Mirrors the real page styling used across the site.
+ */
+
+/* ── Rich content parser ── */
+function RichText({ content }) {
+  if (!content) return null;
+  // Convert <Highlight>...</Highlight> to styled spans for dangerouslySetInnerHTML
+  const html = content.replace(
+    /<Highlight>(.*?)<\/Highlight>/g,
+    '<span style="background:var(--accent-20);border-bottom:2px solid var(--accent);padding:1px 4px">$1</span>'
+  );
+  return <span dangerouslySetInnerHTML={{ __html: html }} />;
+}
+
+/* ── Section wrapper ── */
+function Section({ id, title, children }) {
+  return (
+    <div id={id} data-section style={{ marginBottom: '48px', scrollMarginTop: '24px' }}>
+      <h2 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '16px', letterSpacing: '-0.5px' }}>{title}</h2>
+      {children}
+    </div>
+  );
+}
+
+/* ── Block Renderer ── */
+function renderBlock(block, idx) {
+  switch (block.type) {
+    case 'paragraph':
+      return (
+        <p key={idx} style={{ fontSize: 'var(--font-size)', lineHeight: 1.75, color: 'var(--text-muted)', marginBottom: '14px' }}>
+          <RichText content={block.content} />
+        </p>
+      );
+
+    case 'callout': {
+      const colors = {
+        info:    { bg: '#EFF6FF', border: '#3B82F6', icon: 'ℹ️' },
+        warning: { bg: '#FFF7ED', border: '#F59E0B', icon: '⚠️' },
+        key:     { bg: '#F0FDF4', border: '#10B981', icon: '💡' },
+        accent:  { bg: 'rgba(8,145,178,0.08)', border: '#0891B2', icon: '↩' },
+      };
+      const c = colors[block.calloutType] || colors.info;
+      return (
+        <div key={idx} style={{
+          background: c.bg, borderLeft: `4px solid ${c.border}`,
+          padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0',
+          fontSize: '14px', lineHeight: 1.6, color: 'var(--text-muted)',
+        }}>
+          <span style={{ marginRight: '8px' }}>{c.icon}</span>
+          <RichText content={block.content} />
+        </div>
+      );
+    }
+
+    case 'math-box':
+      return block.expression ? (
+        <div key={idx} className="math-box" style={{ textAlign: 'center', padding: '16px' }}>
+          <Latex math={block.expression} block />
+        </div>
+      ) : null;
+
+    case 'code-block':
+      return (
+        <div key={idx} style={{
+          background: '#1e1e24', padding: '16px 18px',
+          fontFamily: 'var(--font-mono)', fontSize: '12.5px', lineHeight: 1.65,
+          color: '#e5c07b', borderRadius: '6px', border: '1px solid var(--border)',
+          overflowX: 'auto', position: 'relative', margin: '16px 0',
+        }}>
+          {block.label && (
+            <div style={{ position: 'absolute', top: '8px', right: '12px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--accent)', opacity: 0.7 }}>
+              {block.label}
+            </div>
+          )}
+          <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{block.content || '...'}</pre>
+        </div>
+      );
+
+    case 'three-scene': {
+      let parsedData = null;
+      try { parsedData = JSON.parse(block.data); } catch { /* */ }
+      if (!parsedData) return null;
+      return (
+        <div key={idx} style={{ margin: '16px 0' }}>
+          {block.sceneType === 'bar-chart' && Array.isArray(parsedData) && (
+            <BarChart3D data={parsedData} height={block.height || 280} hint={block.hint} />
+          )}
+          {block.sceneType === 'scatter-plot' && parsedData.points && (
+            <ScatterPlot3D
+              points={parsedData.points}
+              connections={parsedData.connections}
+              height={block.height || 280}
+              hint={block.hint}
+            />
+          )}
+        </div>
+      );
+    }
+
+    case 'prop-table': {
+      const rows = (block.rows || []).filter(([k, v]) => k || v);
+      if (rows.length === 0) return null;
+      return (
+        <table key={idx} style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px', fontSize: '13px', border: '1px solid var(--border)' }}>
+          <tbody>
+            {rows.map(([k, v], i) => (
+              <tr key={i}>
+                <td style={{ padding: '8px 12px', fontWeight: 700, borderBottom: '1px solid var(--border)', width: '40%', background: 'var(--node-bg)' }}>{k}</td>
+                <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)' }}>{v}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    }
+
+    default:
+      return null;
+  }
+}
+
+export default function PublishedPage({ pageData }) {
+  const { meta, blocks } = pageData;
+
+  // Separate content, references, disclosure
+  const contentBlocks = blocks.filter(b => b.type !== 'reference' && b.type !== 'ai-disclosure');
+  const refBlocks = blocks.filter(b => b.type === 'reference');
+  const disclosureBlock = blocks.find(b => b.type === 'ai-disclosure');
+
+  // Group into sections
+  const sections = useMemo(() => {
+    const result = [];
+    let currentSection = null;
+
+    contentBlocks.forEach((block, idx) => {
+      if (block.type === 'section') {
+        if (currentSection) result.push(currentSection);
+        const sectionId = (block.title || 'section').toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, '-');
+        currentSection = { title: block.title || 'Untitled', id: sectionId, children: [] };
+      } else {
+        const el = renderBlock(block, idx);
+        if (el) {
+          if (currentSection) {
+            currentSection.children.push(el);
+          } else {
+            result.push({ type: 'loose', element: el, key: idx });
+          }
+        }
+      }
+    });
+    if (currentSection) result.push(currentSection);
+    return result;
+  }, [contentBlocks]);
+
+  const categoryLabel = meta.subcategory || meta.category || 'Concept';
+
+  return (
+    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '48px 24px' }}>
+      {/* Header */}
+      <div style={{ marginBottom: '48px' }}>
+        <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-light)', marginBottom: '8px' }}>
+          {categoryLabel}
+        </div>
+        <h1 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-1px', marginBottom: '12px' }}>
+          {meta.title}
+        </h1>
+        {meta.subtitle && (
+          <p style={{ fontSize: '16px', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+            {meta.subtitle}
+          </p>
+        )}
+      </div>
+
+      {/* Content */}
+      {sections.map((item, i) => {
+        if (item.type === 'loose') return <div key={item.key}>{item.element}</div>;
+        return (
+          <Section key={i} id={item.id} title={item.title}>
+            {item.children}
+          </Section>
+        );
+      })}
+
+      {/* References */}
+      {refBlocks.length > 0 && (
+        <Section id="references" title="References & Further Reading">
+          <ul style={{ fontSize: '14px', lineHeight: 2, color: 'var(--text-muted)', paddingLeft: '20px' }}>
+            {refBlocks.map((ref, i) => (
+              <li key={i}>
+                <a href={ref.url || '#'} target="_blank" rel="noreferrer" style={{ color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>
+                  {ref.title}
+                </a>{' '}
+                by {ref.authors}, {ref.venue} {ref.year}. {ref.description}
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+
+      {/* AI Disclosure */}
+      {disclosureBlock && (
+        <div style={{
+          marginTop: '32px', padding: '16px 20px', background: 'var(--node-bg)',
+          border: '1px solid var(--border)', fontSize: '13px',
+          color: 'var(--text-light)', lineHeight: 1.6,
+        }}>
+          <strong style={{ color: 'var(--text-muted)' }}>A note on this article:</strong> {disclosureBlock.content}
+        </div>
+      )}
+    </div>
+  );
+}

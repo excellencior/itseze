@@ -12,6 +12,18 @@
   overflow: hidden;
 }
 
+.editor-root textarea::selection,
+.editor-root input::selection {
+  background: rgba(8, 145, 178, 0.4);
+  color: #fff;
+}
+
+.editor-root textarea::-moz-selection,
+.editor-root input::-moz-selection {
+  background: rgba(8, 145, 178, 0.4);
+  color: #fff;
+}
+
 /* ── Toolbar ── */
 .editor-toolbar {
   display: flex;
@@ -177,6 +189,11 @@
   overflow-y: auto;
   padding: 24px;
   background: #0f0f13;
+  scrollbar-width: none;            /* Firefox */
+  -ms-overflow-style: none;         /* IE/Edge */
+}
+.editor-canvas::-webkit-scrollbar {
+  display: none;                    /* Chrome/Safari */
 }
 
 .editor-canvas .canvas-empty {
@@ -250,7 +267,7 @@
 }
 
 .block-card-header .drag-handle {
-  color: #52525b;
+  color: #71717a;
   font-size: 14px;
   cursor: grab;
   user-select: none;
@@ -263,29 +280,32 @@
 }
 
 .block-card-header .block-action-btn {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  border: none;
-  color: #52525b;
+  background: #27272a;
+  border: 1px solid #3f3f46;
+  color: #a1a1aa;
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: 4px;
   font-size: 12px;
+  font-weight: 600;
   padding: 0;
   transition: all 0.15s;
 }
 
 .block-card-header .block-action-btn:hover {
-  background: #27272a;
-  color: #e4e4e7;
+  background: #3f3f46;
+  border-color: #52525b;
+  color: #f4f4f5;
 }
 
 .block-card-header .block-action-btn.delete:hover {
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
 }
 
 .block-card-body {
@@ -316,6 +336,21 @@
 .block-card-body textarea {
   min-height: 60px;
   line-height: 1.5;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-50, rgba(8,145,178,0.5)) transparent;
+}
+.block-card-body textarea::-webkit-scrollbar {
+  width: 6px;
+}
+.block-card-body textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+.block-card-body textarea::-webkit-scrollbar-thumb {
+  background: var(--accent-50, rgba(8,145,178,0.5));
+  border-radius: 3px;
+}
+.block-card-body textarea::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-70, rgba(8,145,178,0.7));
 }
 
 .block-card-body textarea.math-input {
@@ -416,6 +451,21 @@
   border-left: 1px solid #27272a;
   overflow-y: auto;
   background: #fff;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-50, rgba(8,145,178,0.5)) transparent;
+}
+.editor-preview::-webkit-scrollbar {
+  width: 6px;
+}
+.editor-preview::-webkit-scrollbar-track {
+  background: transparent;
+}
+.editor-preview::-webkit-scrollbar-thumb {
+  background: var(--accent-50, rgba(8,145,178,0.5));
+  border-radius: 3px;
+}
+.editor-preview::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-70, rgba(8,145,178,0.7));
 }
 
 .editor-preview .preview-label {
@@ -434,6 +484,25 @@
 
 .editor-preview .preview-content {
   padding: 32px 40px;
+  color: #1f2937;
+}
+
+.editor-preview .preview-content h1,
+.editor-preview .preview-content h2,
+.editor-preview .preview-content h3 {
+  color: #111827;
+}
+
+.editor-preview .preview-content p {
+  color: #374151;
+}
+
+.editor-preview .preview-content td {
+  color: #374151;
+}
+
+.editor-preview .preview-content a {
+  color: #0891B2;
 }
 
 /* ── Toast ── */
@@ -456,4 +525,205 @@
 @keyframes toastIn {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Rich Text Toolbar ── */
+.rich-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.rich-toolbar-btn {
+  width: 26px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #27272a;
+  border: 1px solid #3f3f46;
+  color: #a1a1aa;
+  cursor: pointer;
+  border-radius: 3px;
+  font-size: 12px;
+  font-family: inherit;
+  padding: 0;
+  transition: all 0.15s;
+}
+
+.rich-toolbar-btn:hover {
+  background: #3f3f46;
+  border-color: #52525b;
+  color: #f4f4f5;
+}
+
+.rich-toolbar-hint {
+  font-size: 10px;
+  color: #52525b;
+  margin-left: 6px;
+}
+
+/* ── Preview double-click highlight ── */
+.preview-block-wrapper {
+  transition: outline 0.2s;
+  cursor: default;
+  border-radius: 4px;
+}
+
+.preview-block-wrapper:hover {
+  outline: 1px dashed rgba(8,145,178,0.3);
+  outline-offset: 4px;
+}
+
+/* ── Fullscreen Block Editor Overlay ── */
+.block-fullscreen {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: #0f0f13;
+  display: flex;
+  flex-direction: column;
+  animation: fullscreenIn 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes fullscreenIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.block-fullscreen-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: #18181b;
+  border-bottom: 1px solid #27272a;
+  flex-shrink: 0;
+}
+
+.block-fullscreen-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0891B2;
+  letter-spacing: 0.02em;
+}
+
+.block-fullscreen-close {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  border: 1px solid #3f3f46;
+  background: #27272a;
+  color: #a1a1aa;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.block-fullscreen-close:hover {
+  background: #3f3f46;
+  color: #f4f4f5;
+}
+
+.block-fullscreen-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.block-fullscreen-textarea {
+  flex: 1;
+  width: 100%;
+  background: #111114;
+  border: none;
+  border-bottom: 1px solid #27272a;
+  color: #e4e4e7;
+  padding: 20px 24px;
+  font-family: var(--font-mono, 'Iosevka Charon', monospace);
+  font-size: 13px;
+  line-height: 1.7;
+  resize: none;
+  outline: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-50, rgba(8,145,178,0.5)) transparent;
+}
+
+.block-fullscreen-textarea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.block-fullscreen-textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.block-fullscreen-textarea::-webkit-scrollbar-thumb {
+  background: var(--accent-50, rgba(8,145,178,0.5));
+  border-radius: 3px;
+}
+
+.block-fullscreen-textarea::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-70, rgba(8,145,178,0.7));
+}
+
+.block-fullscreen-preview {
+  flex-shrink: 0;
+  max-height: 40%;
+  overflow-y: auto;
+  background: #18181b;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-50, rgba(8,145,178,0.5)) transparent;
+}
+
+.block-fullscreen-preview::-webkit-scrollbar {
+  width: 6px;
+}
+
+.block-fullscreen-preview::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.block-fullscreen-preview::-webkit-scrollbar-thumb {
+  background: var(--accent-50, rgba(8,145,178,0.5));
+  border-radius: 3px;
+}
+
+.block-fullscreen-preview-label {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 5px 16px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #52525b;
+  background: #18181b;
+  border-bottom: 1px solid #27272a;
+}
+
+.block-fullscreen-preview-content {
+  padding: 16px 24px;
+  text-align: center;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Make the editor canvas position:relative so fullscreen overlay is scoped */
+.editor-canvas {
+  position: relative;
+}
+
+/* Paragraph fullscreen uses a non-mono font */
+.block-fullscreen-textarea.prose-input {
+  font-family: var(--font-main, 'Iosevka Charon', sans-serif);
+  font-size: 14px;
+  line-height: 1.75;
 }

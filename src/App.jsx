@@ -28,6 +28,7 @@ import SelfConsistencyPage from './pages/prompting/SelfConsistencyPage';
 
 // Admin
 import EditorPage from './pages/admin/EditorPage';
+import PublishedPage from './pages/admin/PublishedPage';
 
 // ── Route mapping: internal key ↔ URL path ──
 const ROUTE_MAP = {
@@ -58,16 +59,25 @@ const PATH_TO_KEY = Object.fromEntries(
   Object.entries(ROUTE_MAP).map(([key, path]) => [path, key])
 );
 
+function getPublishedPages() {
+  try { return JSON.parse(localStorage.getItem('itseze-published') || '{}'); } catch { return {}; }
+}
+
 function getKeyFromURL() {
   const path = window.location.pathname;
   if (path === '/admin/editor') return '__editor__';
-  return PATH_TO_KEY[path] || 'gpt3';
+  if (PATH_TO_KEY[path]) return PATH_TO_KEY[path];
+  // Check if it's a published page
+  const published = getPublishedPages();
+  if (published[path]) return `__pub__${path}`;
+  return 'gpt3';
 }
 
 function App() {
   const [selectedModel, setSelectedModel] = useState(() => {
     // URL takes priority, then sessionStorage fallback
     const fromURL = getKeyFromURL();
+    if (fromURL === '__editor__' || fromURL.startsWith('__pub__')) return fromURL;
     if (window.location.pathname !== '/' && PATH_TO_KEY[window.location.pathname]) {
       return fromURL;
     }
@@ -78,6 +88,9 @@ function App() {
 
   // On page selection change, update URL and sessionStorage
   useEffect(() => {
+    // Don't touch URL when on the editor page or a published page
+    if (selectedModel === '__editor__' || selectedModel.startsWith('__pub__')) return;
+
     sessionStorage.setItem('itseze-active-page', selectedModel);
 
     const targetPath = ROUTE_MAP[selectedModel] || '/';
@@ -233,7 +246,14 @@ function App() {
         return <LeastToMostPage />;
       case 'concept:prompting-sc':
         return <SelfConsistencyPage />;
-      default:
+      default: {
+        // Check for dynamically published pages
+        if (selectedModel.startsWith('__pub__')) {
+          const pubPath = selectedModel.replace('__pub__', '');
+          const published = getPublishedPages();
+          const pageData = published[pubPath];
+          if (pageData) return <PublishedPage pageData={pageData} />;
+        }
         return (
           <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--text-light)' }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>🚧</div>
@@ -241,6 +261,7 @@ function App() {
             <p style={{ fontSize: '14px', marginTop: '8px' }}>This page is currently being built.</p>
           </div>
         );
+      }
     }
   };
 
