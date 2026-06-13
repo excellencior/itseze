@@ -79,7 +79,7 @@ function ThoughtTreeDiagram() {
       <div style={{ position: 'relative', background: '#FAF8F1', border: '1px solid var(--border)', padding: '28px 24px 24px' }}>
 
         {/* ── SVG connector lines ── */}
-        <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', overflow: 'visible' }}>
+        <svg viewBox="0 0 1000 420" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', overflow: 'visible' }}>
           <defs>
             <marker id="arrowGreen" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
               <path d="M 0 0 L 10 5 L 0 10 z" fill="#10B981" />
@@ -93,24 +93,24 @@ function ThoughtTreeDiagram() {
           </defs>
 
           {/* Root → Step 1 */}
-          <line x1="50%" y1="58" x2="50%" y2="82" stroke="#10B981" strokeWidth="1.5" markerEnd="url(#arrowGreen)" />
+          <line x1="500" y1="58" x2="500" y2="82" stroke="#10B981" strokeWidth="1.5" markerEnd="url(#arrowGreen)" />
           {/* Step 1 → Step 2 */}
-          <line x1="50%" y1="132" x2="50%" y2="156" stroke="#10B981" strokeWidth="1.5" markerEnd="url(#arrowGreen)" />
+          <line x1="500" y1="132" x2="500" y2="156" stroke="#10B981" strokeWidth="1.5" markerEnd="url(#arrowGreen)" />
 
           {/* Step 2 → Branch A (left fork) */}
-          <path d="M 50% 206 Q 50% 226 30% 236" fill="none" stroke="#EF4444" strokeWidth="1.5" markerEnd="url(#arrowRed)" />
+          <path d="M 500 206 Q 500 230 300 240" fill="none" stroke="#EF4444" strokeWidth="1.5" markerEnd="url(#arrowRed)" />
           {/* Step 2 → Branch B (right fork) */}
-          <path d="M 50% 206 Q 50% 226 70% 236" fill="none" stroke="#10B981" strokeWidth="1.5" markerEnd="url(#arrowGreen)" />
+          <path d="M 500 206 Q 500 230 700 240" fill="none" stroke="#10B981" strokeWidth="1.5" markerEnd="url(#arrowGreen)" />
 
           {/* Branch A → Pruned (strikethrough) */}
-          <line x1="30%" y1="306" x2="30%" y2="328" stroke="#EF4444" strokeWidth="1.5" strokeDasharray="4 4" />
-          <line x1="26%" y1="320" x2="34%" y2="320" stroke="#EF4444" strokeWidth="2" />
+          <line x1="300" y1="306" x2="300" y2="328" stroke="#EF4444" strokeWidth="1.5" strokeDasharray="4 4" />
+          <line x1="260" y1="320" x2="340" y2="320" stroke="#EF4444" strokeWidth="2" />
 
           {/* Backtrack arrow from Branch A back up to Step 2 */}
-          <path d="M 22% 280 Q 10% 240 40% 200" fill="none" stroke="#F59E0B" strokeWidth="1.5" strokeDasharray="6 4" markerEnd="url(#arrowAmber)" />
+          <path d="M 220 280 Q 100 240 400 200" fill="none" stroke="#F59E0B" strokeWidth="1.5" strokeDasharray="6 4" markerEnd="url(#arrowAmber)" />
 
           {/* Branch B → Answer */}
-          <line x1="70%" y1="306" x2="70%" y2="336" stroke="#10B981" strokeWidth="1.5" markerEnd="url(#arrowGreen)" />
+          <line x1="700" y1="306" x2="700" y2="336" stroke="#10B981" strokeWidth="1.5" markerEnd="url(#arrowGreen)" />
         </svg>
 
         {/* ── Node layer ── */}
@@ -257,12 +257,12 @@ Total = 5 + 6 = 11. The answer is 11.`}</pre>
         </Callout>
       </Section>
 
-      <Section title="4. Interactive Thought Tree Explorer">
+      <Section title="4. Thought Tree Diagram">
         <P>
-          Step through the tree search below to observe deliberative reasoning in action. Notice the critical moment where the model's self-verification check detects an arithmetic error, prunes the incorrect branch, backtracks to the last stable state, and explores a correct alternative path.
+          The tree below illustrates deliberative reasoning in action. Notice the critical moment where the model's self-verification check detects an arithmetic error, prunes the incorrect branch, backtracks to the last stable state, and explores a correct alternative path.
         </P>
 
-        <ThoughtTreeExplorer />
+        <ThoughtTreeDiagram />
       </Section>
 
       <Section title="5. Inference-Time Compute Scaling">
