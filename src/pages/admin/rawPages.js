@@ -5,7 +5,6 @@ import encoder from '../concepts/EncoderPage.jsx?raw';
 import speculativeDecoding from '../concepts/SpeculativeDecodingPage.jsx?raw';
 import ssm from '../concepts/SSMPage.jsx?raw';
 
-import reasoningHub from '../reasoning/ReasoningHubPage.jsx?raw';
 import reasoningSymbolic from '../reasoning/SymbolicPage.jsx?raw';
 import reasoningProbabilistic from '../reasoning/ProbabilisticPage.jsx?raw';
 import reasoningNeural from '../reasoning/NeuralPage.jsx?raw';
@@ -14,7 +13,6 @@ import reasoningChainOfThought from '../reasoning/ChainOfThoughtPage.jsx?raw';
 import reasoningRag from '../reasoning/RagPage.jsx?raw';
 import reasoningProgramSynthesis from '../reasoning/ProgramSynthesisPage.jsx?raw';
 
-import promptingHub from '../prompting/PromptingHubPage.jsx?raw';
 import promptingZeroShot from '../prompting/ZeroShotPage.jsx?raw';
 import promptingFewShot from '../prompting/FewShotPage.jsx?raw';
 import promptingCot from '../prompting/COTPage.jsx?raw';
@@ -29,7 +27,6 @@ export const RAW_PAGES = {
   'concept:encoder': encoder,
   'concept:speculative-decoding': speculativeDecoding,
   'concept:ssm': ssm,
-  'concept:reasoning': reasoningHub,
   'concept:reasoning-symbolic': reasoningSymbolic,
   'concept:reasoning-probabilistic': reasoningProbabilistic,
   'concept:reasoning-neural': reasoningNeural,
@@ -37,7 +34,6 @@ export const RAW_PAGES = {
   'concept:reasoning-chain-of-thought': reasoningChainOfThought,
   'concept:reasoning-rag': reasoningRag,
   'concept:reasoning-program-synthesis': reasoningProgramSynthesis,
-  'concept:prompting': promptingHub,
   'concept:prompting-zero-shot': promptingZeroShot,
   'concept:prompting-few-shot': promptingFewShot,
   'concept:prompting-cot': promptingCot,

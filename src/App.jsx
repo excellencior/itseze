@@ -8,7 +8,6 @@ import SpeculativeDecodingPage from './pages/concepts/SpeculativeDecodingPage';
 import SSMPage from './pages/concepts/SSMPage';
 
 // Reasoning Pages
-import ReasoningHubPage from './pages/reasoning/ReasoningHubPage';
 import SymbolicPage from './pages/reasoning/SymbolicPage';
 import ProbabilisticPage from './pages/reasoning/ProbabilisticPage';
 import NeuralPage from './pages/reasoning/NeuralPage';
@@ -18,7 +17,6 @@ import RagPage from './pages/reasoning/RagPage';
 import ProgramSynthesisPage from './pages/reasoning/ProgramSynthesisPage';
 
 // Prompting Pages
-import PromptingHubPage from './pages/prompting/PromptingHubPage';
 import ZeroShotPage from './pages/prompting/ZeroShotPage';
 import FewShotPage from './pages/prompting/FewShotPage';
 import COTPage from './pages/prompting/COTPage';
@@ -38,7 +36,6 @@ const ROUTE_MAP = {
   'concept:encoder': '/concepts/encoder',
   'concept:speculative-decoding': '/concepts/speculative-decoding',
   'concept:ssm': '/concepts/ssm',
-  'concept:reasoning': '/concepts/reasoning',
   'concept:reasoning-symbolic': '/concepts/reasoning/symbolic',
   'concept:reasoning-probabilistic': '/concepts/reasoning/probabilistic',
   'concept:reasoning-neural': '/concepts/reasoning/neural',
@@ -46,7 +43,6 @@ const ROUTE_MAP = {
   'concept:reasoning-chain-of-thought': '/concepts/reasoning/chain-of-thought',
   'concept:reasoning-rag': '/concepts/reasoning/rag',
   'concept:reasoning-program-synthesis': '/concepts/reasoning/program-synthesis',
-  'concept:prompting': '/concepts/prompting',
   'concept:prompting-zero-shot': '/concepts/prompting/zero-shot',
   'concept:prompting-few-shot': '/concepts/prompting/few-shot',
   'concept:prompting-cot': '/concepts/prompting/cot',
@@ -216,8 +212,6 @@ function App() {
         return <SpeculativeDecodingPage />;
       case 'concept:ssm':
         return <SSMPage />;
-      case 'concept:reasoning':
-        return <ReasoningHubPage onNavigate={setSelectedModel} />;
       case 'concept:reasoning-symbolic':
         return <SymbolicPage />;
       case 'concept:reasoning-probabilistic':
@@ -232,8 +226,6 @@ function App() {
         return <RagPage />;
       case 'concept:reasoning-program-synthesis':
         return <ProgramSynthesisPage />;
-      case 'concept:prompting':
-        return <PromptingHubPage onNavigate={setSelectedModel} />;
       case 'concept:prompting-zero-shot':
         return <ZeroShotPage />;
       case 'concept:prompting-few-shot':

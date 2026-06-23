@@ -31,7 +31,6 @@ export const CONCEPTS = [
     name: 'Reasoning',
     ready: true,
     children: [
-      { name: 'Hub', route: 'concept:reasoning', ready: true },
       { name: 'Symbolic Logic', route: 'concept:reasoning-symbolic', ready: true },
       { name: 'Probabilistic Graphs', route: 'concept:reasoning-probabilistic', ready: true },
       { name: 'Neural Networks', route: 'concept:reasoning-neural', ready: true },
@@ -45,7 +44,6 @@ export const CONCEPTS = [
     name: 'Prompting',
     ready: true,
     children: [
-      { name: 'Hub', route: 'concept:prompting', ready: true },
       { name: 'Zero-Shot', route: 'concept:prompting-zero-shot', ready: true },
       { name: 'Few-Shot ICL', route: 'concept:prompting-few-shot', ready: true },
       { name: 'Chain-of-Thought', route: 'concept:prompting-cot', ready: true },
