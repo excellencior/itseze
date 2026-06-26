@@ -68,7 +68,7 @@ export function renderCustomElement(block, idx) {
   const Component = WIDGETS[block.name];
   if (!Component) {
     return (
-      <div key={idx} style={{ color: '#ef4444', padding: '12px', border: '1px dashed #ef4444', fontSize: '12px', borderRadius: '4px', background: '#fef2f2', margin: '12px 0' }}>
+      <div key={idx} style={{ color: '#ef4444', padding: '12px', border: '1px dashed #ef4444', fontSize: '12px', borderRadius: '4px', background: 'rgba(239,68,68,0.08)', margin: '12px 0' }}>
         ⚠️ Unknown Visualizer Component: <strong>{block.name}</strong>
       </div>
     );

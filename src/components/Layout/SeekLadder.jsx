@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useSettings } from '../../SettingsContext';
 
 function LadderItem({ id, label, isActive, isLadderHovered, onClick }) {
   const [isItemHovered, setIsItemHovered] = useState(false);
@@ -43,9 +44,9 @@ function LadderItem({ id, label, isActive, isLadderHovered, onClick }) {
           padding: isLadderHovered ? '2px 8px' : '0',
           borderRadius: '4px',
           background: isItemHovered && isLadderHovered
-            ? 'rgba(8, 145, 178, 0.08)'
+            ? 'var(--accent-20)'
             : isActive && isLadderHovered
-              ? 'rgba(8, 145, 178, 0.06)'
+              ? 'var(--accent-20)'
               : 'transparent',
         }}
       >
@@ -73,6 +74,7 @@ function LadderItem({ id, label, isActive, isLadderHovered, onClick }) {
 }
 
 export default function SeekLadder({ scrollContainerRef }) {
+  const { resolvedTheme } = useSettings();
   const [sections, setSections] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -180,9 +182,13 @@ export default function SeekLadder({ scrollContainerRef }) {
         gap: '0px',
         padding: '10px 6px 10px 14px',
         borderRadius: '6px',
-        background: isHovered ? 'rgba(255,255,255,0.85)' : 'transparent',
+        background: isHovered
+          ? (resolvedTheme === 'dark' ? 'rgba(26,26,26,0.9)' : 'rgba(255,255,255,0.85)')
+          : 'transparent',
         backdropFilter: isHovered ? 'blur(8px)' : 'none',
-        boxShadow: isHovered ? '0 2px 16px rgba(0,0,0,0.08)' : 'none',
+        boxShadow: isHovered
+          ? (resolvedTheme === 'dark' ? '0 2px 16px rgba(0,0,0,0.3)' : '0 2px 16px rgba(0,0,0,0.08)')
+          : 'none',
         transition: 'background 0.25s ease, box-shadow 0.25s ease, backdrop-filter 0.25s ease',
       }}
     >

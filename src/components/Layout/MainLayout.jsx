@@ -8,7 +8,7 @@ import { getRouteHeaderInfo } from '../../navigation';
 import { useSettings } from '../../SettingsContext';
 
 export default function MainLayout({ selectedModel, onSelectModel, children, isAdminMode = false, onCreateNewPage }) {
-  const { settings, resolvedTheme } = useSettings();
+  const { settings, resolvedTheme, updateSettings } = useSettings();
   const [sidebarWidth, setSidebarWidth] = useState(280);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return sessionStorage.getItem('sidebar-collapsed') === 'true';
@@ -16,6 +16,7 @@ export default function MainLayout({ selectedModel, onSelectModel, children, isA
   const [isResizing, setIsResizing] = useState(false);
   const containerRef = useRef(null);
   const mainRef = useRef(null);
+  const bubbleRef = useRef(null);
 
   const headerInfo = getRouteHeaderInfo(selectedModel);
   const isBubbleMode = settings.navMode === 'bubble';
@@ -141,9 +142,94 @@ export default function MainLayout({ selectedModel, onSelectModel, children, isA
 
   /** Navigate to the default home page */
   const handleNavigateHome = useCallback(() => {
-    // Navigate to the first available architecture page, or root
     onSelectModel?.('/');
   }, [onSelectModel]);
+
+  /* ═══════════════════════════════════════════
+   *  Global Keyboard Shortcuts
+   * ═══════════════════════════════════════════
+   *  Work in BOTH sidebar and bubble modes.
+   */
+  useEffect(() => {
+    const IS_MAC = /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+
+    const handler = (e) => {
+      const tag = e.target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target?.isContentEditable) return;
+
+      const mod = IS_MAC ? e.metaKey : e.ctrlKey;
+
+      // Ctrl+K → toggle flock / restore dismissed
+      if (mod && !e.shiftKey && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        if (bubbleRef.current) {
+          // If there are dismissed bubbles, restore them first
+          const restored = bubbleRef.current.restoreDismissed();
+          if (!restored) {
+            bubbleRef.current.toggle();
+          }
+        }
+        return;
+      }
+
+      // Ctrl+\ → toggle sidebar/bubble mode
+      if (mod && !e.shiftKey && e.key === '\\') {
+        e.preventDefault();
+        updateSettings({ navMode: settings.navMode === 'bubble' ? 'sidebar' : 'bubble' });
+        return;
+      }
+
+      // Ctrl+Shift+D → toggle theme
+      if (mod && e.shiftKey && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        updateSettings({ theme: resolvedTheme === 'dark' ? 'light' : 'dark' });
+        return;
+      }
+
+      // Home → scroll to top
+      if (e.key === 'Home' && !mod && !e.shiftKey) {
+        mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      // End → scroll to bottom
+      if (e.key === 'End' && !mod && !e.shiftKey) {
+        if (mainRef.current) mainRef.current.scrollTo({ top: mainRef.current.scrollHeight, behavior: 'smooth' });
+        return;
+      }
+
+      // J → next section
+      if (e.key === 'j' && !mod && !e.shiftKey) {
+        if (!mainRef.current) return;
+        const sections = mainRef.current.querySelectorAll('[data-section]');
+        const scrollTop = mainRef.current.scrollTop;
+        for (const sec of sections) {
+          if (sec.offsetTop > scrollTop + 40) {
+            sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            break;
+          }
+        }
+        return;
+      }
+
+      // K → previous section (only when not in a modifier combo)
+      if (e.key === 'k' && !mod && !e.shiftKey) {
+        if (!mainRef.current) return;
+        const sections = [...mainRef.current.querySelectorAll('[data-section]')];
+        const scrollTop = mainRef.current.scrollTop;
+        for (let i = sections.length - 1; i >= 0; i--) {
+          if (sections[i].offsetTop < scrollTop - 10) {
+            sections[i].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            break;
+          }
+        }
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [settings.navMode, resolvedTheme, updateSettings]);
 
   // Dynamic container background based on theme
   const contentBg = resolvedTheme === 'dark' ? '#1a1a1a' : '#F6F6F6';
@@ -246,8 +332,8 @@ export default function MainLayout({ selectedModel, onSelectModel, children, isA
               </button>
             )}
 
-            {/* Standalone logo — always visible */}
-            <Logo onNavigateHome={handleNavigateHome} />
+            {/* Standalone logo — only in bubble mode (sidebar mode has it in the sidebar header) */}
+            {isBubbleMode && <Logo onNavigateHome={handleNavigateHome} />}
 
             {/* Dynamic category / date header */}
             {headerInfo && (headerInfo.category || headerInfo.firstPublishedAt) && (
@@ -296,6 +382,7 @@ export default function MainLayout({ selectedModel, onSelectModel, children, isA
       {/* Bubble navigation — only in bubble mode */}
       {isBubbleMode && (
         <BubbleNav
+          ref={bubbleRef}
           selectedModel={selectedModel}
           onSelectModel={onSelectModel}
         />

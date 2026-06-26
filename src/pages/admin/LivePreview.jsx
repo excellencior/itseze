@@ -30,26 +30,26 @@ function PreviewSection({ title, children }) {
 
 function PreviewP({ children }) {
   if (typeof children === 'string') {
-    return <p style={{ fontSize: '15px', lineHeight: 1.75, color: '#374151', marginBottom: '16px' }} dangerouslySetInnerHTML={{ __html: richContentToHtml(children) }} />;
+    return <p style={{ fontSize: '15px', lineHeight: 1.75, color: 'var(--text-muted)', marginBottom: '16px' }} dangerouslySetInnerHTML={{ __html: richContentToHtml(children) }} />;
   }
-  return <p style={{ fontSize: '15px', lineHeight: 1.75, color: '#374151', marginBottom: '16px' }}>{children}</p>;
+  return <p style={{ fontSize: '15px', lineHeight: 1.75, color: 'var(--text-muted)', marginBottom: '16px' }}>{children}</p>;
 }
 
 function PreviewCallout({ type = 'info', children }) {
   const colors = {
-    info:    { bg: 'rgba(59,130,246,0.08)', border: '#3B82F6', icon: 'i' },
-    warning: { bg: 'rgba(245,158,11,0.08)', border: '#F59E0B', icon: '!' },
-    key:     { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '*' },
-    tip:     { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '*' },
-    accent:  { bg: 'rgba(8,145,178,0.08)', border: '#0891B2', icon: '>' },
+    info:    { bg: 'rgba(59,130,246,0.12)', border: '#3B82F6', icon: 'i' },
+    warning: { bg: 'rgba(245,158,11,0.12)', border: '#F59E0B', icon: '!' },
+    key:     { bg: 'rgba(16,185,129,0.12)', border: '#10B981', icon: '*' },
+    tip:     { bg: 'rgba(16,185,129,0.12)', border: '#10B981', icon: '*' },
+    accent:  { bg: 'rgba(8,145,178,0.12)', border: '#0891B2', icon: '>' },
   };
   const c = colors[type] || colors.info;
   if (typeof children === 'string') {
     return (
       <div style={{
         background: c.bg, borderLeft: `4px solid ${c.border}`,
-        padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0',
-        fontSize: '14px', lineHeight: 1.6, color: '#374151',
+        padding: '14px 18px', marginBottom: '16px', borderRadius: '0 8px 8px 0',
+        fontSize: '14px', lineHeight: 1.6, color: 'var(--text-muted)',
       }}>
         <span style={{ marginRight: '8px', fontWeight: 700 }}>{c.icon}</span>
         <span dangerouslySetInnerHTML={{ __html: richContentToHtml(children) }} />
@@ -59,8 +59,8 @@ function PreviewCallout({ type = 'info', children }) {
   return (
     <div style={{
       background: c.bg, borderLeft: `4px solid ${c.border}`,
-      padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0',
-      fontSize: '14px', lineHeight: 1.6, color: '#374151',
+      padding: '14px 18px', marginBottom: '16px', borderRadius: '0 8px 8px 0',
+      fontSize: '14px', lineHeight: 1.6, color: 'var(--text-muted)',
     }}>
       <span style={{ marginRight: '8px', fontWeight: 700 }}>{c.icon}</span>{children}
     </div>
@@ -80,7 +80,7 @@ function renderPreviewBlock(block, idx) {
 
     case 'math-box':
       return block.expression ? (
-        <div key={idx} style={{ padding: '16px 14px', textAlign: 'center', margin: '16px 0', background: '#f8f9fa', border: '1px solid #e5e7eb', borderRadius: '4px', color: '#111' }}>
+        <div key={idx} style={{ padding: '16px 14px', textAlign: 'center', margin: '16px 0', background: 'var(--bg-subtle, #f8f9fa)', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-main)' }}>
           <Latex math={block.expression} block />
         </div>
       ) : null;

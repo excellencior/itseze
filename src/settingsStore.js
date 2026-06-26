@@ -89,10 +89,51 @@ export function resolveTheme(themeValue) {
   return 'light';
 }
 
+/** Theme-dependent token sets */
+const THEME_TOKENS = {
+  light: {
+    '--bg': '#EAEAEA',
+    '--bg-dark': '#000000',
+    '--bg-subtle': '#FAF8F1',
+    '--node-bg': '#FFFFFF',
+    '--border': '#D4D4D4',
+    '--border-focus': '#A0A0A0',
+    '--text-main': '#000000',
+    '--text-muted': '#545454',
+    '--text-light': '#A0A0A0',
+    '--shadow-sm': '0 2px 8px rgba(0,0,0,0.04)',
+    '--shadow-md': '0 8px 20px rgba(0,0,0,0.06)',
+    '--shadow-hover': '0 12px 32px rgba(0,0,0,0.08)',
+  },
+  dark: {
+    '--bg': '#111111',
+    '--bg-dark': '#000000',
+    '--bg-subtle': '#161616',
+    '--node-bg': '#1a1a1a',
+    '--border': '#333333',
+    '--border-focus': '#555555',
+    '--text-main': '#E8E8E8',
+    '--text-muted': '#AAAAAA',
+    '--text-light': '#777777',
+    '--shadow-sm': '0 2px 8px rgba(0,0,0,0.3)',
+    '--shadow-md': '0 8px 20px rgba(0,0,0,0.4)',
+    '--shadow-hover': '0 12px 32px rgba(0,0,0,0.5)',
+  },
+};
+
 /** Apply the theme (dark/light) to the document */
 export function applyThemeToDOM(themeValue) {
   const resolved = resolveTheme(themeValue);
   document.documentElement.setAttribute('data-theme', resolved);
+
+  // main.jsx injects light vars as inline styles on :root, which have
+  // higher specificity than [data-theme="dark"] CSS rules. We must
+  // also set theme-dependent vars as inline styles so dark mode works.
+  const tokens = THEME_TOKENS[resolved] || THEME_TOKENS.light;
+  const root = document.documentElement;
+  Object.entries(tokens).forEach(([key, value]) => {
+    root.style.setProperty(key, value);
+  });
 }
 
 export { DEFAULTS };

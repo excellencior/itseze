@@ -81,9 +81,9 @@ export default function HoverCard({ term, children }) {
             zIndex: 1000,
 
             width: '300px',
-            background: '#fff',
+            background: 'var(--node-bg)',
             border: '1px solid var(--border)',
-            boxShadow: '0 8px 28px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)',
+            boxShadow: '0 8px 28px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08)',
             padding: '14px 16px',
             borderRadius: '6px',
             pointerEvents: 'auto',
@@ -102,7 +102,7 @@ export default function HoverCard({ term, children }) {
             transform: 'translateX(-50%) rotate(45deg)',
             width: '10px',
             height: '10px',
-            background: '#fff',
+            background: 'var(--node-bg)',
             border: '1px solid var(--border)',
             ...(pos === 'above'
               ? { bottom: '-6px', borderTop: 'none', borderLeft: 'none' }

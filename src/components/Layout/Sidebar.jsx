@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchPublishedPages } from '../../lib/pages';
+import { useSettings } from '../../SettingsContext';
 
 /* ── Color Palette ── */
 const SB = {
@@ -483,15 +484,56 @@ export default function Sidebar({ selectedModel, onSelectModel, width = 280, col
       position: 'relative',
       transition: 'width 0.3s cubic-bezier(0.22, 1, 0.36, 1), min-width 0.3s cubic-bezier(0.22, 1, 0.36, 1), max-width 0.3s cubic-bezier(0.22, 1, 0.36, 1)',
     }}>
-      {/* ── Header ── */}
+      {/* ── Header with Logo ── */}
       <div style={{
         padding: '20px 22px',
         borderBottom: `1px solid ${SB.border}`,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'flex-end',
+        justifyContent: 'space-between',
         gap: '12px',
       }}>
+        {/* Logo */}
+        <div
+          onClick={() => onSelectModel?.('gpt3')}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            cursor: 'pointer',
+            userSelect: 'none',
+            transition: 'opacity 0.2s ease',
+            minWidth: 0,
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.8'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
+        >
+          <span style={{
+            fontSize: '1.15rem',
+            fontWeight: 900,
+            letterSpacing: '-0.04em',
+            color: SB.textBright,
+            lineHeight: 1.1,
+            borderBottom: '2px solid var(--accent-20)',
+            paddingBottom: '3px',
+            display: 'inline-block',
+            whiteSpace: 'nowrap',
+          }}>
+            It&apos;sEze
+          </span>
+          <span style={{
+            fontSize: '8px',
+            fontWeight: 700,
+            color: SB.textMuted,
+            marginTop: '4px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.2em',
+            whiteSpace: 'nowrap',
+          }}>
+            Serve to simplify
+          </span>
+        </div>
+
+        {/* Collapse button */}
         {onToggleCollapse && (
           <button
             onClick={onToggleCollapse}
@@ -590,6 +632,57 @@ export default function Sidebar({ selectedModel, onSelectModel, width = 280, col
           </div>
         </div>
       </nav>
+
+      {/* ── Switch to Bubble button ── */}
+      <div style={{
+        padding: '12px 14px',
+        borderTop: `1px solid ${SB.border}`,
+      }}>
+        <SwitchToBubbleButton />
+      </div>
     </aside>
+  );
+}
+
+function SwitchToBubbleButton() {
+  const { updateSettings } = useSettings();
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <button
+      onClick={() => updateSettings({ navMode: 'bubble' })}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      title="Switch to bubble navigation (Ctrl+\\)"
+      style={{
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
+        padding: '9px 14px',
+        border: `1px solid ${hovered ? 'var(--accent)' : SB.border}`,
+        borderRadius: '8px',
+        background: hovered ? 'rgba(8,145,178,0.06)' : 'transparent',
+        color: hovered ? 'var(--accent)' : SB.textMuted,
+        fontSize: '12px',
+        fontWeight: 600,
+        cursor: 'pointer',
+        fontFamily: 'inherit',
+        transition: 'all 0.15s ease',
+        letterSpacing: '0.01em',
+      }}
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+      Switch to Bubble
+      <span style={{
+        fontSize: '10px',
+        opacity: 0.5,
+        fontWeight: 500,
+      }}>Ctrl+\</span>
+    </button>
   );
 }

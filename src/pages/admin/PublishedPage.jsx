@@ -36,7 +36,7 @@ function RichText({ content }) {
 function Section({ id, title, children }) {
   return (
     <div id={id} data-section style={{ marginBottom: '48px', scrollMarginTop: '24px' }}>
-      <h2 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '16px', letterSpacing: '-0.5px' }}>{title}</h2>
+      <h2 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '16px', letterSpacing: '-0.5px', color: 'var(--text-main)' }}>{title}</h2>
       {children}
     </div>
   );
@@ -54,17 +54,17 @@ function renderBlock(block, idx) {
 
     case 'callout': {
       const colors = {
-        info:    { bg: 'rgba(59,130,246,0.08)', border: '#3B82F6', icon: 'ℹ️' },
-        warning: { bg: 'rgba(245,158,11,0.08)', border: '#F59E0B', icon: '⚠️' },
-        key:     { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '💡' },
-        tip:     { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '💡' },
-        accent:  { bg: 'rgba(8,145,178,0.08)', border: '#0891B2', icon: '↩' },
+        info:    { bg: 'rgba(59,130,246,0.12)', border: '#3B82F6', icon: 'ℹ️' },
+        warning: { bg: 'rgba(245,158,11,0.12)', border: '#F59E0B', icon: '⚠️' },
+        key:     { bg: 'rgba(16,185,129,0.12)', border: '#10B981', icon: '💡' },
+        tip:     { bg: 'rgba(16,185,129,0.12)', border: '#10B981', icon: '💡' },
+        accent:  { bg: 'rgba(8,145,178,0.12)', border: '#0891B2', icon: '↩' },
       };
       const c = colors[block.calloutType] || colors.info;
       return (
         <div key={idx} style={{
           background: c.bg, borderLeft: `4px solid ${c.border}`,
-          padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0',
+          padding: '14px 18px', marginBottom: '16px', borderRadius: '0 8px 8px 0',
           fontSize: '14px', lineHeight: 1.6, color: 'var(--text-muted)',
         }}>
           <span style={{ marginRight: '8px' }}>{c.icon}</span>
@@ -234,7 +234,7 @@ function renderBlock(block, idx) {
       const sizes = { 2: '22px', 3: '18px', 4: '15px' };
       const HeadingTag = `h${level}`;
       return (
-        <HeadingTag key={idx} style={{ fontSize: sizes[level], fontWeight: 800, marginBottom: '12px', letterSpacing: '-0.3px' }}>
+        <HeadingTag key={idx} style={{ fontSize: sizes[level], fontWeight: 800, marginBottom: '12px', letterSpacing: '-0.3px', color: 'var(--text-main)' }}>
           {block.text || 'Untitled'}
         </HeadingTag>
       );
@@ -263,7 +263,7 @@ function PublishedTabs({ block }) {
               padding: '8px 16px', fontSize: '13px', fontWeight: activeTab === i ? 700 : 500,
               border: 'none', background: activeTab === i ? 'var(--bg)' : 'transparent',
               borderBottom: activeTab === i ? '2px solid var(--accent)' : '2px solid transparent',
-              color: activeTab === i ? 'var(--text)' : 'var(--text-light)', cursor: 'pointer',
+              color: activeTab === i ? 'var(--text-main)' : 'var(--text-light)', cursor: 'pointer',
               transition: 'all 0.15s ease',
             }}
           >
@@ -343,7 +343,7 @@ export default function PublishedPage({ pageData }) {
             {showUpdated && <span>· Updated {updatedDate}</span>}
           </div>
         </div>
-        <h1 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-1px', marginBottom: '12px' }}>
+        <h1 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-1px', marginBottom: '12px', color: 'var(--text-main)' }}>
           {meta.title}
         </h1>
         {meta.subtitle && (

@@ -72,7 +72,7 @@ ul, ol { color: var(--text-muted); padding-left: 20px; margin-bottom: 16px; line
 .node-icon {
   width: 32px; height: 32px; display: flex; border: 1.5px solid var(--border);
   align-items: center; justify-content: center; font-weight: 800; color: var(--text-main); flex-shrink: 0;
-  background: white; font-size: 13px;
+  background: var(--node-bg); font-size: 13px;
 }
 .node:hover .node-icon { border-color: var(--accent); color: var(--accent); }
 .chevron { font-size: 16px; color: var(--text-muted); transition: transform 0.3s, color 0.2s; }
@@ -82,7 +82,7 @@ ul, ol { color: var(--text-muted); padding-left: 20px; margin-bottom: 16px; line
 .node-content {
   max-height: 0; opacity: 0; overflow: hidden;
   transition: max-height 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s;
-  background: white; border-top: 1px solid transparent;
+  background: var(--node-bg); border-top: 1px solid transparent;
 }
 .node.expanded { box-shadow: var(--shadow-hover); border-color: var(--accent-50); }
 .node.expanded .node-content {
@@ -92,7 +92,7 @@ ul, ol { color: var(--text-muted); padding-left: 20px; margin-bottom: 16px; line
 
 /* ── INNER COMPONENTS ── */
 .inner-block {
-  background: white; border: 1px solid var(--border);
+  background: var(--node-bg); border: 1px solid var(--border);
   border-radius: var(--radius-sm); padding: 20px; margin-bottom: 20px;
 }
 .inner-title { font-weight: 800; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; font-size: 15px; letter-spacing: -0.3px; }
@@ -102,14 +102,14 @@ ul, ol { color: var(--text-muted); padding-left: 20px; margin-bottom: 16px; line
 .qkv-card {
   padding: 16px; border: 1px solid var(--border);
   display: flex; flex-direction: column; align-items: center; text-align: center;
-  background: white;
+  background: var(--node-bg);
 }
 .qkv-title { font-weight: 800; margin-bottom: 4px; font-size: 14px; }
 .qkv-desc { font-size: 12px; color: var(--text-muted); }
 
 /* Playground */
 .playground {
-  background: white; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--node-bg); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 24px; width: 100%; margin: 0 0 32px 0; box-shadow: var(--shadow-sm);
   position: relative; z-index: 10;
 }
@@ -121,7 +121,7 @@ ul, ol { color: var(--text-muted); padding-left: 20px; margin-bottom: 16px; line
 .pg-input:focus { border-color: var(--accent); }
 .pg-tokens { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
 .tok {
-  background: white; border: 1.5px solid var(--border); padding: 6px 14px;
+  background: var(--node-bg); border: 1.5px solid var(--border); padding: 6px 14px;
   font-family: var(--font-mono); font-size: 14px; font-weight: 600;
   transition: border-color 0.2s;
 }
@@ -136,11 +136,11 @@ input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
 /* Math blocks */
 code {
   font-family: var(--font-mono); font-size: 13px; color: var(--text-main);
-  background: #f6f6f6; padding: 3px 6px; border: 1px solid var(--border);
+  background: var(--bg-subtle, #f6f6f6); padding: 3px 6px; border: 1px solid var(--border);
 }
 .math-box {
-  background: #f6f6f6; border: 1px solid var(--border); padding: 16px;
-  font-family: var(--font-mono); font-size: 13px; margin: 16px 0; color: #000; font-weight: 600;
+  background: var(--bg-subtle, #f6f6f6); border: 1px solid var(--border); padding: 16px;
+  font-family: var(--font-mono); font-size: 13px; margin: 16px 0; color: var(--text-main); font-weight: 600;
 }
 
 /* Attention Heatmap */
@@ -193,15 +193,80 @@ code {
   --shadow-hover: 0 12px 32px rgba(0,0,0,0.5);
 }
 
-/* Hardcoded 'white' backgrounds → dark equivalents */
-[data-theme="dark"] .node-content { background: #1a1a1a; }
-[data-theme="dark"] .node-icon { background: #1a1a1a; }
-[data-theme="dark"] .inner-block { background: #1a1a1a; }
-[data-theme="dark"] .qkv-card { background: #1a1a1a; }
-[data-theme="dark"] .playground { background: #1a1a1a; }
-[data-theme="dark"] code { background: #222222; }
-[data-theme="dark"] .math-box { background: #222222; color: #E8E8E8; }
-[data-theme="dark"] .tok { background: #1a1a1a; }
+/* Legacy dark overrides — now mostly handled by CSS vars, but kept for safety */
+[data-theme="dark"] .pg-input { background: var(--node-bg); color: var(--text-main); }
+
+/* ── Dark mode overrides for database-authored inline HTML ──
+   Content from the CMS may have hardcoded white/light backgrounds
+   and dark text via inline styles. !important is needed to override
+   inline styles. Scoped to main to avoid side effects. */
+[data-theme="dark"] main div[style*="background: white"],
+[data-theme="dark"] main div[style*="background:white"],
+[data-theme="dark"] main div[style*="background: #fff"],
+[data-theme="dark"] main div[style*="background:#fff"],
+[data-theme="dark"] main div[style*="background: #FFF"],
+[data-theme="dark"] main div[style*="background:#FFF"],
+[data-theme="dark"] main div[style*="background: rgb(255"],
+[data-theme="dark"] main div[style*="background-color: white"],
+[data-theme="dark"] main div[style*="background-color:white"],
+[data-theme="dark"] main div[style*="background-color: #fff"],
+[data-theme="dark"] main div[style*="background-color:#fff"],
+[data-theme="dark"] main div[style*="background-color: #FFF"],
+[data-theme="dark"] main div[style*="background-color:#FFF"],
+[data-theme="dark"] main div[style*="background-color: rgb(255"],
+[data-theme="dark"] main span[style*="background: white"],
+[data-theme="dark"] main span[style*="background:white"],
+[data-theme="dark"] main span[style*="background: #fff"],
+[data-theme="dark"] main span[style*="background:#fff"] {
+  background: var(--node-bg) !important;
+  color: var(--text-muted) !important;
+}
+
+/* Light-gray backgrounds used in cards/panels */
+[data-theme="dark"] main div[style*="background: #f"],
+[data-theme="dark"] main div[style*="background:#f"],
+[data-theme="dark"] main div[style*="background-color: #f"],
+[data-theme="dark"] main div[style*="background-color:#f"] {
+  background: var(--node-bg) !important;
+}
+
+/* Fix dark text colors on inline-styled content */
+[data-theme="dark"] main div[style*="color: #1"],
+[data-theme="dark"] main div[style*="color:#1"],
+[data-theme="dark"] main div[style*="color: #2"],
+[data-theme="dark"] main div[style*="color:#2"],
+[data-theme="dark"] main div[style*="color: #3"],
+[data-theme="dark"] main div[style*="color:#3"],
+[data-theme="dark"] main div[style*="color: #4"],
+[data-theme="dark"] main div[style*="color:#4"],
+[data-theme="dark"] main div[style*="color: black"],
+[data-theme="dark"] main div[style*="color:black"],
+[data-theme="dark"] main div[style*="color: rgb(0"],
+[data-theme="dark"] main span[style*="color: #1"],
+[data-theme="dark"] main span[style*="color:#1"],
+[data-theme="dark"] main span[style*="color: #2"],
+[data-theme="dark"] main span[style*="color:#2"],
+[data-theme="dark"] main span[style*="color: #3"],
+[data-theme="dark"] main span[style*="color:#3"],
+[data-theme="dark"] main span[style*="color: black"],
+[data-theme="dark"] main span[style*="color:black"],
+[data-theme="dark"] main p[style*="color: #3"],
+[data-theme="dark"] main p[style*="color:#3"],
+[data-theme="dark"] main p[style*="color: #4"],
+[data-theme="dark"] main p[style*="color:#4"],
+[data-theme="dark"] main h3[style*="color: #"],
+[data-theme="dark"] main h4[style*="color: #"] {
+  color: var(--text-muted) !important;
+}
+
+/* Border colors for inline-styled cards */
+[data-theme="dark"] main div[style*="border: 1px solid #e"],
+[data-theme="dark"] main div[style*="border: 1px solid #d"],
+[data-theme="dark"] main div[style*="border: 1px solid #c"],
+[data-theme="dark"] main div[style*="border:1px solid #e"],
+[data-theme="dark"] main div[style*="border:1px solid #d"] {
+  border-color: var(--border) !important;
+}
 
 /* Main content scrollbar for dark */
 [data-theme="dark"] main {

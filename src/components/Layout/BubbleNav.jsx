@@ -1,62 +1,132 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useCallback, useState, useImperativeHandle, forwardRef } from 'react';
+import { createRoot } from 'react-dom/client';
 import { createBubbles } from '@hyperplexed/bubbles';
 import { useSettings } from '../../SettingsContext';
-import { ACCENT_SWATCHES } from '../../settingsStore';
+import SettingsContext from '../../SettingsContext';
 import { fetchPublishedPages } from '../../lib/pages';
-import { SHORTCUTS, installShortcuts } from '../../shortcuts';
+import PagesPanel from '../bubble/PagesPanel';
+import SettingsPanel from '../bubble/SettingsPanel';
+import ShortcutsPanel from '../bubble/ShortcutsPanel';
 
 /* ═══════════════════════════════════════════
- *  Theme-aware color palette for panel content
- * ═══════════════════════════════════════════ */
-const PALETTES = {
-  dark: {
-    panelBg:        'transparent',
-    text:           '#E8E8E8',
-    textMuted:      '#B0B0B0',
-    textDim:        '#777',
-    headerText:     '#fff',
-    activeBg:       '#1f1f1f',
-    hoverBg:        '#1a1a1a',
-    border:         '#333',
-    borderFocus:    '#555',
-    controlBg:      '#333',
-    controlText:    '#fff',
-    controlOff:     '#777',
-    inputBg:        'transparent',
-    sectionBg:      'transparent',
-  },
-  light: {
-    panelBg:        'transparent',
-    text:           '#1f2937',
-    textMuted:      '#6b7280',
-    textDim:        '#9ca3af',
-    headerText:     '#111827',
-    activeBg:       '#e5e7eb',
-    hoverBg:        '#f3f4f6',
-    border:         '#d1d5db',
-    borderFocus:    '#9ca3af',
-    controlBg:      '#e5e7eb',
-    controlText:    '#111827',
-    controlOff:     '#9ca3af',
-    inputBg:        'transparent',
-    sectionBg:      'transparent',
-  },
+ *  BubbleNav — @hyperplexed/bubbles integration
+ * ═══════════════════════════════════════════
+ *
+ * Uses React render callbacks for all panel content,
+ * full 10-token theming, event subscriptions, and
+ * dismiss/restore via Ctrl+K.
+ */
+
+/* ── SVG icon factories (library needs raw HTMLElements) ── */
+
+function createSvgIcon(innerHTML, color) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('width', '20');
+  svg.setAttribute('height', '20');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '2');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  if (color) svg.style.color = color;
+  svg.innerHTML = innerHTML;
+  return svg;
+}
+
+const ICON_PATHS = {
+  pages:
+    '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>' +
+    '<polyline points="14 2 14 8 20 8"/>' +
+    '<line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>' +
+    '<polyline points="10 9 9 9 8 9"/>',
+  settings:
+    '<circle cx="12" cy="12" r="3"/>' +
+    '<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+  shortcuts:
+    '<rect x="2" y="4" width="20" height="16" rx="2" ry="2"/>' +
+    '<path d="M6 8h.001M10 8h.001M14 8h.001M18 8h.001M8 12h.001M12 12h.001M16 12h.001M7 16h10"/>',
 };
 
+/* ── Build accent-aware color tokens for all 10 library slots ── */
+
+function buildColorTokens(resolvedTheme, accent) {
+  if (resolvedTheme === 'light') {
+    return {
+      bubbleSurface: accent,
+      bubbleIcon: '#ffffff',
+      bubbleShadow: `0 4px 12px ${accent}40`,
+      focusRing: accent,
+      panelSurface: '#ffffff',
+      panelText: '#1c1c1e',
+      panelShadow: `0 12px 32px rgba(0,0,0,0.18)`,
+      dismissSurface: `${accent}14`,
+      dismissBorder: `${accent}40`,
+      dismissIcon: accent,
+    };
+  }
+  return {
+    bubbleSurface: accent,
+    bubbleIcon: '#ffffff',
+    bubbleShadow: `0 4px 12px ${accent}40`,
+    focusRing: accent,
+    panelSurface: '#1c1c1e',
+    panelText: '#ffffff',
+    panelShadow: `0 12px 32px rgba(0,0,0,0.5)`,
+    dismissSurface: `${accent}18`,
+    dismissBorder: `${accent}55`,
+    dismissIcon: accent,
+  };
+}
+
+/* ── The three bubble definitions ── */
+
+const BUBBLE_DEFS = ['pages', 'settings', 'shortcuts'];
+
 /**
- * BubbleNav — floating bubble-based navigation using @hyperplexed/bubbles.
- * Two flocks: Pages (navigation) and Settings (customization).
+ * BubbleNav — floating bubble navigation.
+ *
+ * Exposes toggle and restoreDismissed via forwardRef
+ * so MainLayout can bind Ctrl+K to toggle/restore.
  */
-export default function BubbleNav({ selectedModel, onSelectModel }) {
+const BubbleNav = forwardRef(function BubbleNav({ selectedModel, onSelectModel }, ref) {
   const { settings, resolvedTheme, updateSettings, resetSettings } = useSettings();
   const managerRef = useRef(null);
-  const pagesContentRef = useRef(null);
-  const settingsContentRef = useRef(null);
-  const shortcutsContentRef = useRef(null);
   const [pages, setPages] = useState([]);
-  const mountedRef = useRef(false);
+  const dismissedRef = useRef(new Set());
+  const rootsRef = useRef({}); // { id: { root, host } }
 
-  const pal = PALETTES[resolvedTheme] || PALETTES.dark;
+  // Use refs for values that change frequently — avoids recreating
+  // the render callbacks and causing the library to remount panels.
+  const settingsRef = useRef({ settings, resolvedTheme, updateSettings, resetSettings });
+  const pagesRef = useRef(pages);
+  const selectedRef = useRef(selectedModel);
+  const onSelectRef = useRef(onSelectModel);
+
+  // Keep refs in sync
+  settingsRef.current = { settings, resolvedTheme, updateSettings, resetSettings };
+  pagesRef.current = pages;
+  selectedRef.current = selectedModel;
+  onSelectRef.current = onSelectModel;
+
+  // Expose manager + restore to parent (MainLayout)
+  useImperativeHandle(ref, () => ({
+    toggle: () => {
+      if (managerRef.current) {
+        try { managerRef.current.toggle(); } catch { /* */ }
+      }
+    },
+    restoreDismissed: () => {
+      if (!managerRef.current || dismissedRef.current.size === 0) return false;
+      for (const id of dismissedRef.current) {
+        addBubble(id);
+      }
+      dismissedRef.current.clear();
+      return true;
+    },
+    hasDismissed: () => dismissedRef.current.size > 0,
+    state: () => managerRef.current?.state?.() ?? 'docked',
+  }));
 
   // Fetch pages on mount
   useEffect(() => {
@@ -65,609 +135,108 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
       .catch(() => setPages([]));
   }, []);
 
-  // ── Build Pages panel DOM ──
-  const buildPagesContent = useCallback(() => {
-    const container = document.createElement('div');
-    container.style.cssText = `
-      padding: 16px;
-      font-family: var(--font-main);
-      overflow-y: auto;
-      max-height: 100%;
-    `;
-
-    // Organize pages into groups
-    const architecturePages = [];
-    const conceptGroups = {};
-    const flatConcepts = [];
-
-    for (const page of pages) {
-      const meta = page.current_version?.meta;
-      if (!meta) continue;
-      const category = (meta.category || '').toLowerCase();
-      const item = {
-        id: page.id,
-        title: meta.title || 'Untitled',
-        urlPath: page.url_path,
-        isReady: page.status === 'published',
-        subcategory: meta.subcategory || null,
-      };
-      if (category === 'architecture') {
-        architecturePages.push(item);
-      } else if (category === 'concept' || category === 'concepts') {
-        if (item.subcategory) {
-          if (!conceptGroups[item.subcategory]) conceptGroups[item.subcategory] = [];
-          conceptGroups[item.subcategory].push(item);
-        } else {
-          flatConcepts.push(item);
-        }
-      }
-    }
-
-    const sortByTitle = (a, b) => a.title.localeCompare(b.title);
-    architecturePages.sort(sortByTitle);
-    flatConcepts.sort(sortByTitle);
-    Object.values(conceptGroups).forEach(g => g.sort(sortByTitle));
-
-    // ── Helper: create a page button ──
-    const createPageBtn = (item, fontSize = '13px', gap = '8px', dotSize = '5px') => {
-      const btn = document.createElement('button');
-      const isActive = selectedModel === item.urlPath;
-      btn.style.cssText = `
-        width: 100%; padding: 7px 12px; border: none; border-radius: 6px;
-        background: ${isActive ? pal.activeBg : 'transparent'};
-        color: ${isActive ? settings.accent : pal.textMuted};
-        font-size: ${fontSize}; font-weight: ${isActive ? '650' : '500'};
-        cursor: pointer; text-align: left; font-family: inherit;
-        transition: background 0.15s ease, color 0.15s ease;
-        margin-bottom: 1px; display: flex; align-items: center; gap: ${gap};
-      `;
-      if (isActive) {
-        const dot = document.createElement('span');
-        dot.style.cssText = `
-          width: ${dotSize}; height: ${dotSize}; border-radius: 50%;
-          background: ${settings.accent}; flex-shrink: 0;
-        `;
-        btn.appendChild(dot);
-      }
-      const text = document.createElement('span');
-      text.textContent = item.title;
-      text.style.cssText = 'overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
-      btn.appendChild(text);
-
-      if (!isActive) {
-        btn.addEventListener('mouseenter', () => { btn.style.background = pal.hoverBg; btn.style.color = pal.text; });
-        btn.addEventListener('mouseleave', () => { btn.style.background = 'transparent'; btn.style.color = pal.textMuted; });
-      }
-
-      btn.addEventListener('click', () => {
-        if (item.isReady && onSelectModel) {
-          onSelectModel(item.urlPath);
-          setTimeout(() => {
-            if (managerRef.current) {
-              try { managerRef.current.configure({ initialState: 'docked' }); } catch { /* */ }
-            }
-          }, 300);
-        }
-      });
-      return btn;
-    };
-
-    // ── Helper: create a section ──
-    const createSection = (label, items, isOpen = true) => {
-      const section = document.createElement('div');
-      section.style.cssText = 'margin-bottom: 8px;';
-
-      const header = document.createElement('button');
-      header.style.cssText = `
-        width: 100%; display: flex; align-items: center; justify-content: space-between;
-        padding: 8px 10px; border: none; border-radius: 6px;
-        background: transparent; color: ${pal.headerText}; font-size: 10.5px; font-weight: 700;
-        letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
-        font-family: inherit; transition: background 0.15s ease;
-      `;
-      header.textContent = label;
-      header.addEventListener('mouseenter', () => { header.style.background = pal.hoverBg; });
-      header.addEventListener('mouseleave', () => { header.style.background = 'transparent'; });
-
-      const chevron = document.createElement('span');
-      chevron.textContent = '▾';
-      chevron.style.cssText = `
-        font-size: 12px; transition: transform 0.2s ease;
-        transform: ${isOpen ? 'rotate(0deg)' : 'rotate(-90deg)'};
-      `;
-      header.appendChild(chevron);
-
-      const list = document.createElement('div');
-      list.style.cssText = `
-        overflow: hidden; padding: 2px 0;
-        max-height: ${isOpen ? '2000px' : '0'};
-        opacity: ${isOpen ? '1' : '0'};
-        transition: max-height 0.3s ease, opacity 0.25s ease;
-      `;
-
-      header.addEventListener('click', () => {
-        const nowOpen = list.style.maxHeight === '0px';
-        list.style.maxHeight = nowOpen ? '2000px' : '0';
-        list.style.opacity = nowOpen ? '1' : '0';
-        chevron.style.transform = nowOpen ? 'rotate(0deg)' : 'rotate(-90deg)';
-      });
-
-      items.forEach(item => {
-        list.appendChild(createPageBtn(item));
-      });
-
-      section.appendChild(header);
-      section.appendChild(list);
-      return section;
-    };
-
-    // ── Helper: create subcategory ──
-    const createSubcategory = (label, items) => {
-      const wrapper = document.createElement('div');
-      wrapper.style.cssText = 'margin-left: 8px; margin-bottom: 4px;';
-
-      const header = document.createElement('button');
-      header.style.cssText = `
-        width: 100%; display: flex; align-items: center; justify-content: space-between;
-        padding: 6px 10px; border: none; border-radius: 6px;
-        background: transparent; color: ${pal.textMuted}; font-size: 12.5px; font-weight: 650;
-        cursor: pointer; font-family: inherit; transition: background 0.15s ease, color 0.15s ease;
-      `;
-      header.textContent = label;
-      header.addEventListener('mouseenter', () => { header.style.background = pal.hoverBg; header.style.color = pal.text; });
-      header.addEventListener('mouseleave', () => { header.style.background = 'transparent'; header.style.color = pal.textMuted; });
-
-      const chevron = document.createElement('span');
-      chevron.textContent = '▾';
-      chevron.style.cssText = 'font-size: 11px; transition: transform 0.2s ease;';
-      header.appendChild(chevron);
-
-      const list = document.createElement('div');
-      list.style.cssText = 'overflow: hidden; max-height: 0; opacity: 0; transition: max-height 0.3s ease, opacity 0.25s ease;';
-
-      // Auto-expand if any child is active
-      const hasActive = items.some(i => selectedModel === i.urlPath);
-      if (hasActive) {
-        list.style.maxHeight = '2000px';
-        list.style.opacity = '1';
-      }
-
-      header.addEventListener('click', () => {
-        const nowOpen = list.style.maxHeight === '0px' || list.style.maxHeight === '0';
-        list.style.maxHeight = nowOpen ? '2000px' : '0';
-        list.style.opacity = nowOpen ? '1' : '0';
-        chevron.style.transform = nowOpen ? 'rotate(0deg)' : 'rotate(-90deg)';
-      });
-
-      items.forEach(item => {
-        list.appendChild(createPageBtn(item, '12.5px', '7px', '4px'));
-      });
-
-      wrapper.appendChild(header);
-      wrapper.appendChild(list);
-      return wrapper;
-    };
-
-    // Build sections
-    if (architecturePages.length > 0) {
-      container.appendChild(createSection('Architecture', architecturePages, true));
-    }
-
-    // Concepts with subcategories
-    const conceptsSection = document.createElement('div');
-    conceptsSection.style.cssText = 'margin-bottom: 8px;';
-
-    const conceptsHeader = document.createElement('button');
-    conceptsHeader.style.cssText = `
-      width: 100%; display: flex; align-items: center; justify-content: space-between;
-      padding: 8px 10px; border: none; border-radius: 6px;
-      background: transparent; color: ${pal.headerText}; font-size: 10.5px; font-weight: 700;
-      letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
-      font-family: inherit; transition: background 0.15s ease;
-    `;
-    conceptsHeader.textContent = 'Concepts';
-    conceptsHeader.addEventListener('mouseenter', () => { conceptsHeader.style.background = pal.hoverBg; });
-    conceptsHeader.addEventListener('mouseleave', () => { conceptsHeader.style.background = 'transparent'; });
-
-    const conceptsChevron = document.createElement('span');
-    conceptsChevron.textContent = '▾';
-    conceptsChevron.style.cssText = 'font-size: 12px; transition: transform 0.2s ease;';
-    conceptsHeader.appendChild(conceptsChevron);
-
-    const conceptsList = document.createElement('div');
-    conceptsList.style.cssText = 'overflow: hidden; max-height: 2000px; opacity: 1; transition: max-height 0.3s ease, opacity 0.25s ease;';
-
-    conceptsHeader.addEventListener('click', () => {
-      const nowOpen = conceptsList.style.maxHeight === '0px' || conceptsList.style.maxHeight === '0';
-      conceptsList.style.maxHeight = nowOpen ? '2000px' : '0';
-      conceptsList.style.opacity = nowOpen ? '1' : '0';
-      conceptsChevron.style.transform = nowOpen ? 'rotate(0deg)' : 'rotate(-90deg)';
-    });
-
-    // Subcategories
-    Object.keys(conceptGroups).sort().forEach(subcat => {
-      conceptsList.appendChild(createSubcategory(subcat, conceptGroups[subcat]));
-    });
-
-    // Flat concepts
-    flatConcepts.forEach(item => {
-      conceptsList.appendChild(createPageBtn(item));
-    });
-
-    conceptsSection.appendChild(conceptsHeader);
-    conceptsSection.appendChild(conceptsList);
-
-    if (Object.keys(conceptGroups).length > 0 || flatConcepts.length > 0) {
-      container.appendChild(conceptsSection);
-    }
-
-    return container;
-  }, [pages, selectedModel, settings.accent, onSelectModel, pal]);
-
-  // ── Build Settings panel DOM ──
-  const buildSettingsContent = useCallback(() => {
-    const container = document.createElement('div');
-    container.style.cssText = `
-      padding: 20px 16px;
-      font-family: var(--font-main);
-      color: ${pal.text};
-      overflow-y: auto;
-      max-height: 100%;
-    `;
-
-    // Title
-    const titleRow = document.createElement('div');
-    titleRow.style.cssText = 'display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;';
-    const titleLeft = document.createElement('div');
-    const title = document.createElement('div');
-    title.style.cssText = `font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: ${pal.text};`;
-    title.textContent = '⚙ Customize';
-    const subtitle = document.createElement('div');
-    subtitle.style.cssText = `font-size: 11px; color: ${pal.textDim}; margin-top: 2px;`;
-    subtitle.textContent = 'Changes apply live';
-    titleLeft.appendChild(title);
-    titleLeft.appendChild(subtitle);
-
-    const resetBtn = document.createElement('button');
-    resetBtn.textContent = 'Reset';
-    resetBtn.style.cssText = `
-      padding: 4px 12px; border: 1px solid ${pal.border}; border-radius: 6px;
-      background: transparent; color: ${pal.textDim}; font-size: 11px; font-weight: 600;
-      cursor: pointer; font-family: inherit; transition: all 0.15s ease;
-    `;
-    resetBtn.addEventListener('mouseenter', () => { resetBtn.style.borderColor = pal.borderFocus; resetBtn.style.color = pal.text; });
-    resetBtn.addEventListener('mouseleave', () => { resetBtn.style.borderColor = pal.border; resetBtn.style.color = pal.textDim; });
-    resetBtn.addEventListener('click', () => {
-      resetSettings();
-      rebuildSettingsPanel();
-    });
-
-    titleRow.appendChild(titleLeft);
-    titleRow.appendChild(resetBtn);
-    container.appendChild(titleRow);
-
-    // ── Helper: Create setting group ──
-    const createGroup = (label) => {
-      const group = document.createElement('div');
-      group.style.cssText = 'margin-bottom: 16px;';
-      const lbl = document.createElement('div');
-      lbl.style.cssText = `font-size: 11px; font-weight: 600; color: ${pal.textDim}; margin-bottom: 6px;`;
-      lbl.textContent = label;
-      group.appendChild(lbl);
-      return group;
-    };
-
-    // ── Helper: Create segmented control ──
-    const createSegmented = (options, currentValue, onChange) => {
-      const row = document.createElement('div');
-      row.style.cssText = `
-        display: flex; border: 1px solid ${pal.border}; border-radius: 8px; overflow: hidden;
-      `;
-      options.forEach(opt => {
-        const btn = document.createElement('button');
-        const isActive = opt.value === currentValue;
-        btn.style.cssText = `
-          flex: 1; padding: 7px 0; border: none;
-          background: ${isActive ? pal.controlBg : 'transparent'};
-          color: ${isActive ? pal.controlText : pal.controlOff};
-          font-size: 12px; font-weight: 600; cursor: pointer;
-          font-family: inherit; transition: all 0.15s ease;
-        `;
-        btn.textContent = opt.label;
-        btn.addEventListener('click', () => {
-          onChange(opt.value);
-          // Update button states
-          row.querySelectorAll('button').forEach(b => {
-            b.style.background = 'transparent';
-            b.style.color = pal.controlOff;
-          });
-          btn.style.background = pal.controlBg;
-          btn.style.color = pal.controlText;
-        });
-        row.appendChild(btn);
-      });
-      return row;
-    };
-
-    // ── Helper: Create slider ──
-    const createSlider = (min, max, step, currentValue, unit, onChange) => {
-      const row = document.createElement('div');
-      row.style.cssText = 'display: flex; align-items: center; gap: 10px;';
-      const slider = document.createElement('input');
-      slider.type = 'range';
-      slider.min = min;
-      slider.max = max;
-      slider.step = step;
-      slider.value = typeof currentValue === 'string' ? parseFloat(currentValue) : currentValue;
-      slider.style.cssText = `flex: 1; accent-color: ${settings.accent}; cursor: pointer;`;
-      const valueLabel = document.createElement('span');
-      valueLabel.style.cssText = `font-size: 12px; font-weight: 600; color: ${pal.textMuted}; min-width: 50px; text-align: right;`;
-      valueLabel.textContent = `${slider.value}${unit}`;
-      slider.addEventListener('input', () => {
-        valueLabel.textContent = `${slider.value}${unit}`;
-        onChange(parseFloat(slider.value));
-      });
-      row.appendChild(slider);
-      row.appendChild(valueLabel);
-      return row;
-    };
-
-    // 1. Navigation Mode
-    const navGroup = createGroup('Navigation');
-    navGroup.appendChild(createSegmented(
-      [{ label: 'Sidebar', value: 'sidebar' }, { label: 'Bubble', value: 'bubble' }],
-      settings.navMode,
-      (val) => updateSettings({ navMode: val })
-    ));
-    container.appendChild(navGroup);
-
-    // 2. Theme
-    const themeGroup = createGroup('Theme');
-    themeGroup.appendChild(createSegmented(
-      [{ label: 'Auto', value: 'auto' }, { label: 'Dark', value: 'dark' }, { label: 'Light', value: 'light' }],
-      settings.theme,
-      (val) => updateSettings({ theme: val })
-    ));
-    container.appendChild(themeGroup);
-
-    // 3. Accent colors
-    const accentGroup = createGroup('Accent');
-    const swatchRow = document.createElement('div');
-    swatchRow.style.cssText = 'display: flex; flex-wrap: wrap; gap: 8px;';
-    ACCENT_SWATCHES.forEach(swatch => {
-      const btn = document.createElement('button');
-      const isActive = settings.accent === swatch.hex;
-      btn.style.cssText = `
-        width: 28px; height: 28px; border-radius: 50%;
-        background: ${swatch.hex};
-        border: 2px solid ${isActive ? (resolvedTheme === 'dark' ? '#fff' : '#111') : 'transparent'};
-        cursor: pointer; transition: all 0.15s ease;
-        box-shadow: ${isActive ? '0 0 0 2px ' + swatch.hex : 'none'};
-      `;
-      btn.title = swatch.name;
-      btn.addEventListener('mouseenter', () => { if (!isActive) btn.style.transform = 'scale(1.15)'; });
-      btn.addEventListener('mouseleave', () => { btn.style.transform = 'scale(1)'; });
-      btn.addEventListener('click', () => {
-        updateSettings({ accent: swatch.hex });
-        const ring = resolvedTheme === 'dark' ? '#fff' : '#111';
-        swatchRow.querySelectorAll('button').forEach(b => {
-          b.style.border = '2px solid transparent';
-          b.style.boxShadow = 'none';
-        });
-        btn.style.border = `2px solid ${ring}`;
-        btn.style.boxShadow = `0 0 0 2px ${swatch.hex}`;
-        container.querySelectorAll('input[type=range]').forEach(s => {
-          s.style.accentColor = swatch.hex;
-        });
-      });
-      swatchRow.appendChild(btn);
-    });
-    accentGroup.appendChild(swatchRow);
-    container.appendChild(accentGroup);
-
-    // 4. Initial dock side
-    const sideGroup = createGroup('Initial dock side');
-    sideGroup.appendChild(createSegmented(
-      [{ label: 'Left', value: 'left' }, { label: 'Right', value: 'right' }],
-      settings.dockSide,
-      (val) => {
-        updateSettings({ dockSide: val });
-        if (managerRef.current) {
-          try { managerRef.current.configure({ side: val }); } catch { /* */ }
-        }
-      }
-    ));
-    container.appendChild(sideGroup);
-
-    // 5. Dock vertical
-    const vertGroup = createGroup('Dock vertical');
-    vertGroup.appendChild(createSlider(0, 100, 1, Math.round(settings.dockVertical * 100), '%', (val) => {
-      const v = val / 100;
-      updateSettings({ dockVertical: v });
-      if (managerRef.current) {
-        try { managerRef.current.configure({ vertical: v }); } catch { /* */ }
-      }
-    }));
-    container.appendChild(vertGroup);
-
-    // 6. Panel width
-    const widthGroup = createGroup('Panel width');
-    widthGroup.appendChild(createSlider(280, 800, 10, settings.panelWidth, 'px', (val) => {
-      updateSettings({ panelWidth: val });
-      if (managerRef.current) {
-        try { managerRef.current.configure({ panelWidth: val }); } catch { /* */ }
-      }
-    }));
-    container.appendChild(widthGroup);
-
-    // 7. Panel max height
-    const heightGroup = createGroup('Panel max height');
-    heightGroup.appendChild(createSlider(30, 100, 5, parseFloat(settings.panelMaxHeight), '%', (val) => {
-      const v = `${val}%`;
-      updateSettings({ panelMaxHeight: v });
-      if (managerRef.current) {
-        try { managerRef.current.configure({ panelMaxHeight: v }); } catch { /* */ }
-      }
-    }));
-    container.appendChild(heightGroup);
-
-    // 8. Ricochet
-    const ricochetGroup = createGroup('Ricochet');
-    ricochetGroup.appendChild(createSlider(0, 100, 1, Math.round(settings.ricochet * 100), '%', (val) => {
-      const v = val / 100;
-      updateSettings({ ricochet: v });
-      if (managerRef.current) {
-        try { managerRef.current.configure({ ricochet: v }); } catch { /* */ }
-      }
-    }));
-    container.appendChild(ricochetGroup);
-
-    return container;
-  }, [settings, resolvedTheme, updateSettings, resetSettings, pal]);
-
-  const rebuildSettingsPanel = useCallback(() => {
+  // ── Immediate configure (bypasses React render cycle for real-time feel) ──
+  // partial: library config keys to override (e.g. { panelWidth: 500 })
+  // settingsOverride: app settings to override for color computation (e.g. { accent: '#ff0000' })
+  const handleConfigure = useCallback((partial, settingsOverride) => {
     if (!managerRef.current) return;
-    const newContent = buildSettingsContent();
-    settingsContentRef.current = newContent;
-    managerRef.current.add({
-      id: 'settings',
-      label: 'Settings',
-      icon: createSettingsIcon(),
-      content: newContent,
-    });
-  }, [buildSettingsContent]);
-
-  // ── Build Keyboard Shortcuts panel DOM ──
-  const buildShortcutsContent = useCallback(() => {
-    const container = document.createElement('div');
-    container.style.cssText = `
-      padding: 20px 16px;
-      font-family: var(--font-main);
-      color: ${pal.text};
-      overflow-y: auto;
-      max-height: 100%;
-    `;
-
-    // Title
-    const title = document.createElement('div');
-    title.style.cssText = `font-size: 15px; font-weight: 700; margin-bottom: 4px; color: ${pal.text}; display: flex; align-items: center; gap: 8px;`;
-    title.textContent = '⌨ Keyboard Shortcuts';
-    container.appendChild(title);
-
-    const subtitle = document.createElement('div');
-    subtitle.style.cssText = `font-size: 11px; color: ${pal.textDim}; margin-bottom: 20px;`;
-    subtitle.textContent = 'Press ? anytime to toggle this panel';
-    container.appendChild(subtitle);
-
-    // Group shortcuts by category
-    const categories = {};
-    SHORTCUTS.forEach(s => {
-      if (!categories[s.category]) categories[s.category] = [];
-      categories[s.category].push(s);
-    });
-
-    Object.entries(categories).forEach(([catName, shortcuts]) => {
-      const catLabel = document.createElement('div');
-      catLabel.style.cssText = `font-size: 11px; font-weight: 600; color: ${pal.textDim}; margin-bottom: 8px; margin-top: 4px;`;
-      catLabel.textContent = catName;
-      container.appendChild(catLabel);
-
-      shortcuts.forEach(shortcut => {
-        const row = document.createElement('div');
-        row.style.cssText = `
-          display: flex; align-items: center; justify-content: space-between;
-          padding: 6px 0; border-bottom: 1px solid ${pal.border}22;
-        `;
-
-        const label = document.createElement('span');
-        label.style.cssText = `font-size: 13px; color: ${pal.textMuted}; font-weight: 500;`;
-        label.textContent = shortcut.label;
-
-        const keysWrap = document.createElement('div');
-        keysWrap.style.cssText = 'display: flex; gap: 4px; align-items: center;';
-
-        shortcut.keys.forEach((k, i) => {
-          const kbd = document.createElement('kbd');
-          kbd.style.cssText = `
-            display: inline-flex; align-items: center; justify-content: center;
-            min-width: 24px; height: 24px; padding: 0 6px;
-            background: ${pal.controlBg}; border: 1px solid ${pal.border};
-            border-radius: 5px; font-size: 11px; font-weight: 600;
-            font-family: var(--font-mono); color: ${pal.text};
-            box-shadow: 0 1px 0 ${pal.border};
-          `;
-          kbd.textContent = k;
-          keysWrap.appendChild(kbd);
-
-          if (i < shortcut.keys.length - 1) {
-            const plus = document.createElement('span');
-            plus.style.cssText = `font-size: 10px; color: ${pal.textDim}; font-weight: 600;`;
-            plus.textContent = '+';
-            keysWrap.appendChild(plus);
-          }
-        });
-
-        row.appendChild(label);
-        row.appendChild(keysWrap);
-        container.appendChild(row);
+    const s = { ...settingsRef.current.settings, ...settingsOverride };
+    const rt = settingsRef.current.resolvedTheme;
+    try {
+      managerRef.current.configure({
+        theme: s.theme,
+        colors: buildColorTokens(rt, s.accent),
+        side: s.dockSide,
+        vertical: s.dockVertical,
+        panelWidth: s.panelWidth,
+        panelMaxHeight: s.panelMaxHeight,
+        ricochet: s.ricochet,
+        ...partial,
       });
+    } catch { /* */ }
+  }, []); // Stable — reads from refs
 
-      // Spacer between categories
-      const spacer = document.createElement('div');
-      spacer.style.cssText = 'height: 12px;';
-      container.appendChild(spacer);
-    });
+  // ── Render a panel into a root (create or re-render) ──
+  const renderPanel = useCallback((id, root) => {
+    const { settings: s, resolvedTheme: rt, updateSettings: us, resetSettings: rs } = settingsRef.current;
+    const ctxValue = { settings: s, resolvedTheme: rt, updateSettings: us, resetSettings: rs };
 
-    return container;
-  }, [pal]);
+    const handleCollapse = () => {
+      setTimeout(() => {
+        if (managerRef.current?.state() === 'open') {
+          try { managerRef.current.toggle(); } catch { /* */ }
+        }
+      }, 200);
+    };
 
-  // ── Create SVG icons ──
-  function createPagesIcon() {
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', '0 0 24 24');
-    svg.setAttribute('width', '20');
-    svg.setAttribute('height', '20');
-    svg.setAttribute('fill', 'none');
-    svg.setAttribute('stroke', 'currentColor');
-    svg.setAttribute('stroke-width', '2');
-    svg.setAttribute('stroke-linecap', 'round');
-    svg.setAttribute('stroke-linejoin', 'round');
-    svg.innerHTML = '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>';
-    return svg;
-  }
+    const components = {
+      pages: (
+        <SettingsContext.Provider value={ctxValue}>
+          <PagesPanel
+            pages={pagesRef.current}
+            selectedModel={selectedRef.current}
+            onSelectModel={onSelectRef.current}
+            onCollapse={handleCollapse}
+          />
+        </SettingsContext.Provider>
+      ),
+      settings: (
+        <SettingsContext.Provider value={ctxValue}>
+          <SettingsPanel onConfigure={handleConfigure} />
+        </SettingsContext.Provider>
+      ),
+      shortcuts: (
+        <SettingsContext.Provider value={ctxValue}>
+          <ShortcutsPanel />
+        </SettingsContext.Provider>
+      ),
+    };
 
-  function createSettingsIcon() {
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', '0 0 24 24');
-    svg.setAttribute('width', '20');
-    svg.setAttribute('height', '20');
-    svg.setAttribute('fill', 'none');
-    svg.setAttribute('stroke', 'currentColor');
-    svg.setAttribute('stroke-width', '2');
-    svg.setAttribute('stroke-linecap', 'round');
-    svg.setAttribute('stroke-linejoin', 'round');
-    svg.innerHTML = '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>';
-    return svg;
-  }
+    root.render(components[id]);
+  }, []); // Stable — reads from refs
 
-  function createKeyboardIcon() {
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', '0 0 24 24');
-    svg.setAttribute('width', '20');
-    svg.setAttribute('height', '20');
-    svg.setAttribute('fill', 'none');
-    svg.setAttribute('stroke', 'currentColor');
-    svg.setAttribute('stroke-width', '2');
-    svg.setAttribute('stroke-linecap', 'round');
-    svg.setAttribute('stroke-linejoin', 'round');
-    svg.innerHTML = '<rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><path d="M6 8h.001M10 8h.001M14 8h.001M18 8h.001M8 12h.001M12 12h.001M16 12h.001M7 16h10"/>';
-    return svg;
-  }
+  // ── React render callback factory (stable, never changes) ──
+  const makeContent = useCallback((id) => {
+    return (host) => {
+      // Style host to fill the panel surface's flex layout
+      host.style.flex = '1';
+      host.style.minHeight = '0';
+      host.style.display = 'flex';
+      host.style.flexDirection = 'column';
+      host.style.overflow = 'hidden';
 
-  // ── Initialize / reinitialize the bubble manager ──
+      const root = createRoot(host);
+      rootsRef.current[id] = { root, host };
+      renderPanel(id, root);
+
+      return () => {
+        root.unmount();
+        delete rootsRef.current[id];
+      };
+    };
+  }, [renderPanel]); // Stable
+
+  // ── Add a single bubble to the manager ──
+  const addBubble = useCallback((id) => {
+    if (!managerRef.current) return;
+    const labels = { pages: 'Pages', settings: 'Settings', shortcuts: 'Shortcuts' };
+    const iconColor = '#ffffff'; // White on accent-colored bubble surface
+    try {
+      managerRef.current.add({
+        id,
+        label: labels[id],
+        icon: createSvgIcon(ICON_PATHS[id], iconColor),
+        content: makeContent(id),
+        onDismiss: () => {
+          dismissedRef.current.add(id);
+        },
+      });
+    } catch { /* */ }
+  }, [makeContent]); // Stable
+
+  // ── Initialize the bubble manager ──
   useEffect(() => {
     if (settings.navMode !== 'bubble') {
-      // Destroy manager when not in bubble mode
       if (managerRef.current) {
         try { managerRef.current.destroy(); } catch { /* */ }
         managerRef.current = null;
@@ -675,7 +244,6 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
       return;
     }
 
-    // Small delay to avoid init during first render
     const timer = setTimeout(() => {
       if (managerRef.current) {
         try { managerRef.current.destroy(); } catch { /* */ }
@@ -683,11 +251,8 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
       }
 
       const manager = createBubbles({
-        theme: resolvedTheme === 'light' ? 'light' : 'dark',
-        colors: {
-          bubbleSurface: resolvedTheme === 'light' ? '#ffffff' : '#000000',
-          bubbleIcon: settings.accent,
-        },
+        theme: settings.theme,
+        colors: buildColorTokens(resolvedTheme, settings.accent),
         side: settings.dockSide,
         vertical: settings.dockVertical,
         panelWidth: settings.panelWidth,
@@ -699,37 +264,18 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
 
       managerRef.current = manager;
 
-      // Add Pages bubble
-      const pagesContent = buildPagesContent();
-      pagesContentRef.current = pagesContent;
-      manager.add({
-        id: 'pages',
-        label: 'Pages',
-        icon: createPagesIcon(),
-        content: pagesContent,
+      // Subscribe to statechange for background dim
+      manager.on('statechange', ({ state }) => {
+        const overlay = document.getElementById('bubble-dim-overlay');
+        if (overlay) {
+          overlay.style.opacity = state === 'open' ? '1' : '0';
+          overlay.style.pointerEvents = 'none';
+        }
       });
 
-      // Add Settings bubble
-      const settingsContent = buildSettingsContent();
-      settingsContentRef.current = settingsContent;
-      manager.add({
-        id: 'settings',
-        label: 'Settings',
-        icon: createSettingsIcon(),
-        content: settingsContent,
-      });
-
-      // Add Keyboard Shortcuts bubble
-      const shortcutsContent = buildShortcutsContent();
-      shortcutsContentRef.current = shortcutsContent;
-      manager.add({
-        id: 'shortcuts',
-        label: 'Keyboard Shortcuts',
-        icon: createKeyboardIcon(),
-        content: shortcutsContent,
-      });
-
-      mountedRef.current = true;
+      // Add all three bubbles
+      BUBBLE_DEFS.forEach(id => addBubble(id));
+      dismissedRef.current.clear();
     }, 100);
 
     return () => {
@@ -741,143 +287,51 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
     };
   }, [settings.navMode]); // Only re-create on mode change
 
-  // ── Update bubble theme when resolvedTheme or accent changes ──
+  // ── Live-configure when ANY setting changes ──
+  // configure() resets omitted options to defaults,
+  // so we always send the full set.
   useEffect(() => {
     if (!managerRef.current || settings.navMode !== 'bubble') return;
-
-    // Update the library's own surfaces (panel bg, bubble fill, etc.)
     try {
       managerRef.current.configure({
-        theme: resolvedTheme === 'light' ? 'light' : 'dark',
-        colors: {
-          bubbleSurface: resolvedTheme === 'light' ? '#ffffff' : '#000000',
-          bubbleIcon: settings.accent,
-        },
+        theme: settings.theme,
+        colors: buildColorTokens(resolvedTheme, settings.accent),
+        side: settings.dockSide,
+        vertical: settings.dockVertical,
+        panelWidth: settings.panelWidth,
+        panelMaxHeight: settings.panelMaxHeight,
+        ricochet: settings.ricochet,
       });
     } catch { /* */ }
+  }, [resolvedTheme, settings.accent, settings.theme, settings.dockSide,
+      settings.dockVertical, settings.panelWidth, settings.panelMaxHeight,
+      settings.ricochet, settings.navMode]);
 
-    // Rebuild panel content with updated palette colors
-    const newPages = buildPagesContent();
-    pagesContentRef.current = newPages;
-    try {
-      managerRef.current.add({
-        id: 'pages',
-        label: 'Pages',
-        icon: createPagesIcon(),
-        content: newPages,
-      });
-    } catch { /* */ }
-
-    const newSettings = buildSettingsContent();
-    settingsContentRef.current = newSettings;
-    try {
-      managerRef.current.add({
-        id: 'settings',
-        label: 'Settings',
-        icon: createSettingsIcon(),
-        content: newSettings,
-      });
-    } catch { /* */ }
-
-    const newShortcuts = buildShortcutsContent();
-    shortcutsContentRef.current = newShortcuts;
-    try {
-      managerRef.current.add({
-        id: 'shortcuts',
-        label: 'Keyboard Shortcuts',
-        icon: createKeyboardIcon(),
-        content: newShortcuts,
-      });
-    } catch { /* */ }
-  }, [resolvedTheme, settings.accent, buildPagesContent, buildSettingsContent, buildShortcutsContent]);
-
-  // Update pages content when pages or selectedModel changes
+  // ── Re-render all mounted panel roots when settings/pages/selection change ──
+  // This is what makes the panels reactive: we push new context + props
+  // into existing React roots without destroying/recreating them.
   useEffect(() => {
-    if (!managerRef.current || settings.navMode !== 'bubble') return;
-    const newContent = buildPagesContent();
-    pagesContentRef.current = newContent;
-    try {
-      managerRef.current.add({
-        id: 'pages',
-        label: 'Pages',
-        icon: createPagesIcon(),
-        content: newContent,
-      });
-    } catch { /* */ }
-  }, [pages, selectedModel, buildPagesContent]);
+    if (settings.navMode !== 'bubble') return;
+    for (const [id, entry] of Object.entries(rootsRef.current)) {
+      if (entry?.root) renderPanel(id, entry.root);
+    }
+  }, [settings, resolvedTheme, pages, selectedModel, renderPanel]);
 
-  // ── Install keyboard shortcuts ──
-  useEffect(() => {
-    const cleanup = installShortcuts({
-      toggleBubble: () => {
-        if (managerRef.current) {
-          try { managerRef.current.toggle(); } catch { /* */ }
-        }
-      },
-      searchPages: () => {
-        // Open bubble on pages panel
-        if (managerRef.current) {
-          try {
-            managerRef.current.activate('pages');
-          } catch { /* */ }
-        }
-      },
-      toggleNav: () => {
-        updateSettings({ navMode: settings.navMode === 'bubble' ? 'sidebar' : 'bubble' });
-      },
-      escape: () => {
-        if (managerRef.current && managerRef.current.state() === 'open') {
-          try { managerRef.current.configure({ initialState: 'docked' }); } catch { /* */ }
-        }
-      },
-      toggleTheme: () => {
-        const next = resolvedTheme === 'dark' ? 'light' : 'dark';
-        updateSettings({ theme: next });
-      },
-      scrollTop: () => {
-        const main = document.querySelector('main');
-        if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
-      },
-      scrollBottom: () => {
-        const main = document.querySelector('main');
-        if (main) main.scrollTo({ top: main.scrollHeight, behavior: 'smooth' });
-      },
-      nextSection: () => {
-        const main = document.querySelector('main');
-        if (!main) return;
-        const sections = main.querySelectorAll('[data-section]');
-        const scrollTop = main.scrollTop;
-        for (const sec of sections) {
-          if (sec.offsetTop > scrollTop + 40) {
-            sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            break;
-          }
-        }
-      },
-      prevSection: () => {
-        const main = document.querySelector('main');
-        if (!main) return;
-        const sections = [...main.querySelectorAll('[data-section]')];
-        const scrollTop = main.scrollTop;
-        for (let i = sections.length - 1; i >= 0; i--) {
-          if (sections[i].offsetTop < scrollTop - 10) {
-            sections[i].scrollIntoView({ behavior: 'smooth', block: 'start' });
-            break;
-          }
-        }
-      },
-      showShortcuts: () => {
-        if (managerRef.current) {
-          try {
-            managerRef.current.activate('shortcuts');
-          } catch { /* */ }
-        }
-      },
-    });
+  // ── Render the dim overlay (purely visual) ──
+  return (
+    <div
+      id="bubble-dim-overlay"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.15)',
+        opacity: 0,
+        transition: 'opacity 0.3s ease',
+        pointerEvents: 'none',
+        zIndex: 999998,
+      }}
+    />
+  );
+});
 
-    return cleanup;
-  }, [settings.navMode, resolvedTheme, updateSettings]);
-
-  // This component renders nothing — the bubbles library manages its own DOM
-  return null;
-}
+export default BubbleNav;
