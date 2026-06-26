@@ -13,6 +13,9 @@ import { useAuth } from '../../lib/auth';
 // Lazy-load batch data
 const BATCHES = {
   1: { label: 'Batch 1 — Prompting (6 pages)', loader: () => import('../../migration/batch1/index.js') },
+  2: { label: 'Batch 2 — Reasoning (7 pages)', loader: () => import('../../migration/batch2/index.js') },
+  3: { label: 'Batch 3 — Concepts (5 pages)', loader: () => import('../../migration/batch3/index.js') },
+  4: { label: 'Batch 4 — GPT3 Course (1 page)', loader: () => import('../../migration/batch4/index.js') },
   5: { label: 'Batch 5 — Coming Soon (16 pages)', loader: () => import('../../migration/batch5-coming-soon.js') },
 };
 
