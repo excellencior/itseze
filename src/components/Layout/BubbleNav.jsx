@@ -4,17 +4,57 @@ import { useSettings } from '../../SettingsContext';
 import { ACCENT_SWATCHES } from '../../settingsStore';
 import { fetchPublishedPages } from '../../lib/pages';
 
+/* ═══════════════════════════════════════════
+ *  Theme-aware color palette for panel content
+ * ═══════════════════════════════════════════ */
+const PALETTES = {
+  dark: {
+    panelBg:        'transparent',
+    text:           '#E8E8E8',
+    textMuted:      '#B0B0B0',
+    textDim:        '#777',
+    headerText:     '#fff',
+    activeBg:       '#1f1f1f',
+    hoverBg:        '#1a1a1a',
+    border:         '#333',
+    borderFocus:    '#555',
+    controlBg:      '#333',
+    controlText:    '#fff',
+    controlOff:     '#777',
+    inputBg:        'transparent',
+    sectionBg:      'transparent',
+  },
+  light: {
+    panelBg:        'transparent',
+    text:           '#1f2937',
+    textMuted:      '#6b7280',
+    textDim:        '#9ca3af',
+    headerText:     '#111827',
+    activeBg:       '#e5e7eb',
+    hoverBg:        '#f3f4f6',
+    border:         '#d1d5db',
+    borderFocus:    '#9ca3af',
+    controlBg:      '#e5e7eb',
+    controlText:    '#111827',
+    controlOff:     '#9ca3af',
+    inputBg:        'transparent',
+    sectionBg:      'transparent',
+  },
+};
+
 /**
  * BubbleNav — floating bubble-based navigation using @hyperplexed/bubbles.
  * Two flocks: Pages (navigation) and Settings (customization).
  */
 export default function BubbleNav({ selectedModel, onSelectModel }) {
-  const { settings, updateSettings, resetSettings } = useSettings();
+  const { settings, resolvedTheme, updateSettings, resetSettings } = useSettings();
   const managerRef = useRef(null);
   const pagesContentRef = useRef(null);
   const settingsContentRef = useRef(null);
   const [pages, setPages] = useState([]);
   const mountedRef = useRef(false);
+
+  const pal = PALETTES[resolvedTheme] || PALETTES.dark;
 
   // Fetch pages on mount
   useEffect(() => {
@@ -66,6 +106,50 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
     flatConcepts.sort(sortByTitle);
     Object.values(conceptGroups).forEach(g => g.sort(sortByTitle));
 
+    // ── Helper: create a page button ──
+    const createPageBtn = (item, fontSize = '13px', gap = '8px', dotSize = '5px') => {
+      const btn = document.createElement('button');
+      const isActive = selectedModel === item.urlPath;
+      btn.style.cssText = `
+        width: 100%; padding: 7px 12px; border: none; border-radius: 6px;
+        background: ${isActive ? pal.activeBg : 'transparent'};
+        color: ${isActive ? settings.accent : pal.textMuted};
+        font-size: ${fontSize}; font-weight: ${isActive ? '650' : '500'};
+        cursor: pointer; text-align: left; font-family: inherit;
+        transition: background 0.15s ease, color 0.15s ease;
+        margin-bottom: 1px; display: flex; align-items: center; gap: ${gap};
+      `;
+      if (isActive) {
+        const dot = document.createElement('span');
+        dot.style.cssText = `
+          width: ${dotSize}; height: ${dotSize}; border-radius: 50%;
+          background: ${settings.accent}; flex-shrink: 0;
+        `;
+        btn.appendChild(dot);
+      }
+      const text = document.createElement('span');
+      text.textContent = item.title;
+      text.style.cssText = 'overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
+      btn.appendChild(text);
+
+      if (!isActive) {
+        btn.addEventListener('mouseenter', () => { btn.style.background = pal.hoverBg; btn.style.color = pal.text; });
+        btn.addEventListener('mouseleave', () => { btn.style.background = 'transparent'; btn.style.color = pal.textMuted; });
+      }
+
+      btn.addEventListener('click', () => {
+        if (item.isReady && onSelectModel) {
+          onSelectModel(item.urlPath);
+          setTimeout(() => {
+            if (managerRef.current) {
+              try { managerRef.current.configure({ initialState: 'docked' }); } catch { /* */ }
+            }
+          }, 300);
+        }
+      });
+      return btn;
+    };
+
     // ── Helper: create a section ──
     const createSection = (label, items, isOpen = true) => {
       const section = document.createElement('div');
@@ -75,12 +159,12 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
       header.style.cssText = `
         width: 100%; display: flex; align-items: center; justify-content: space-between;
         padding: 8px 10px; border: none; border-radius: 6px;
-        background: transparent; color: #fff; font-size: 10.5px; font-weight: 700;
+        background: transparent; color: ${pal.headerText}; font-size: 10.5px; font-weight: 700;
         letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
         font-family: inherit; transition: background 0.15s ease;
       `;
       header.textContent = label;
-      header.addEventListener('mouseenter', () => { header.style.background = '#1a1a1a'; });
+      header.addEventListener('mouseenter', () => { header.style.background = pal.hoverBg; });
       header.addEventListener('mouseleave', () => { header.style.background = 'transparent'; });
 
       const chevron = document.createElement('span');
@@ -107,47 +191,7 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
       });
 
       items.forEach(item => {
-        const btn = document.createElement('button');
-        const isActive = selectedModel === item.urlPath;
-        btn.style.cssText = `
-          width: 100%; padding: 7px 12px; border: none; border-radius: 6px;
-          background: ${isActive ? '#1f1f1f' : 'transparent'};
-          color: ${isActive ? settings.accent : '#B0B0B0'};
-          font-size: 13px; font-weight: ${isActive ? '650' : '500'};
-          cursor: pointer; text-align: left; font-family: inherit;
-          transition: background 0.15s ease, color 0.15s ease;
-          margin-bottom: 1px; display: flex; align-items: center; gap: 8px;
-        `;
-        if (isActive) {
-          const dot = document.createElement('span');
-          dot.style.cssText = `
-            width: 5px; height: 5px; border-radius: 50%;
-            background: ${settings.accent}; flex-shrink: 0;
-          `;
-          btn.appendChild(dot);
-        }
-        const text = document.createElement('span');
-        text.textContent = item.title;
-        text.style.cssText = 'overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
-        btn.appendChild(text);
-
-        if (!isActive) {
-          btn.addEventListener('mouseenter', () => { btn.style.background = '#1a1a1a'; btn.style.color = '#EDEDED'; });
-          btn.addEventListener('mouseleave', () => { btn.style.background = 'transparent'; btn.style.color = '#B0B0B0'; });
-        }
-
-        btn.addEventListener('click', () => {
-          if (item.isReady && onSelectModel) {
-            onSelectModel(item.urlPath);
-            // Auto-close after a brief moment
-            setTimeout(() => {
-              if (managerRef.current) {
-                try { managerRef.current.configure({ initialState: 'docked' }); } catch { /* */ }
-              }
-            }, 300);
-          }
-        });
-        list.appendChild(btn);
+        list.appendChild(createPageBtn(item));
       });
 
       section.appendChild(header);
@@ -164,12 +208,12 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
       header.style.cssText = `
         width: 100%; display: flex; align-items: center; justify-content: space-between;
         padding: 6px 10px; border: none; border-radius: 6px;
-        background: transparent; color: #B0B0B0; font-size: 12.5px; font-weight: 650;
+        background: transparent; color: ${pal.textMuted}; font-size: 12.5px; font-weight: 650;
         cursor: pointer; font-family: inherit; transition: background 0.15s ease, color 0.15s ease;
       `;
       header.textContent = label;
-      header.addEventListener('mouseenter', () => { header.style.background = '#1a1a1a'; header.style.color = '#EDEDED'; });
-      header.addEventListener('mouseleave', () => { header.style.background = 'transparent'; header.style.color = '#B0B0B0'; });
+      header.addEventListener('mouseenter', () => { header.style.background = pal.hoverBg; header.style.color = pal.text; });
+      header.addEventListener('mouseleave', () => { header.style.background = 'transparent'; header.style.color = pal.textMuted; });
 
       const chevron = document.createElement('span');
       chevron.textContent = '▾';
@@ -194,43 +238,7 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
       });
 
       items.forEach(item => {
-        const btn = document.createElement('button');
-        const isActive = selectedModel === item.urlPath;
-        btn.style.cssText = `
-          width: 100%; padding: 6px 12px; border: none; border-radius: 6px;
-          background: ${isActive ? '#1f1f1f' : 'transparent'};
-          color: ${isActive ? settings.accent : '#B0B0B0'};
-          font-size: 12.5px; font-weight: ${isActive ? '650' : '500'};
-          cursor: pointer; text-align: left; font-family: inherit;
-          transition: background 0.15s ease, color 0.15s ease;
-          margin-bottom: 1px; display: flex; align-items: center; gap: 7px;
-        `;
-        if (isActive) {
-          const dot = document.createElement('span');
-          dot.style.cssText = `width: 4px; height: 4px; border-radius: 50%; background: ${settings.accent}; flex-shrink: 0;`;
-          btn.appendChild(dot);
-        }
-        const text = document.createElement('span');
-        text.textContent = item.title;
-        text.style.cssText = 'overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
-        btn.appendChild(text);
-
-        if (!isActive) {
-          btn.addEventListener('mouseenter', () => { btn.style.background = '#1a1a1a'; btn.style.color = '#EDEDED'; });
-          btn.addEventListener('mouseleave', () => { btn.style.background = 'transparent'; btn.style.color = '#B0B0B0'; });
-        }
-
-        btn.addEventListener('click', () => {
-          if (item.isReady && onSelectModel) {
-            onSelectModel(item.urlPath);
-            setTimeout(() => {
-              if (managerRef.current) {
-                try { managerRef.current.configure({ initialState: 'docked' }); } catch { /* */ }
-              }
-            }, 300);
-          }
-        });
-        list.appendChild(btn);
+        list.appendChild(createPageBtn(item, '12.5px', '7px', '4px'));
       });
 
       wrapper.appendChild(header);
@@ -251,12 +259,12 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
     conceptsHeader.style.cssText = `
       width: 100%; display: flex; align-items: center; justify-content: space-between;
       padding: 8px 10px; border: none; border-radius: 6px;
-      background: transparent; color: #fff; font-size: 10.5px; font-weight: 700;
+      background: transparent; color: ${pal.headerText}; font-size: 10.5px; font-weight: 700;
       letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
       font-family: inherit; transition: background 0.15s ease;
     `;
     conceptsHeader.textContent = 'Concepts';
-    conceptsHeader.addEventListener('mouseenter', () => { conceptsHeader.style.background = '#1a1a1a'; });
+    conceptsHeader.addEventListener('mouseenter', () => { conceptsHeader.style.background = pal.hoverBg; });
     conceptsHeader.addEventListener('mouseleave', () => { conceptsHeader.style.background = 'transparent'; });
 
     const conceptsChevron = document.createElement('span');
@@ -281,42 +289,7 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
 
     // Flat concepts
     flatConcepts.forEach(item => {
-      const btn = document.createElement('button');
-      const isActive = selectedModel === item.urlPath;
-      btn.style.cssText = `
-        width: 100%; padding: 7px 12px; border: none; border-radius: 6px;
-        background: ${isActive ? '#1f1f1f' : 'transparent'};
-        color: ${isActive ? settings.accent : '#B0B0B0'};
-        font-size: 13px; font-weight: ${isActive ? '650' : '500'};
-        cursor: pointer; text-align: left; font-family: inherit;
-        transition: background 0.15s ease, color 0.15s ease;
-        margin-bottom: 1px; display: flex; align-items: center; gap: 8px;
-      `;
-      if (isActive) {
-        const dot = document.createElement('span');
-        dot.style.cssText = `width: 5px; height: 5px; border-radius: 50%; background: ${settings.accent}; flex-shrink: 0;`;
-        btn.appendChild(dot);
-      }
-      const text = document.createElement('span');
-      text.textContent = item.title;
-      text.style.cssText = 'overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
-      btn.appendChild(text);
-
-      if (!isActive) {
-        btn.addEventListener('mouseenter', () => { btn.style.background = '#1a1a1a'; btn.style.color = '#EDEDED'; });
-        btn.addEventListener('mouseleave', () => { btn.style.background = 'transparent'; btn.style.color = '#B0B0B0'; });
-      }
-      btn.addEventListener('click', () => {
-        if (item.isReady && onSelectModel) {
-          onSelectModel(item.urlPath);
-          setTimeout(() => {
-            if (managerRef.current) {
-              try { managerRef.current.configure({ initialState: 'docked' }); } catch { /* */ }
-            }
-          }, 300);
-        }
-      });
-      conceptsList.appendChild(btn);
+      conceptsList.appendChild(createPageBtn(item));
     });
 
     conceptsSection.appendChild(conceptsHeader);
@@ -327,7 +300,7 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
     }
 
     return container;
-  }, [pages, selectedModel, settings.accent, onSelectModel]);
+  }, [pages, selectedModel, settings.accent, onSelectModel, pal]);
 
   // ── Build Settings panel DOM ──
   const buildSettingsContent = useCallback(() => {
@@ -335,7 +308,7 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
     container.style.cssText = `
       padding: 20px 16px;
       font-family: var(--font-main);
-      color: #E8E8E8;
+      color: ${pal.text};
       overflow-y: auto;
       max-height: 100%;
     `;
@@ -345,10 +318,10 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
     titleRow.style.cssText = 'display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;';
     const titleLeft = document.createElement('div');
     const title = document.createElement('div');
-    title.style.cssText = 'font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px;';
+    title.style.cssText = `font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: ${pal.text};`;
     title.textContent = '⚙ Customize';
     const subtitle = document.createElement('div');
-    subtitle.style.cssText = 'font-size: 11px; color: #777; margin-top: 2px;';
+    subtitle.style.cssText = `font-size: 11px; color: ${pal.textDim}; margin-top: 2px;`;
     subtitle.textContent = 'Changes apply live';
     titleLeft.appendChild(title);
     titleLeft.appendChild(subtitle);
@@ -356,15 +329,14 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
     const resetBtn = document.createElement('button');
     resetBtn.textContent = 'Reset';
     resetBtn.style.cssText = `
-      padding: 4px 12px; border: 1px solid #333; border-radius: 6px;
-      background: transparent; color: #777; font-size: 11px; font-weight: 600;
+      padding: 4px 12px; border: 1px solid ${pal.border}; border-radius: 6px;
+      background: transparent; color: ${pal.textDim}; font-size: 11px; font-weight: 600;
       cursor: pointer; font-family: inherit; transition: all 0.15s ease;
     `;
-    resetBtn.addEventListener('mouseenter', () => { resetBtn.style.borderColor = '#555'; resetBtn.style.color = '#ccc'; });
-    resetBtn.addEventListener('mouseleave', () => { resetBtn.style.borderColor = '#333'; resetBtn.style.color = '#777'; });
+    resetBtn.addEventListener('mouseenter', () => { resetBtn.style.borderColor = pal.borderFocus; resetBtn.style.color = pal.text; });
+    resetBtn.addEventListener('mouseleave', () => { resetBtn.style.borderColor = pal.border; resetBtn.style.color = pal.textDim; });
     resetBtn.addEventListener('click', () => {
       resetSettings();
-      // Rebuild settings panel
       rebuildSettingsPanel();
     });
 
@@ -377,7 +349,7 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
       const group = document.createElement('div');
       group.style.cssText = 'margin-bottom: 16px;';
       const lbl = document.createElement('div');
-      lbl.style.cssText = 'font-size: 11px; font-weight: 600; color: #777; margin-bottom: 6px;';
+      lbl.style.cssText = `font-size: 11px; font-weight: 600; color: ${pal.textDim}; margin-bottom: 6px;`;
       lbl.textContent = label;
       group.appendChild(lbl);
       return group;
@@ -387,15 +359,15 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
     const createSegmented = (options, currentValue, onChange) => {
       const row = document.createElement('div');
       row.style.cssText = `
-        display: flex; border: 1px solid #333; border-radius: 8px; overflow: hidden;
+        display: flex; border: 1px solid ${pal.border}; border-radius: 8px; overflow: hidden;
       `;
       options.forEach(opt => {
         const btn = document.createElement('button');
         const isActive = opt.value === currentValue;
         btn.style.cssText = `
           flex: 1; padding: 7px 0; border: none;
-          background: ${isActive ? '#333' : 'transparent'};
-          color: ${isActive ? '#fff' : '#777'};
+          background: ${isActive ? pal.controlBg : 'transparent'};
+          color: ${isActive ? pal.controlText : pal.controlOff};
           font-size: 12px; font-weight: 600; cursor: pointer;
           font-family: inherit; transition: all 0.15s ease;
         `;
@@ -405,10 +377,10 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
           // Update button states
           row.querySelectorAll('button').forEach(b => {
             b.style.background = 'transparent';
-            b.style.color = '#777';
+            b.style.color = pal.controlOff;
           });
-          btn.style.background = '#333';
-          btn.style.color = '#fff';
+          btn.style.background = pal.controlBg;
+          btn.style.color = pal.controlText;
         });
         row.appendChild(btn);
       });
@@ -427,7 +399,7 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
       slider.value = typeof currentValue === 'string' ? parseFloat(currentValue) : currentValue;
       slider.style.cssText = `flex: 1; accent-color: ${settings.accent}; cursor: pointer;`;
       const valueLabel = document.createElement('span');
-      valueLabel.style.cssText = 'font-size: 12px; font-weight: 600; color: #AAAAAA; min-width: 50px; text-align: right;';
+      valueLabel.style.cssText = `font-size: 12px; font-weight: 600; color: ${pal.textMuted}; min-width: 50px; text-align: right;`;
       valueLabel.textContent = `${slider.value}${unit}`;
       slider.addEventListener('input', () => {
         valueLabel.textContent = `${slider.value}${unit}`;
@@ -466,7 +438,7 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
       btn.style.cssText = `
         width: 28px; height: 28px; border-radius: 50%;
         background: ${swatch.hex};
-        border: 2px solid ${isActive ? '#fff' : 'transparent'};
+        border: 2px solid ${isActive ? (resolvedTheme === 'dark' ? '#fff' : '#111') : 'transparent'};
         cursor: pointer; transition: all 0.15s ease;
         box-shadow: ${isActive ? '0 0 0 2px ' + swatch.hex : 'none'};
       `;
@@ -475,14 +447,13 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
       btn.addEventListener('mouseleave', () => { btn.style.transform = 'scale(1)'; });
       btn.addEventListener('click', () => {
         updateSettings({ accent: swatch.hex });
-        // Update all swatch borders
+        const ring = resolvedTheme === 'dark' ? '#fff' : '#111';
         swatchRow.querySelectorAll('button').forEach(b => {
           b.style.border = '2px solid transparent';
           b.style.boxShadow = 'none';
         });
-        btn.style.border = '2px solid #fff';
+        btn.style.border = `2px solid ${ring}`;
         btn.style.boxShadow = `0 0 0 2px ${swatch.hex}`;
-        // Update slider accent colors
         container.querySelectorAll('input[type=range]').forEach(s => {
           s.style.accentColor = swatch.hex;
         });
@@ -550,7 +521,7 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
     container.appendChild(ricochetGroup);
 
     return container;
-  }, [settings, updateSettings, resetSettings]);
+  }, [settings, resolvedTheme, updateSettings, resetSettings, pal]);
 
   const rebuildSettingsPanel = useCallback(() => {
     if (!managerRef.current) return;
@@ -612,9 +583,9 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
       }
 
       const manager = createBubbles({
-        theme: 'dark',
+        theme: resolvedTheme === 'light' ? 'light' : 'dark',
         colors: {
-          bubbleSurface: '#000000',
+          bubbleSurface: resolvedTheme === 'light' ? '#ffffff' : '#000000',
           bubbleIcon: settings.accent,
         },
         side: settings.dockSide,
@@ -659,6 +630,45 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
       }
     };
   }, [settings.navMode]); // Only re-create on mode change
+
+  // ── Update bubble theme when resolvedTheme or accent changes ──
+  useEffect(() => {
+    if (!managerRef.current || settings.navMode !== 'bubble') return;
+
+    // Update the library's own surfaces (panel bg, bubble fill, etc.)
+    try {
+      managerRef.current.configure({
+        theme: resolvedTheme === 'light' ? 'light' : 'dark',
+        colors: {
+          bubbleSurface: resolvedTheme === 'light' ? '#ffffff' : '#000000',
+          bubbleIcon: settings.accent,
+        },
+      });
+    } catch { /* */ }
+
+    // Rebuild panel content with updated palette colors
+    const newPages = buildPagesContent();
+    pagesContentRef.current = newPages;
+    try {
+      managerRef.current.add({
+        id: 'pages',
+        label: 'Pages',
+        icon: createPagesIcon(),
+        content: newPages,
+      });
+    } catch { /* */ }
+
+    const newSettings = buildSettingsContent();
+    settingsContentRef.current = newSettings;
+    try {
+      managerRef.current.add({
+        id: 'settings',
+        label: 'Settings',
+        icon: createSettingsIcon(),
+        content: newSettings,
+      });
+    } catch { /* */ }
+  }, [resolvedTheme, settings.accent, buildPagesContent, buildSettingsContent]);
 
   // Update pages content when pages or selectedModel changes
   useEffect(() => {
