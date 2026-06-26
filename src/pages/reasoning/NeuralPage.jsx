@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Latex from '../../components/Latex';
+import Callout from '../../components/Callout';
 
 function Section({ title, children }) {
   return (
@@ -12,25 +13,6 @@ function Section({ title, children }) {
 
 function P({ children }) {
   return <p>{children}</p>;
-}
-
-function Callout({ type = 'info', children }) {
-  const colors = {
-    info: { bg: 'rgba(59,130,246,0.08)', border: '#3B82F6', icon: 'ℹ️' },
-    warning: { bg: 'rgba(245,158,11,0.08)', border: '#F59E0B', icon: '⚠️' },
-    key: { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '💡' },
-    accent: { bg: 'var(--accent-20)', border: 'var(--accent)', icon: '↩' },
-  };
-  const c = colors[type];
-  return (
-    <div style={{
-      background: c.bg, borderLeft: `4px solid ${c.border}`,
-      padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0',
-      fontSize: '14px', lineHeight: 1.6, color: 'var(--text-main)',
-    }}>
-      <span style={{ marginRight: '8px' }}>{c.icon}</span>{children}
-    </div>
-  );
 }
 
 
@@ -104,7 +86,7 @@ export function AttentionFlowWidget() {
   const weights = getAttentionWeights(selectedTokenIndex, layer, tokens.length);
 
   return (
-    <div style={{ background: '#fff', border: '1px solid var(--border)', padding: '24px', margin: '24px 0' }}>
+    <div style={{ background: 'var(--node-bg)', border: '1px solid var(--border)', padding: '24px', margin: '24px 0' }}>
       <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
         Interactive attention grid
       </div>
@@ -152,7 +134,7 @@ export function AttentionFlowWidget() {
                   flex: 1,
                   padding: '6px',
                   fontSize: '11px',
-                  background: layer === l.val ? 'var(--accent-20)' : '#f6f6f6',
+                  background: layer === l.val ? 'var(--accent-20)' : 'var(--bg-subtle)',
                   border: `1px solid ${layer === l.val ? 'var(--accent)' : 'var(--border)'}`,
                   color: layer === l.val ? 'var(--accent)' : 'var(--text-muted)',
                   cursor: 'pointer',
@@ -190,7 +172,7 @@ export function AttentionFlowWidget() {
               onClick={() => setSelectedTokenIndex(idx)}
               style={{
                 padding: '6px 12px',
-                background: selectedTokenIndex === idx ? 'var(--accent)' : '#fff',
+                background: selectedTokenIndex === idx ? 'var(--accent)' : 'var(--node-bg)',
                 color: selectedTokenIndex === idx ? '#fff' : '#000',
                 border: '1px solid var(--border)',
                 fontWeight: 700,
@@ -234,7 +216,7 @@ export function AttentionFlowWidget() {
                 key={idx}
                 style={{
                   padding: '6px 12px',
-                  background: '#fff',
+                  background: 'var(--node-bg)',
                   border: '1.5px solid var(--border)',
                   borderColor: weightVal > 0.25 ? 'var(--accent)' : 'var(--border)',
                   fontWeight: 600,

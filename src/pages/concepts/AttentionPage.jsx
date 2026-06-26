@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Latex from '../../components/Latex';
 import Highlight from '../../components/Highlight';
 import HoverCard from '../../components/HoverCard';
+import Callout from '../../components/Callout';
 
 // ── Shared page components ──
 function slugify(title) {
@@ -27,24 +28,7 @@ function P({ children }) {
   return <p>{children}</p>;
 }
 
-function Callout({ type = 'info', children }) {
-  const colors = {
-    info: { bg: 'rgba(59,130,246,0.08)', border: '#3B82F6', icon: 'ℹ️' },
-    warning: { bg: 'rgba(245,158,11,0.08)', border: '#F59E0B', icon: '⚠️' },
-    key: { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '💡' },
-    accent: { bg: 'var(--accent-20)', border: 'var(--accent)', icon: '↩' },
-  };
-  const c = colors[type];
-  return (
-    <div style={{
-      background: c.bg, borderLeft: `4px solid ${c.border}`,
-      padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0',
-      fontSize: '14px', lineHeight: 1.6, color: 'var(--text-main)',
-    }}>
-      <span style={{ marginRight: '8px' }}>{c.icon}</span>{children}
-    </div>
-  );
-}
+
 
 function PropTable({ rows }) {
   return (
@@ -242,7 +226,7 @@ function MiniMatrix({ data, label, highlightRow, highlightCol, accentColor = 'va
               return (
                 <div key={j} style={{
                   width: '46px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: hl ? 'var(--accent-20)' : '#F9FAFB',
+                  background: hl ? 'var(--accent-20)' : 'var(--bg-subtle)',
                   border: `1px solid ${hl ? accentColor : 'var(--border)'}`,
                   color: hl ? accentColor : 'var(--text-muted)',
                   fontWeight: hl ? 700 : 400,
@@ -417,7 +401,7 @@ export default function AttentionPage() {
             <div key={i} style={{
               padding: '16px', border: '1px solid var(--border)',
               display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
-              background: 'white',
+              background: 'var(--node-bg)',
             }}>
               <div style={{ fontWeight: 800, marginBottom: '4px', fontSize: '14px', color }}>{title}</div>
               <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>{desc}</div>
@@ -555,7 +539,7 @@ export default function AttentionPage() {
         <div style={{
           display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px', marginBottom: '20px',
         }}>
-          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white' }}>
+          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'var(--node-bg)' }}>
             <div style={{ fontWeight: 800, fontSize: '15px', marginBottom: '8px', color: '#3B82F6' }}>Self-Attention</div>
             <div className="math-box" style={{ margin: '0 0 8px 0', padding: '8px 12px' }}>
               <Latex math={"Q, K, V = XW_Q, \\; XW_K, \\; XW_V"} />
@@ -568,7 +552,7 @@ export default function AttentionPage() {
               Used in: GPT (decoder), BERT (encoder), ViT
             </div>
           </div>
-          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white' }}>
+          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'var(--node-bg)' }}>
             <div style={{ fontWeight: 800, fontSize: '15px', marginBottom: '8px', color: '#10B981' }}>Cross-Attention</div>
             <div className="math-box" style={{ margin: '0 0 8px 0', padding: '8px 12px' }}>
               <Latex math={"Q = XW_Q, \\quad K, V = YW_K, \\; YW_V"} />

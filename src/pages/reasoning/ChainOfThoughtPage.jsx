@@ -1,4 +1,5 @@
 import Latex from '../../components/Latex';
+import Callout from '../../components/Callout';
 
 function Section({ title, children }) {
   return (
@@ -13,25 +14,6 @@ function P({ children }) {
   return <p>{children}</p>;
 }
 
-function Callout({ type = 'info', children }) {
-  const colors = {
-    info: { bg: 'rgba(59,130,246,0.08)', border: '#3B82F6', icon: 'ℹ️' },
-    warning: { bg: 'rgba(245,158,11,0.08)', border: '#F59E0B', icon: '⚠️' },
-    key: { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '💡' },
-    accent: { bg: 'var(--accent-20)', border: 'var(--accent)', icon: '↩' },
-  };
-  const c = colors[type];
-  return (
-    <div style={{
-      background: c.bg, borderLeft: `4px solid ${c.border}`,
-      padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0',
-      fontSize: '14px', lineHeight: 1.6, color: 'var(--text-main)',
-    }}>
-      <span style={{ marginRight: '8px' }}>{c.icon}</span>{children}
-    </div>
-  );
-}
-
 
 /* ── Static node card used in the tree diagram ── */
 function TreeNode({ label, desc, status, style: overrides }) {
@@ -40,7 +22,7 @@ function TreeNode({ label, desc, status, style: overrides }) {
     failure: { border: '#EF4444', bg: '#FEF2F2', color: '#DC2626', icon: '✗' },
     backtrack: { border: '#F59E0B', bg: '#FFFBEB', color: '#D97706', icon: '↩' },
     root: { border: 'var(--accent)', bg: 'var(--accent-20)', color: 'var(--accent)', icon: '◉' },
-    neutral: { border: 'var(--border)', bg: '#fff', color: '#555', icon: '→' },
+    neutral: { border: 'var(--border)', bg: 'var(--node-bg)', color: 'var(--text-muted)', icon: '→' },
   };
   const p = palette[status] || palette.neutral;
 
@@ -64,7 +46,7 @@ function TreeNode({ label, desc, status, style: overrides }) {
 
 export function ThoughtTreeDiagram() {
   return (
-    <div style={{ background: '#fff', border: '1px solid var(--border)', padding: '24px', margin: '24px 0' }}>
+    <div style={{ background: 'var(--node-bg)', border: '1px solid var(--border)', padding: '24px', margin: '24px 0' }}>
       <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
         Search trace diagram
       </div>

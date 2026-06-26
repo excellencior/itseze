@@ -1,8 +1,9 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { useSettings } from '../../SettingsContext';
 
 /**
  * Interactive 2D function plotter using HTML Canvas.
- * Reusable for any mathematical function visualization.
+ * Theme-aware — adapts to light/dark mode.
  *
  * @param {Array} functions - Array of { fn: x => y, label, color, dash? }
  * @param {Array} [xRange=[-6, 6]] - X-axis domain
@@ -13,6 +14,32 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
  * @param {boolean} [interactive=true] - Show crosshair on hover
  * @param {string} [title] - Chart title
  */
+
+const CANVAS_PALETTES = {
+  light: {
+    bg: '#F5F3EE',
+    grid: '#E8E5E0',
+    axes: '#ADA99F',
+    axisLabel: '#9C9C9C',
+    crosshair: 'rgba(0,0,0,0.10)',
+    tooltipBg: 'rgba(255,255,255,0.92)',
+    tooltipText: '#5C5C5C',
+    legendText: null, // uses function color
+    titleText: '#5C5C5C',
+  },
+  dark: {
+    bg: '#0a0a0a',
+    grid: '#1a1a1a',
+    axes: '#333',
+    axisLabel: '#555',
+    crosshair: 'rgba(255,255,255,0.15)',
+    tooltipBg: 'rgba(0,0,0,0.85)',
+    tooltipText: '#888',
+    legendText: null,
+    titleText: '#888',
+  },
+};
+
 export default function FunctionPlot({
   functions = [],
   xRange = [-6, 6],
@@ -27,6 +54,9 @@ export default function FunctionPlot({
   const containerRef = useRef(null);
   const [mousePos, setMousePos] = useState(null);
   const [canvasWidth, setCanvasWidth] = useState(600);
+  const { resolvedTheme } = useSettings();
+
+  const palette = CANVAS_PALETTES[resolvedTheme] || CANVAS_PALETTES.dark;
 
   // Responsive width
   useEffect(() => {
@@ -62,12 +92,12 @@ export default function FunctionPlot({
     ctx.scale(dpr, dpr);
 
     // Background
-    ctx.fillStyle = '#0a0a0a';
+    ctx.fillStyle = palette.bg;
     ctx.fillRect(0, 0, canvasWidth, height);
 
     // Grid
     if (showGrid) {
-      ctx.strokeStyle = '#1a1a1a';
+      ctx.strokeStyle = palette.grid;
       ctx.lineWidth = 1;
       for (let x = Math.ceil(xRange[0]); x <= xRange[1]; x++) {
         const cx = toCanvasX(x);
@@ -87,7 +117,7 @@ export default function FunctionPlot({
 
     // Axes
     if (showAxes) {
-      ctx.strokeStyle = '#333';
+      ctx.strokeStyle = palette.axes;
       ctx.lineWidth = 1.5;
       // X-axis
       const yZero = toCanvasY(0);
@@ -103,7 +133,7 @@ export default function FunctionPlot({
       ctx.stroke();
 
       // Axis labels
-      ctx.fillStyle = '#555';
+      ctx.fillStyle = palette.axisLabel;
       ctx.font = '11px "Iosevka Charon", sans-serif';
       for (let x = Math.ceil(xRange[0]); x <= xRange[1]; x++) {
         if (x === 0) continue;
@@ -151,7 +181,7 @@ export default function FunctionPlot({
       const cxLine = mx;
 
       // Vertical crosshair
-      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.strokeStyle = palette.crosshair;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(cxLine, 0);
@@ -179,14 +209,14 @@ export default function FunctionPlot({
       });
 
       // Values tooltip
-      ctx.fillStyle = 'rgba(0,0,0,0.85)';
+      ctx.fillStyle = palette.tooltipBg;
       const tooltipX = mx < canvasWidth / 2 ? mx + 15 : mx - 150;
       const tooltipY = 12;
       const tooltipW = 135;
       const tooltipH = 20 + functions.length * 18;
       ctx.fillRect(tooltipX, tooltipY, tooltipW, tooltipH);
 
-      ctx.fillStyle = '#888';
+      ctx.fillStyle = palette.tooltipText;
       ctx.font = '11px "Iosevka Charon", monospace';
       ctx.fillText(`x = ${xVal.toFixed(2)}`, tooltipX + 8, tooltipY + 15);
 
@@ -227,7 +257,7 @@ export default function FunctionPlot({
     });
     ctx.textAlign = 'left';
 
-  }, [functions, xRange, yRange, height, canvasWidth, showGrid, showAxes, interactive, mousePos, toCanvasX, toCanvasY, fromCanvasX]);
+  }, [functions, xRange, yRange, height, canvasWidth, showGrid, showAxes, interactive, mousePos, toCanvasX, toCanvasY, fromCanvasX, palette]);
 
   return (
     <div ref={containerRef} style={{ width: '100%', marginTop: '16px', marginBottom: '10px' }}>
@@ -235,7 +265,7 @@ export default function FunctionPlot({
         <div style={{
           fontSize: '12px',
           fontWeight: 700,
-          color: '#333',
+          color: 'var(--text-muted)',
           marginBottom: '8px',
           textTransform: 'uppercase',
           letterSpacing: '0.05em',

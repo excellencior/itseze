@@ -15,7 +15,7 @@ export function SettingsProvider({ children }) {
 
   // Apply accent + theme on mount
   useEffect(() => {
-    applyAccentToCSS(settings.accent);
+    applyAccentToCSS(settings.accent, settings.theme);
     applyThemeToDOM(settings.theme);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -35,7 +35,7 @@ export function SettingsProvider({ children }) {
 
     // Side-effects
     if (partial.accent !== undefined) {
-      applyAccentToCSS(next.accent);
+      applyAccentToCSS(next.accent, next.theme);
     }
     if (partial.theme !== undefined) {
       applyThemeToDOM(next.theme);
@@ -47,7 +47,7 @@ export function SettingsProvider({ children }) {
   const resetSettingsWrapped = useCallback(() => {
     const defaults = storeReset();
     setSettings(defaults);
-    applyAccentToCSS(defaults.accent);
+    applyAccentToCSS(defaults.accent, defaults.theme);
     applyThemeToDOM(defaults.theme);
     return defaults;
   }, []);

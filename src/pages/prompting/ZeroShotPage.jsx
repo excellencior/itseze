@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import Latex from '../../components/Latex';
 import Highlight from '../../components/Highlight';
 import InlinePanel from '../../components/viz/InlinePanel';
+import Callout from '../../components/Callout';
 
 function Section({ title, children }) {
   return (
@@ -16,24 +17,7 @@ function P({ children }) {
   return <p>{children}</p>;
 }
 
-function Callout({ type = 'info', children }) {
-  const colors = {
-    info: { bg: 'rgba(59,130,246,0.08)', border: '#3B82F6', icon: 'ℹ️' },
-    warning: { bg: 'rgba(245,158,11,0.08)', border: '#F59E0B', icon: '⚠️' },
-    key: { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '💡' },
-    accent: { bg: 'var(--accent-20)', border: 'var(--accent)', icon: '↩' },
-  };
-  const c = colors[type];
-  return (
-    <div style={{
-      background: c.bg, borderLeft: `4px solid ${c.border}`,
-      padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0',
-      fontSize: '14px', lineHeight: 1.6, color: 'var(--text-main)',
-    }}>
-      <span style={{ marginRight: '8px' }}>{c.icon}</span>{children}
-    </div>
-  );
-}
+
 
 /* ────────────────────────────────────────────────────────
    PromptAnatomyWidget — interactive zero-shot prompt diagram
@@ -118,7 +102,7 @@ export function PromptAnatomyWidget() {
         lineHeight: 1.55,
         fontFamily: 'var(--font-mono)',
         color: 'var(--text)',
-        background: 'var(--bg, #fff)',
+        background: 'var(--bg, var(--node-bg))',
         whiteSpace: 'pre-wrap',
         wordBreak: 'break-word',
       }}>{content}</div>

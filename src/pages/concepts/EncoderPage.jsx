@@ -3,6 +3,7 @@ import Latex from '../../components/Latex';
 import Highlight from '../../components/Highlight';
 import LinkedLatex from '../../components/LinkedLatex';
 import HoverCard from '../../components/HoverCard';
+import Callout from '../../components/Callout';
 
 // ── Shared page components ──
 function slugify(title) {
@@ -28,24 +29,7 @@ function P({ children }) {
   return <p>{children}</p>;
 }
 
-function Callout({ type = 'info', children }) {
-  const colors = {
-    info: { bg: 'rgba(59,130,246,0.08)', border: '#3B82F6', icon: 'ℹ️' },
-    warning: { bg: 'rgba(245,158,11,0.08)', border: '#F59E0B', icon: '⚠️' },
-    key: { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '💡' },
-    accent: { bg: 'var(--accent-20)', border: 'var(--accent)', icon: '↩' },
-  };
-  const c = colors[type];
-  return (
-    <div style={{
-      background: c.bg, borderLeft: `4px solid ${c.border}`,
-      padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0',
-      fontSize: '14px', lineHeight: 1.6, color: 'var(--text-main)',
-    }}>
-      <span style={{ marginRight: '8px' }}>{c.icon}</span>{children}
-    </div>
-  );
-}
+
 
 function PropTable({ rows }) {
   return (
@@ -132,7 +116,7 @@ export function EncoderBlockDiagram({ onActiveChange }) {
                 style={{
                   width: '260px',
                   padding: '12px 16px',
-                  background: isActive ? 'var(--accent-20)' : '#FAFAFA',
+                  background: isActive ? 'var(--accent-20)' : 'var(--bg-subtle)',
                   border: `1.5px solid ${isActive ? 'var(--accent)' : 'var(--border)'}`,
                   cursor: 'pointer',
                   transition: 'all 0.15s',
@@ -330,7 +314,7 @@ export default function EncoderPage() {
         <div style={{
           display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', margin: '20px 0',
         }}>
-          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white' }}>
+          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'var(--node-bg)' }}>
             <div style={{ fontWeight: 800, fontSize: '14px', marginBottom: '8px', color: '#EF4444' }}>Static Embedding (Word2Vec)</div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', marginBottom: '8px' }}>
               <div style={{ marginBottom: '4px' }}>"river <strong>bank</strong>" → bank = [0.23, −0.41, ...]</div>
@@ -340,7 +324,7 @@ export default function EncoderPage() {
               Same vector regardless of context. The model <strong>cannot</strong> distinguish the two meanings.
             </div>
           </div>
-          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white' }}>
+          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'var(--node-bg)' }}>
             <div style={{ fontWeight: 800, fontSize: '14px', marginBottom: '8px', color: '#10B981' }}>Contextual Embedding (Encoder)</div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', marginBottom: '8px' }}>
               <div style={{ marginBottom: '4px' }}>"river <strong>bank</strong>" → bank = [0.87, 0.12, ...]</div>
@@ -519,7 +503,7 @@ export default function EncoderPage() {
               <div style={{
                 position: 'absolute', left: '-29px', top: '4px',
                 width: '10px', height: '10px', borderRadius: '50%',
-                background: color, border: '2px solid white',
+                background: color, border: '2px solid var(--node-bg)',
               }} />
               <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-light)', marginBottom: '2px' }}>{layers}</div>
               <div style={{ fontSize: '16px', fontWeight: 800, color, marginBottom: '4px' }}>{name}</div>
@@ -571,7 +555,7 @@ export default function EncoderPage() {
             },
           ].map(({ title, model, attn, tasks, color, strength }, i) => (
             <div key={i} style={{
-              padding: '16px', border: '1px solid var(--border)', background: 'white',
+              padding: '16px', border: '1px solid var(--border)', background: 'var(--node-bg)',
               display: 'flex', flexDirection: 'column', gap: '8px',
             }}>
               <div style={{ fontWeight: 800, fontSize: '15px', color }}>{title}</div>

@@ -1,15 +1,41 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { useSettings } from '../../SettingsContext';
 
 /**
  * GradientDecayViz — Shows how gradients decay through layers
  * for Sigmoid (max deriv 0.25) vs Tanh (max deriv 1.0).
- *
- * Uses a bar chart: each bar is the cumulative gradient after N layers.
- * Sigmoid: 0.25^n, Tanh: at a typical activation point (~0.65 per layer).
+ * Theme-aware canvas rendering.
  */
+
+const CANVAS_PALETTES = {
+  light: {
+    bg: '#F5F3EE',
+    axes: '#D6D3CC',
+    yLabel: '#9C9C9C',
+    title: '#5C5C5C',
+    tickText: '#9C9C9C',
+    tickLine: '#E8E5E0',
+    layerLabel: '#9C9C9C',
+    legendText: '#9C9C9C',
+  },
+  dark: {
+    bg: '#1A1A1A',
+    axes: '#333',
+    yLabel: '#666',
+    title: '#A0A0A0',
+    tickText: '#666',
+    tickLine: '#2A2A2A',
+    layerLabel: '#666',
+    legendText: '#666',
+  },
+};
+
 export default function GradientDecayViz() {
   const canvasRef = useRef(null);
   const [layers, setLayers] = useState(6);
+  const { resolvedTheme } = useSettings();
+
+  const palette = CANVAS_PALETTES[resolvedTheme] || CANVAS_PALETTES.light;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -22,7 +48,7 @@ export default function GradientDecayViz() {
     canvas.height = h * dpr;
     ctx.scale(dpr, dpr);
 
-    ctx.fillStyle = '#FAFAFA';
+    ctx.fillStyle = palette.bg;
     ctx.fillRect(0, 0, w, h);
 
     const sigmoidMax = 0.25;
@@ -35,7 +61,7 @@ export default function GradientDecayViz() {
     const chartH = h - padTop - padBottom;
 
     // Axes
-    ctx.strokeStyle = '#D4D4D4';
+    ctx.strokeStyle = palette.axes;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(padLeft, padTop);
@@ -45,7 +71,7 @@ export default function GradientDecayViz() {
 
     // Y-axis label
     ctx.save();
-    ctx.fillStyle = '#888';
+    ctx.fillStyle = palette.yLabel;
     ctx.font = '11px "Iosevka Charon", sans-serif';
     ctx.textAlign = 'center';
     ctx.translate(14, padTop + chartH / 2);
@@ -54,7 +80,7 @@ export default function GradientDecayViz() {
     ctx.restore();
 
     // Title
-    ctx.fillStyle = '#333';
+    ctx.fillStyle = palette.title;
     ctx.font = 'bold 12px "Iosevka Charon", sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('Gradient reaching each layer (backprop)', w / 2, 16);
@@ -102,20 +128,20 @@ export default function GradientDecayViz() {
       ctx.fillText(tanLabel, tanX + barW / 2, tanY - 4);
 
       // Layer label
-      ctx.fillStyle = '#888';
+      ctx.fillStyle = palette.layerLabel;
       ctx.font = '11px "Iosevka Charon", sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(`L${i + 1}`, cx, padTop + chartH + 16);
     }
 
     // Y-axis ticks
-    ctx.fillStyle = '#AAA';
+    ctx.fillStyle = palette.tickText;
     ctx.font = '10px "Iosevka Charon", monospace';
     ctx.textAlign = 'right';
     [0, 0.25, 0.5, 0.75, 1.0].forEach(v => {
       const y = padTop + chartH - (v / maxVal) * chartH;
       ctx.fillText(v.toFixed(2), padLeft - 6, y + 3);
-      ctx.strokeStyle = '#ECECEC';
+      ctx.strokeStyle = palette.tickLine;
       ctx.beginPath();
       ctx.moveTo(padLeft, y);
       ctx.lineTo(padLeft + chartW, y);
@@ -129,15 +155,15 @@ export default function GradientDecayViz() {
 
     ctx.fillStyle = '#F59E0B';
     ctx.fillRect(padLeft + chartW / 2 - 100, legendY - 8, 10, 10);
-    ctx.fillStyle = '#888';
+    ctx.fillStyle = palette.legendText;
     ctx.fillText('Sigmoid (0.25ⁿ)', padLeft + chartW / 2 - 86, legendY);
 
     ctx.fillStyle = '#3B82F6';
     ctx.fillRect(padLeft + chartW / 2 + 30, legendY - 8, 10, 10);
-    ctx.fillStyle = '#888';
+    ctx.fillStyle = palette.legendText;
     ctx.fillText('Tanh (~0.65ⁿ)', padLeft + chartW / 2 + 44, legendY);
 
-  }, [layers]);
+  }, [layers, palette]);
 
   return (
     <div style={{ position: 'relative' }}>

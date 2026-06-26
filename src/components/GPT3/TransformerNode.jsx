@@ -51,7 +51,7 @@ export default function TransformerNode({ isOpen, onToggle, tokens }) {
                     <div className="attn-lbl">{rowTok}</div>
                     {tokens.map((colTok, c) => {
                       if (c > r) {
-                        return <div key={c} className="attn-cell" style={{ background: '#F6F6F6', color: '#A0A0A0' }}>-</div>;
+                        return <div key={c} className="attn-cell" style={{ background: 'var(--bg-subtle)', color: 'var(--text-light)' }}>-</div>;
                       } else if (c === r) {
                         return <div key={c} className="attn-cell" style={{ background: 'var(--accent)', color: 'white' }}>.60</div>;
                       } else {

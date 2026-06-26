@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import Latex from '../../components/Latex';
 import Highlight from '../../components/Highlight';
 import InlinePanel from '../../components/viz/InlinePanel';
+import Callout from '../../components/Callout';
 
 function Section({ title, children }) {
   return (
@@ -16,24 +17,7 @@ function P({ children }) {
   return <p>{children}</p>;
 }
 
-function Callout({ type = 'info', children }) {
-  const colors = {
-    info: { bg: 'rgba(59,130,246,0.08)', border: '#3B82F6', icon: 'ℹ️' },
-    warning: { bg: 'rgba(245,158,11,0.08)', border: '#F59E0B', icon: '⚠️' },
-    key: { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '💡' },
-    accent: { bg: 'var(--accent-20)', border: 'var(--accent)', icon: '↩' },
-  };
-  const c = colors[type];
-  return (
-    <div style={{
-      background: c.bg, borderLeft: `4px solid ${c.border}`,
-      padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0',
-      fontSize: '14px', lineHeight: 1.6, color: 'var(--text-main)',
-    }}>
-      <span style={{ marginRight: '8px' }}>{c.icon}</span>{children}
-    </div>
-  );
-}
+
 
 /* ────────────────────────────────────────────────────────
    DecompositionTreeWidget — interactive step-through of
@@ -56,7 +40,7 @@ export function DecompositionTreeWidget() {
     border: active ? '2px solid var(--accent)' : solved ? '2px solid #10B981' : '1.5px solid var(--border)',
     borderRadius: '8px',
     padding: '14px 16px',
-    background: isFinal ? '#0891B210' : solved ? '#F0FDF4' : '#fff',
+    background: isFinal ? '#0891B210' : solved ? 'var(--surface-green)' : 'var(--node-bg)',
     transition: 'all 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
     boxShadow: active ? '0 0 12px rgba(8,145,178,0.2)' : 'var(--shadow-sm)',
     position: 'relative',
@@ -241,7 +225,7 @@ export function DecompositionTreeWidget() {
                 padding: '2px 8px',
                 fontSize: '10px',
                 fontWeight: 600,
-                background: '#DBEAFE',
+                background: 'var(--surface-blue)',
                 color: '#1D4ED8',
                 borderRadius: '3px',
                 fontFamily: 'var(--font-mono)',

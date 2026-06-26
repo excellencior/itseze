@@ -175,9 +175,9 @@ export default function MainLayout({ selectedModel, onSelectModel, children, isA
     return () => window.removeEventListener('keydown', handler);
   }, [resolvedTheme, updateSettings]);
 
-  // Dynamic container background based on theme
-  const contentBg = resolvedTheme === 'dark' ? '#1a1a1a' : '#F6F6F6';
-  const outerBg = resolvedTheme === 'dark' ? '#000' : '#111';
+  // Dynamic container background based on theme — uses CSS vars from settingsStore
+  const contentBg = resolvedTheme === 'dark' ? '#161616' : '#FAFAF8';
+  const outerBg = resolvedTheme === 'dark' ? '#0A0A0A' : '#D6D3CC';
 
   return (
     <div style={{
@@ -198,7 +198,7 @@ export default function MainLayout({ selectedModel, onSelectModel, children, isA
           backgroundColor: contentBg,
           overflow: 'hidden',
           borderRadius: '12px',
-          boxShadow: '0 0 40px rgba(0,0,0,0.4)',
+          boxShadow: resolvedTheme === 'dark' ? '0 0 40px rgba(0,0,0,0.5)' : '0 0 40px rgba(0,0,0,0.15)',
           transition: 'background-color 0.3s ease',
         }}
       >

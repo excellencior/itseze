@@ -17,10 +17,10 @@ export default function TokenizationNode({ isOpen, onToggle }) {
           The BPE algorithm starts with single characters (bytes) and iteratively merges the most frequently occurring pairs in the training data until it reaches a vocabulary of <strong>50,257 tokens</strong>.
         </p>
 
-        <div style={{ background: '#f6f6f6', border: '1px solid var(--border)', padding: '20px', marginBottom: '16px' }}>
+        <div style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border)', padding: '20px', marginBottom: '16px' }}>
           <div style={{ fontWeight: 800, fontSize: '14px', color: 'var(--text-main)', marginBottom: '12px' }}>SUB-WORD SPLITTING</div>
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', fontFamily: 'monospace', fontSize: '15px' }}>
-            <span style={{ background: 'white', border: '1.5px solid var(--border)', padding: '6px 12px', fontWeight: 600 }}>"unhappiness"</span>
+            <span style={{ background: 'var(--node-bg)', border: '1.5px solid var(--border)', padding: '6px 12px', fontWeight: 600 }}>"unhappiness"</span>
             <span style={{ color: 'var(--text-muted)', fontWeight: 800 }}>→</span>
             <span style={{ background: '#333', color: 'white', padding: '6px 12px', fontWeight: 600 }}>"un" (250)</span>
             <span style={{ background: '#333', color: 'white', padding: '6px 12px', fontWeight: 600 }}>"happi" (1823)</span>
@@ -37,22 +37,22 @@ export default function TokenizationNode({ isOpen, onToggle }) {
         </p>
         
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 600 }}>
-          <div style={{ background: 'white', padding: '12px 16px', border: '1px solid #E5E5E5', display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ background: 'var(--node-bg)', padding: '12px 16px', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ color: 'var(--text-main)' }}>"!"</span><span>0</span>
           </div>
-          <div style={{ background: 'white', padding: '12px 16px', border: '1px solid #E5E5E5', display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ background: 'var(--node-bg)', padding: '12px 16px', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ color: 'var(--text-main)' }}>"The"</span><span>464</span>
           </div>
-          <div style={{ background: 'white', padding: '12px 16px', border: '1px solid #E5E5E5', display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ background: 'var(--node-bg)', padding: '12px 16px', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ color: 'var(--text-main)' }}>" cat"</span><span>3797</span>
           </div>
-          <div style={{ background: 'white', padding: '12px 16px', border: '1px solid #E5E5E5', display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ background: 'var(--node-bg)', padding: '12px 16px', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ color: 'var(--text-main)' }}>" Data"</span><span>8585</span>
           </div>
-          <div style={{ background: 'white', padding: '12px 16px', border: '1px solid #E5E5E5', display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ background: 'var(--node-bg)', padding: '12px 16px', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ color: 'var(--text-main)' }}>" visualization"</span><span>18451</span>
           </div>
-          <div style={{ background: 'white', padding: '12px 16px', border: '1px solid #E5E5E5', display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ background: 'var(--node-bg)', padding: '12px 16px', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ color: 'var(--text-main)' }}>"&lt;|endoftext|&gt;"</span><span>50256</span>
           </div>
         </div>

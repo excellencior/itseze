@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Latex from '../../components/Latex';
 import HoverCard from '../../components/HoverCard';
+import Callout from '../../components/Callout';
 
 function slugify(t) {
   return t.toLowerCase().replace(/[^\w\s-]/g, '').replace(/^\d+\.\s*/, '').trim().replace(/\s+/g, '-');
@@ -17,20 +18,7 @@ function Section({ title, children }) {
 function P({ children }) {
   return <p>{children}</p>;
 }
-function Callout({ type = 'info', children }) {
-  const colors = {
-    info: { bg: 'rgba(59,130,246,0.08)', border: '#3B82F6', icon: 'ℹ️' },
-    warning: { bg: 'rgba(245,158,11,0.08)', border: '#F59E0B', icon: '⚠️' },
-    key: { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '💡' },
-    accent: { bg: 'var(--accent-20)', border: 'var(--accent)', icon: '↩' },
-  };
-  const c = colors[type];
-  return (
-    <div style={{ background: c.bg, borderLeft: `4px solid ${c.border}`, padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0', fontSize: '14px', lineHeight: 1.6, color: 'var(--text-main)' }}>
-      <span style={{ marginRight: '8px' }}>{c.icon}</span>{children}
-    </div>
-  );
-}
+
 function PropTable({ rows }) {
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px', fontSize: '13px', border: '1px solid var(--border)' }}>
@@ -47,7 +35,7 @@ function PropTable({ rows }) {
 }
 function CodeBlock({ children }) {
   return (
-    <pre style={{ background: '#f6f6f6', border: '1px solid var(--border)', padding: '16px', fontFamily: 'var(--font-mono)', fontSize: '12px', lineHeight: 1.6, marginBottom: '16px', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
+    <pre style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border)', padding: '16px', fontFamily: 'var(--font-mono)', fontSize: '12px', lineHeight: 1.6, marginBottom: '16px', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
       {children}
     </pre>
   );
@@ -92,7 +80,7 @@ export function SSMWalkthrough() {
   ];
 
   return (
-    <div style={{ border: '1px solid var(--border)', background: 'white', padding: '20px 24px', marginTop: '16px', marginBottom: '20px' }}>
+    <div style={{ border: '1px solid var(--border)', background: 'var(--node-bg)', padding: '20px 24px', marginTop: '16px', marginBottom: '20px' }}>
       <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-light)', marginBottom: '12px' }}>
         Walkthrough — SSM Recurrence: Processing Tokens One by One
       </div>
@@ -103,7 +91,7 @@ export function SSMWalkthrough() {
           <span key={i} style={{
             display: 'inline-block', padding: '4px 10px',
             border: `1.5px solid ${i < step ? '#10B981' : i === step ? 'var(--accent)' : 'var(--border)'}`,
-            background: i < step ? '#F0FDF4' : i === step ? 'var(--accent-20)' : '#FAFAFA',
+            background: i < step ? 'var(--surface-green)' : i === step ? 'var(--accent-20)' : 'var(--bg-subtle)',
             fontFamily: 'var(--font-mono)', fontSize: '13px',
             fontWeight: i <= step ? 700 : 500,
             color: i < step ? '#166534' : i === step ? 'var(--accent)' : 'var(--text-light)',
@@ -170,7 +158,7 @@ export function AttnVsSSMViz() {
 
   const N = 6;
   return (
-    <div style={{ border: '1px solid var(--border)', background: 'white', padding: '20px 24px', marginTop: '16px', marginBottom: '20px' }}>
+    <div style={{ border: '1px solid var(--border)', background: 'var(--node-bg)', padding: '20px 24px', marginTop: '16px', marginBottom: '20px' }}>
       <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-light)', marginBottom: '12px' }}>
         Processing Strategy Comparison
       </div>
@@ -220,7 +208,7 @@ export function AttnVsSSMViz() {
               </React.Fragment>
             ))}
             <div style={{
-              padding: '6px 12px', border: '2px solid #10B981', background: '#F0FDF4',
+              padding: '6px 12px', border: '2px solid #10B981', background: 'var(--surface-green)',
               fontSize: '10px', fontWeight: 700, fontFamily: 'var(--font-mono)',
               opacity: animate ? 1 : 0.1, transition: 'opacity 0.5s ease 0.6s',
             }}>h (fixed size)</div>
@@ -539,14 +527,14 @@ in the least squares sense.`}</CodeBlock>
           The key insight is that <strong>Δ acts as a gate</strong>:
         </P>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px', marginBottom: '20px' }}>
-          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white', borderLeft: '4px solid #10B981' }}>
+          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'var(--node-bg)', borderLeft: '4px solid #10B981' }}>
             <div style={{ fontWeight: 800, fontSize: '14px', marginBottom: '6px', color: '#166534' }}>Large Δ</div>
             <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.6 }}>
               Ā ≈ 0 (forget old state), B̄ is large (write new input).<br />
               <strong>"This token is important — store it!"</strong>
             </div>
           </div>
-          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white', borderLeft: '4px solid #F59E0B' }}>
+          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'var(--node-bg)', borderLeft: '4px solid #F59E0B' }}>
             <div style={{ fontWeight: 800, fontSize: '14px', marginBottom: '6px', color: '#92400E' }}>Small Δ</div>
             <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.6 }}>
               Ā ≈ 1 (keep old state), B̄ ≈ 0 (ignore new input).<br />
@@ -617,7 +605,7 @@ in the least squares sense.`}</CodeBlock>
           also their core weakness.
         </P>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px', marginBottom: '20px' }}>
-          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white', borderLeft: '4px solid #3B82F6' }}>
+          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'var(--node-bg)', borderLeft: '4px solid #3B82F6' }}>
             <div style={{ fontWeight: 800, fontSize: '14px', marginBottom: '8px', color: '#1E40AF' }}>Transformer (Attention)</div>
             <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.6 }}>
               Like having a <strong>complete recording</strong> of every lecture. Want to recall what was
@@ -625,7 +613,7 @@ in the least squares sense.`}</CodeBlock>
               <strong>Cost:</strong> Storage proportional to everything recorded.
             </div>
           </div>
-          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white', borderLeft: '4px solid #10B981' }}>
+          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'var(--node-bg)', borderLeft: '4px solid #10B981' }}>
             <div style={{ fontWeight: 800, fontSize: '14px', marginBottom: '8px', color: '#166534' }}>SSM (State Space)</div>
             <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.6 }}>
               Like taking <strong>handwritten notes</strong>. Great summary of key themes, but the exact
@@ -643,7 +631,7 @@ in the least squares sense.`}</CodeBlock>
             { title: 'Verbatim Copying', desc: 'Reproducing exact sequences from the input. Attention directly attends to original tokens; SSMs must reconstruct from compressed state, often paraphrasing rather than reproducing verbatim.', color: '#F59E0B' },
             { title: 'Recency Bias', desc: 'SSMs tend to weight recent tokens more heavily than distant ones. Information at position 100 may be overwritten by position 9,900, even when the earlier information is the correct answer.', color: '#8B5CF6' },
           ].map(({ title, desc, color }, i) => (
-            <div key={i} style={{ padding: '12px 16px', border: '1px solid var(--border)', background: 'white', borderLeft: `4px solid ${color}` }}>
+            <div key={i} style={{ padding: '12px 16px', border: '1px solid var(--border)', background: 'var(--node-bg)', borderLeft: `4px solid ${color}` }}>
               <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '4px' }}>Failure Mode {i+1}: {title}</div>
               <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.6 }}>{desc}</div>
             </div>
@@ -691,14 +679,14 @@ in the least squares sense.`}</CodeBlock>
         </P>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px', marginBottom: '20px' }}>
-          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white' }}>
+          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'var(--node-bg)' }}>
             <div style={{ fontWeight: 800, fontSize: '14px', marginBottom: '8px', color: '#F59E0B' }}>Sequential Stacking (Jamba)</div>
             <CodeBlock>{`Input → [SSM] → [SSM] → [SSM] → [Attn] → [SSM]
                                   ↑
                       Details may be compressed
                       away before attention sees them`}</CodeBlock>
           </div>
-          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white' }}>
+          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'var(--node-bg)' }}>
             <div style={{ fontWeight: 800, fontSize: '14px', marginBottom: '8px', color: '#10B981' }}>Parallel Fusion (Hymba)</div>
             <CodeBlock>{`Input → ┌─ [Attention Heads] ─┐
         │                     │ → Fuse

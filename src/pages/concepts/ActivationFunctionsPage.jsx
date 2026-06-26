@@ -6,6 +6,7 @@ import InlinePanel from '../../components/viz/InlinePanel';
 import LinearCollapseViz from '../../components/viz/LinearCollapseViz';
 import GradientDecayViz from '../../components/viz/GradientDecayViz';
 import HoverCard from '../../components/HoverCard';
+import Callout from '../../components/Callout';
 
 // ── Activation function definitions ──
 const sigmoid = (x) => 1 / (1 + Math.exp(-x));
@@ -51,24 +52,7 @@ function P({ children }) {
   return <p>{children}</p>;
 }
 
-function Callout({ type = 'info', children }) {
-  const colors = {
-    info: { bg: 'rgba(59,130,246,0.08)', border: '#3B82F6', icon: 'ℹ️' },
-    warning: { bg: 'rgba(245,158,11,0.08)', border: '#F59E0B', icon: '⚠️' },
-    key: { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '💡' },
-    accent: { bg: 'var(--accent-20)', border: 'var(--accent)', icon: '↩' },
-  };
-  const c = colors[type];
-  return (
-    <div style={{
-      background: c.bg, borderLeft: `4px solid ${c.border}`,
-      padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0',
-      fontSize: '14px', lineHeight: 1.6, color: 'var(--text-main)',
-    }}>
-      <span style={{ marginRight: '8px' }}>{c.icon}</span>{children}
-    </div>
-  );
-}
+
 
 function PropTable({ rows }) {
   return (
@@ -595,7 +579,7 @@ export default function ActivationFunctionsPage() {
                 fontSize: '13px',
                 fontWeight: 600,
                 border: `1.5px solid ${compareSet === key ? 'var(--accent)' : 'var(--border)'}`,
-                background: compareSet === key ? 'var(--accent-20)' : 'white',
+                background: compareSet === key ? 'var(--accent-20)' : 'var(--node-bg)',
                 color: compareSet === key ? 'var(--accent)' : 'var(--text-muted)',
                 cursor: 'pointer',
                 borderRadius: '4px',
@@ -629,7 +613,7 @@ export default function ActivationFunctionsPage() {
               <div style={{
                 position: 'absolute', left: '-29px', top: '4px',
                 width: '10px', height: '10px', borderRadius: '50%',
-                background: color, border: '2px solid white',
+                background: color, border: '2px solid var(--node-bg)',
               }} />
               <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-light)', marginBottom: '2px' }}>{year}</div>
               <div style={{ fontSize: '16px', fontWeight: 800, color, marginBottom: '4px' }}>{name}</div>

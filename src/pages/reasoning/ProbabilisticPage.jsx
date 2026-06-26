@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Latex from '../../components/Latex';
+import Callout from '../../components/Callout';
 
 function Section({ title, children }) {
   return (
@@ -12,25 +13,6 @@ function Section({ title, children }) {
 
 function P({ children }) {
   return <p>{children}</p>;
-}
-
-function Callout({ type = 'info', children }) {
-  const colors = {
-    info: { bg: 'rgba(59,130,246,0.08)', border: '#3B82F6', icon: 'ℹ️' },
-    warning: { bg: 'rgba(245,158,11,0.08)', border: '#F59E0B', icon: '⚠️' },
-    key: { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '💡' },
-    accent: { bg: 'var(--accent-20)', border: 'var(--accent)', icon: '↩' },
-  };
-  const c = colors[type];
-  return (
-    <div style={{
-      background: c.bg, borderLeft: `4px solid ${c.border}`,
-      padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0',
-      fontSize: '14px', lineHeight: 1.6, color: 'var(--text-main)',
-    }}>
-      <span style={{ marginRight: '8px' }}>{c.icon}</span>{children}
-    </div>
-  );
 }
 
 
@@ -170,7 +152,7 @@ export function BayesianNetwork() {
           left: `${x}px`,
           top: `${y}px`,
           width: '150px',
-          background: '#fff',
+          background: 'var(--node-bg)',
           border: `1.5px solid ${isObserved ? 'var(--accent)' : 'var(--border)'}`,
           padding: '12px',
           boxShadow: isObserved ? '0 0 10px rgba(8, 145, 178, 0.2)' : 'var(--shadow-sm)',
@@ -216,7 +198,7 @@ export function BayesianNetwork() {
   };
 
   return (
-    <div style={{ background: '#fff', border: '1px solid var(--border)', padding: '24px', margin: '24px 0' }}>
+    <div style={{ background: 'var(--node-bg)', border: '1px solid var(--border)', padding: '24px', margin: '24px 0' }}>
       <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
         Interactive belief update
       </div>
@@ -283,7 +265,7 @@ export function BayesianNetwork() {
             padding: '8px 14px',
             fontSize: '12px',
             fontWeight: 700,
-            background: 'white',
+            background: 'var(--node-bg)',
             border: '1px solid var(--border)',
             cursor: 'pointer',
           }}

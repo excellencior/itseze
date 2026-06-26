@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Latex from '../../components/Latex';
 import HoverCard from '../../components/HoverCard';
 import InlinePanel from '../../components/viz/InlinePanel';
+import Callout from '../../components/Callout';
 
 function slugify(t) {
   return t.toLowerCase().replace(/[^\w\s-]/g, '').replace(/^\d+\.\s*/, '').trim().replace(/\s+/g, '-');
@@ -18,20 +19,7 @@ function Section({ title, children }) {
 function P({ children }) {
   return <p>{children}</p>;
 }
-function Callout({ type = 'info', children }) {
-  const colors = {
-    info: { bg: 'rgba(59,130,246,0.08)', border: '#3B82F6', icon: 'ℹ️' },
-    warning: { bg: 'rgba(245,158,11,0.08)', border: '#F59E0B', icon: '⚠️' },
-    key: { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '💡' },
-    accent: { bg: 'var(--accent-20)', border: 'var(--accent)', icon: '↩' },
-  };
-  const c = colors[type];
-  return (
-    <div style={{ background: c.bg, borderLeft: `4px solid ${c.border}`, padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0', fontSize: '14px', lineHeight: 1.6, color: 'var(--text-main)' }}>
-      <span style={{ marginRight: '8px' }}>{c.icon}</span>{children}
-    </div>
-  );
-}
+
 function PropTable({ rows }) {
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px', fontSize: '13px', border: '1px solid var(--border)' }}>
@@ -56,7 +44,7 @@ const VERIFY_TABLES = [
   { after: '"I want to eat"', draft: 'pizza', top: [['dinner', 40], ['food', 30], ['pizza', 5]], accepted: false },
 ];
 
-function TokenChip({ text, color = 'var(--text-main)', bg = '#FAFAFA', border = 'var(--border)', bold, mono }) {
+function TokenChip({ text, color = 'var(--text-main)', bg = 'var(--bg-subtle)', border = 'var(--border)', bold, mono }) {
   return (
     <span style={{
       display: 'inline-block', padding: '4px 10px',
@@ -80,7 +68,7 @@ function MiniTable({ rows, draftToken, accepted }) {
         {rows.map(([tok, prob], i) => {
           const isDraft = tok === draftToken;
           return (
-            <tr key={i} style={{ background: isDraft ? (accepted ? '#F0FDF4' : '#FEF2F2') : 'white' }}>
+            <tr key={i} style={{ background: isDraft ? (accepted ? 'var(--surface-green)' : 'var(--surface-red)') : 'var(--node-bg)' }}>
               <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--border)', fontFamily: 'var(--font-mono)', fontWeight: isDraft ? 700 : 400 }}>{tok}</td>
               <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--border)', fontFamily: 'var(--font-mono)' }}>{prob}%</td>
               <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--border)', fontWeight: 700, fontSize: '11px' }}>
@@ -105,7 +93,7 @@ export function SpecDecodingWalkthrough() {
   ];
 
   return (
-    <div style={{ border: '1px solid var(--border)', background: 'white', padding: '20px 24px', marginTop: '16px', marginBottom: '20px' }}>
+    <div style={{ border: '1px solid var(--border)', background: 'var(--node-bg)', padding: '20px 24px', marginTop: '16px', marginBottom: '20px' }}>
       <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-light)', marginBottom: '12px' }}>
         Walkthrough — One Iteration of Speculative Decoding
       </div>
@@ -152,7 +140,7 @@ export function SpecDecodingWalkthrough() {
               {CONTEXT.map((t, i) => <TokenChip key={i} text={t} mono bold bg="#F0FDF4" border="#10B981" color="#166534" />)}
             </div>
             <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '10px', lineHeight: 1.7 }}>Small drafter predicts 4 tokens:</div>
-            <div style={{ padding: '10px 16px', background: '#EFF6FF', border: '1px solid #3B82F6', marginBottom: '14px' }}>
+            <div style={{ padding: '10px 16px', background: 'var(--surface-blue)', border: '1px solid #3B82F6', marginBottom: '14px' }}>
               {DRAFTED.map((t, i) => <TokenChip key={i} text={t} mono bold border="#3B82F6" bg="#EFF6FF" color="#1E40AF" />)}
             </div>
             <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '10px', lineHeight: 1.7 }}>So the full sequence becomes:</div>
@@ -220,11 +208,11 @@ export function SpecDecodingWalkthrough() {
               Accepted tokens become finalized. Everything from the rejection onward is discarded:
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
-              <div style={{ padding: '12px 14px', border: '1px solid #10B981', background: '#F0FDF4', fontSize: '12px' }}>
+              <div style={{ padding: '12px 14px', border: '1px solid #10B981', background: 'var(--surface-green)', fontSize: '12px' }}>
                 <div style={{ fontWeight: 700, marginBottom: '6px', color: '#166534' }}>✓ Finalized</div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>I want <strong>to eat</strong></div>
               </div>
-              <div style={{ padding: '12px 14px', border: '1px solid #EF4444', background: '#FEF2F2', fontSize: '12px' }}>
+              <div style={{ padding: '12px 14px', border: '1px solid #EF4444', background: 'var(--surface-red)', fontSize: '12px' }}>
                 <div style={{ fontWeight: 700, marginBottom: '6px', color: '#991B1B' }}>✗ Discarded</div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, textDecoration: 'line-through', color: 'var(--text-light)' }}>pizza tonight</div>
               </div>
@@ -356,7 +344,7 @@ function ParallelViz() {
   });
 
   return (
-    <div style={{ border: '1px solid var(--border)', background: 'white', padding: '20px 24px', marginTop: '16px', marginBottom: '20px' }}>
+    <div style={{ border: '1px solid var(--border)', background: 'var(--node-bg)', padding: '20px 24px', marginTop: '16px', marginBottom: '20px' }}>
       {/* Header */}
       <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-light)', marginBottom: '12px' }}>
         Why Parallel Verification Works
@@ -486,7 +474,7 @@ function ParallelViz() {
       {/* ── SECTION 3: Key insight callout ── */}
       <div style={{
         padding: '12px 16px', fontSize: '13px', lineHeight: 1.6,
-        background: mode === 'parallel' ? '#F0FDF4' : '#FEF2F2',
+        background: mode === 'parallel' ? 'var(--surface-green)' : 'var(--surface-red)',
         border: `1px solid ${mode === 'parallel' ? '#10B981' : '#EF4444'}`,
         borderRadius: '4px',
         color: mode === 'parallel' ? '#166534' : '#991B1B',
@@ -630,14 +618,14 @@ export default function SpeculativeDecodingPage() {
         </InlinePanel>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px', marginBottom: '20px' }}>
-          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white' }}>
+          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'var(--node-bg)' }}>
             <div style={{ fontWeight: 800, fontSize: '15px', marginBottom: '8px', color: '#EF4444' }}>Without Speculative Decoding</div>
             <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.6 }}>
               Generate 5 tokens → <strong>5 serial forward passes</strong> through the 70B model.<br/>
               Each pass: ~40ms. Total: ~200ms.
             </div>
           </div>
-          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white' }}>
+          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'var(--node-bg)' }}>
             <div style={{ fontWeight: 800, fontSize: '15px', marginBottom: '8px', color: '#10B981' }}>With Speculative Decoding</div>
             <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.6 }}>
               Draft model proposes 5 tokens → <strong>1 forward pass</strong> through 70B to verify all 5.<br/>
@@ -717,14 +705,14 @@ export default function SpeculativeDecodingPage() {
           <Latex math={"q(x)"} /> and the target assigns it probability <Latex math={"p(x)"} />, three things can happen:
         </P>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px', marginBottom: '16px' }}>
-          <div style={{ padding: '12px 16px', border: '1px solid var(--border)', background: 'white', borderLeft: '4px solid #10B981' }}>
+          <div style={{ padding: '12px 16px', border: '1px solid var(--border)', background: 'var(--node-bg)', borderLeft: '4px solid #10B981' }}>
             <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '4px' }}>Case 1: Target agrees more — <Latex math={"p(x) \\geq q(x)"} /></div>
             <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.6 }}>
               The target would have been <em>even more likely</em> to pick this token than the draft was.
               Accept unconditionally. The ratio <Latex math={"p(x)/q(x) \\geq 1"} />, so <Latex math={"\\min(1, p/q) = 1"} />.
             </div>
           </div>
-          <div style={{ padding: '12px 16px', border: '1px solid var(--border)', background: 'white', borderLeft: '4px solid #F59E0B' }}>
+          <div style={{ padding: '12px 16px', border: '1px solid var(--border)', background: 'var(--node-bg)', borderLeft: '4px solid #F59E0B' }}>
             <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '4px' }}>Case 2: Target agrees less — <Latex math={"p(x) < q(x)"} /></div>
             <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.6 }}>
               The draft was <em>overconfident</em> about this token. Accept with probability <Latex math={"p(x)/q(x) < 1"} />.
@@ -732,7 +720,7 @@ export default function SpeculativeDecodingPage() {
               This downweights tokens the draft liked too much.
             </div>
           </div>
-          <div style={{ padding: '12px 16px', border: '1px solid var(--border)', background: 'white', borderLeft: '4px solid #EF4444' }}>
+          <div style={{ padding: '12px 16px', border: '1px solid var(--border)', background: 'var(--node-bg)', borderLeft: '4px solid #EF4444' }}>
             <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '4px' }}>Case 3: Rejected — resample from the residual</div>
             <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.6 }}>
               When rejected, don't just pick the target's top token — sample from the <strong>adjusted
@@ -767,14 +755,14 @@ export default function SpeculativeDecodingPage() {
           the matrix multiplications collapse to matrix-vector products, and the GPU is starved for work.
         </P>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px', marginBottom: '20px' }}>
-          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white' }}>
+          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'var(--node-bg)' }}>
             <div style={{ fontWeight: 800, fontSize: '14px', marginBottom: '8px', color: '#3B82F6' }}>Prefill (Compute-Bound)</div>
             <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.6 }}>
               Many tokens processed at once. Large matrix × matrix multiplications. GPU tensor cores fully saturated.
               Processing 5 tokens takes barely longer than processing 1.
             </div>
           </div>
-          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white' }}>
+          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'var(--node-bg)' }}>
             <div style={{ fontWeight: 800, fontSize: '14px', marginBottom: '8px', color: '#F59E0B' }}>Decode (Memory-Bound)</div>
             <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.6 }}>
               One token at a time. Matrix × vector multiplications. GPU waits for weight loading from HBM.
@@ -849,7 +837,7 @@ export default function SpeculativeDecodingPage() {
             { title: 'EAGLE (Li et al., 2024)', desc: 'Trains a lightweight autoregressive head on top of the target model\'s hidden states to draft tokens. Achieves higher acceptance rates than Medusa by modeling token dependencies in the draft.', color: '#F59E0B' },
             { title: 'Prompt Lookup Decoding', desc: 'No draft model at all. Instead, look for n-gram matches in the prompt itself to predict continuations. Works remarkably well for tasks like summarization or code editing where the output overlaps with the input.', color: '#EF4444' },
           ].map(({ title, desc, color }, i) => (
-            <div key={i} style={{ padding: '16px', border: '1px solid var(--border)', background: 'white', borderLeft: `4px solid ${color}` }}>
+            <div key={i} style={{ padding: '16px', border: '1px solid var(--border)', background: 'var(--node-bg)', borderLeft: `4px solid ${color}` }}>
               <div style={{ fontWeight: 800, fontSize: '14px', marginBottom: '6px' }}>{title}</div>
               <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.6 }}>{desc}</div>
             </div>
@@ -894,7 +882,7 @@ export default function SpeculativeDecodingPage() {
           and understanding when it helps — and when it doesn't — is critical for practical deployment.
         </P>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px', marginBottom: '20px' }}>
-          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white' }}>
+          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'var(--node-bg)' }}>
             <div style={{ fontWeight: 800, fontSize: '14px', marginBottom: '8px', color: '#10B981' }}>High Speedup Scenarios</div>
             <ul style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.8, paddingLeft: '16px' }}>
               <li><strong>Predictable text:</strong> boilerplate code, formulaic writing, translations</li>
@@ -903,7 +891,7 @@ export default function SpeculativeDecodingPage() {
               <li><strong>Large target model:</strong> the bigger the target, the more decode time is wasted</li>
             </ul>
           </div>
-          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'white' }}>
+          <div style={{ padding: '16px', border: '1px solid var(--border)', background: 'var(--node-bg)' }}>
             <div style={{ fontWeight: 800, fontSize: '14px', marginBottom: '8px', color: '#EF4444' }}>Low Speedup Scenarios</div>
             <ul style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.8, paddingLeft: '16px' }}>
               <li><strong>Creative writing:</strong> high entropy, many equally valid continuations</li>

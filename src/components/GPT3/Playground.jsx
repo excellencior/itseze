@@ -16,7 +16,7 @@ export default function Playground({ promptText, setPromptText, tokens }) {
         {tokens.map((w, idx) => (
           <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
             <div className="tok">{w}</div>
-            <div style={{ fontSize: '11px', color: '#545454', fontWeight: 800 }}>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 800 }}>
               ID: {getTokenID(w)}
             </div>
           </div>

@@ -74,7 +74,7 @@ export default function OutputNode({ isOpen, onToggle }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
             <div style={{ width: '90px', fontFamily: 'var(--font-mono)', fontSize: '15px', fontWeight: 600 }}>" them"</div>
             <div style={{ flex: 1, background: 'var(--bg)', height: '24px', overflow: 'hidden' }}>
-              <div style={{ width: probs.p2 + '%', height: '100%', background: '#000000', transition: 'width 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}></div>
+              <div style={{ width: probs.p2 + '%', height: '100%', background: 'var(--text-main)', transition: 'width 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}></div>
             </div>
             <div style={{ width: '40px', fontWeight: 800, fontSize: '15px', color: 'var(--text-main)' }}>{probs.p2}%</div>
           </div>
@@ -82,7 +82,7 @@ export default function OutputNode({ isOpen, onToggle }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{ width: '90px', fontFamily: 'var(--font-mono)', fontSize: '15px', fontWeight: 600 }}>" everyone"</div>
             <div style={{ flex: 1, background: 'var(--bg)', height: '24px', overflow: 'hidden' }}>
-              <div style={{ width: probs.p3 + '%', height: '100%', background: '#545454', transition: 'width 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}></div>
+              <div style={{ width: probs.p3 + '%', height: '100%', background: 'var(--text-muted)', transition: 'width 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}></div>
             </div>
             <div style={{ width: '40px', fontWeight: 800, fontSize: '15px', color: 'var(--text-main)' }}>{probs.p3}%</div>
           </div>

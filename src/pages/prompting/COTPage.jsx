@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import Latex from '../../components/Latex';
 import InlinePanel from '../../components/viz/InlinePanel';
+import Callout from '../../components/Callout';
 
 function Section({ title, children }) {
   return (
@@ -15,24 +16,7 @@ function P({ children }) {
   return <p>{children}</p>;
 }
 
-function Callout({ type = 'info', children }) {
-  const colors = {
-    info: { bg: 'rgba(59,130,246,0.08)', border: '#3B82F6', icon: 'ℹ️' },
-    warning: { bg: 'rgba(245,158,11,0.08)', border: '#F59E0B', icon: '⚠️' },
-    key: { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '💡' },
-    accent: { bg: 'var(--accent-20)', border: 'var(--accent)', icon: '↩' },
-  };
-  const c = colors[type];
-  return (
-    <div style={{
-      background: c.bg, borderLeft: `4px solid ${c.border}`,
-      padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0',
-      fontSize: '14px', lineHeight: 1.6, color: 'var(--text-main)',
-    }}>
-      <span style={{ marginRight: '8px' }}>{c.icon}</span>{children}
-    </div>
-  );
-}
+
 
 // ── CoT Trace Stepper Widget ──
 export function CoTTraceStepperWidget() {
@@ -225,8 +209,8 @@ export function CoTTraceStepperWidget() {
                 fontWeight: 700,
                 border: 'none',
                 borderRadius: '4px',
-                background: revealedSteps >= cotSteps.length ? '#e0e0e0' : 'var(--accent)',
-                color: revealedSteps >= cotSteps.length ? '#999' : '#fff',
+                background: revealedSteps >= cotSteps.length ? 'var(--bg-subtle)' : 'var(--accent)',
+                color: revealedSteps >= cotSteps.length ? 'var(--text-muted)' : '#fff',
                 cursor: revealedSteps >= cotSteps.length ? 'default' : 'pointer',
                 fontFamily: 'inherit',
                 transition: 'all 0.2s',
