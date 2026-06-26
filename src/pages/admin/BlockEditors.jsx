@@ -366,6 +366,205 @@ export function ThreeSceneEditor({ block, onChange }) {
   );
 }
 
+export function VideoEmbedEditor({ block, onChange }) {
+  const set = (field, val) => onChange({ ...block, [field]: val });
+
+  // Extract embed URL for preview
+  const getEmbedUrl = (url) => {
+    if (!url) return null;
+    // YouTube
+    const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+    if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+    // Vimeo
+    const vmMatch = url.match(/(?:vimeo\.com\/)(\d+)/);
+    if (vmMatch) return `https://player.vimeo.com/video/${vmMatch[1]}`;
+    return null;
+  };
+
+  const embedUrl = getEmbedUrl(block.url);
+  const ratioMap = { '16:9': '56.25%', '4:3': '75%', '1:1': '100%' };
+
+  return (
+    <div className="block-card-body">
+      <div className="field-label">Video URL</div>
+      <input type="text" value={block.url} onChange={e => set('url', e.target.value)} placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..." />
+      <div className="field-label">Aspect Ratio</div>
+      <select className="callout-type-select" value={block.aspectRatio} onChange={e => set('aspectRatio', e.target.value)}>
+        <option value="16:9">16:9</option>
+        <option value="4:3">4:3</option>
+        <option value="1:1">1:1</option>
+      </select>
+      {embedUrl && (
+        <div style={{ marginTop: '8px', position: 'relative', paddingBottom: ratioMap[block.aspectRatio] || '56.25%', height: 0, overflow: 'hidden', borderRadius: '4px', border: '1px solid #27272a' }}>
+          <iframe
+            src={embedUrl}
+            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            title="Video preview"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function DividerEditor({ block, onChange }) {
+  return (
+    <div className="block-card-body">
+      <div className="field-label">Style</div>
+      <select className="callout-type-select" value={block.style} onChange={e => onChange({ ...block, style: e.target.value })}>
+        <option value="solid">Solid</option>
+        <option value="dashed">Dashed</option>
+        <option value="dotted">Dotted</option>
+        <option value="gradient">Gradient</option>
+      </select>
+    </div>
+  );
+}
+
+export function BlockquoteEditor({ block, onChange }) {
+  return (
+    <div className="block-card-body">
+      <div className="field-label">Quote Content</div>
+      <RichTextArea
+        value={block.content}
+        onChange={content => onChange({ ...block, content })}
+        placeholder="Write the quote here..."
+        rows={3}
+      />
+      <div className="field-label">Attribution</div>
+      <input type="text" value={block.attribution} onChange={e => onChange({ ...block, attribution: e.target.value })} placeholder="e.g. — Albert Einstein" />
+    </div>
+  );
+}
+
+export function ListEditor({ block, onChange }) {
+  const items = block.items || [''];
+  const updateItem = (idx, val) => {
+    const next = items.map((item, i) => i === idx ? val : item);
+    onChange({ ...block, items: next });
+  };
+  const addItem = () => onChange({ ...block, items: [...items, ''] });
+  const removeItem = (idx) => onChange({ ...block, items: items.filter((_, i) => i !== idx) });
+
+  return (
+    <div className="block-card-body">
+      <div className="field-label">List Type</div>
+      <select className="callout-type-select" value={block.listType} onChange={e => onChange({ ...block, listType: e.target.value })}>
+        <option value="unordered">Unordered (bullets)</option>
+        <option value="ordered">Ordered (numbers)</option>
+      </select>
+      <div className="field-label">Items</div>
+      {items.map((item, idx) => (
+        <div className="field-row" key={idx}>
+          <input type="text" value={item} onChange={e => updateItem(idx, e.target.value)} placeholder={`Item ${idx + 1}`} />
+          <button className="row-btn delete" onClick={() => removeItem(idx)} title="Remove item">×</button>
+        </div>
+      ))}
+      <button className="add-row-btn" onClick={addItem}>+ Add item</button>
+    </div>
+  );
+}
+
+export function HeadingEditor({ block, onChange }) {
+  return (
+    <div className="block-card-body">
+      <div className="field-label">Heading Level</div>
+      <select className="callout-type-select" value={block.level} onChange={e => onChange({ ...block, level: parseInt(e.target.value) })}>
+        <option value={2}>H2</option>
+        <option value={3}>H3</option>
+        <option value={4}>H4</option>
+      </select>
+      <div className="field-label">Text</div>
+      <input type="text" value={block.text} onChange={e => onChange({ ...block, text: e.target.value })} placeholder="Heading text..." />
+    </div>
+  );
+}
+
+export function TabsEditor({ block, onChange }) {
+  const tabs = block.tabs || [{ label: 'Tab 1', content: '' }];
+  const updateTab = (idx, field, val) => {
+    const next = tabs.map((tab, i) => i === idx ? { ...tab, [field]: val } : tab);
+    onChange({ ...block, tabs: next });
+  };
+  const addTab = () => onChange({ ...block, tabs: [...tabs, { label: `Tab ${tabs.length + 1}`, content: '' }] });
+  const removeTab = (idx) => onChange({ ...block, tabs: tabs.filter((_, i) => i !== idx) });
+
+  return (
+    <div className="block-card-body">
+      <div className="field-label">Tabs</div>
+      {tabs.map((tab, idx) => (
+        <div key={idx} style={{ marginBottom: '10px', padding: '8px', border: '1px solid #27272a', borderRadius: '4px', background: '#18181b' }}>
+          <div className="field-row" style={{ marginBottom: '6px' }}>
+            <input type="text" value={tab.label} onChange={e => updateTab(idx, 'label', e.target.value)} placeholder="Tab label" style={{ fontWeight: 700 }} />
+            <button className="row-btn delete" onClick={() => removeTab(idx)} title="Remove tab">×</button>
+          </div>
+          <textarea value={tab.content} onChange={e => updateTab(idx, 'content', e.target.value)} placeholder="Tab content..." rows={3} />
+        </div>
+      ))}
+      <button className="add-row-btn" onClick={addTab}>+ Add tab</button>
+    </div>
+  );
+}
+
+export function CompTableEditor({ block, onChange }) {
+  const headers = block.headers || ['Column 1', 'Column 2'];
+  const rows = block.rows || [headers.map(() => '')];
+  const colCount = headers.length;
+
+  const updateHeader = (idx, val) => {
+    const next = headers.map((h, i) => i === idx ? val : h);
+    onChange({ ...block, headers: next });
+  };
+  const updateCell = (ri, ci, val) => {
+    const next = rows.map((row, i) => i === ri ? row.map((cell, j) => j === ci ? val : cell) : row);
+    onChange({ ...block, rows: next });
+  };
+  const addRow = () => onChange({ ...block, rows: [...rows, headers.map(() => '')] });
+  const removeRow = (idx) => onChange({ ...block, rows: rows.filter((_, i) => i !== idx) });
+  const addColumn = () => {
+    onChange({
+      ...block,
+      headers: [...headers, `Column ${headers.length + 1}`],
+      rows: rows.map(row => [...row, '']),
+    });
+  };
+  const removeColumn = (ci) => {
+    if (headers.length <= 2) return;
+    onChange({
+      ...block,
+      headers: headers.filter((_, i) => i !== ci),
+      rows: rows.map(row => row.filter((_, i) => i !== ci)),
+    });
+  };
+
+  return (
+    <div className="block-card-body">
+      <div className="field-label">Headers</div>
+      <div className="field-row">
+        {headers.map((h, i) => (
+          <div key={i} style={{ flex: 1, display: 'flex', gap: '4px' }}>
+            <input type="text" value={h} onChange={e => updateHeader(i, e.target.value)} placeholder={`Col ${i + 1}`} style={{ fontWeight: 700 }} />
+            {headers.length > 2 && <button className="row-btn delete" onClick={() => removeColumn(i)} title="Remove column">×</button>}
+          </div>
+        ))}
+        <button className="row-btn" onClick={addColumn} title="Add column" style={{ color: '#0891B2', fontWeight: 700 }}>+</button>
+      </div>
+      <div className="field-label">Rows</div>
+      {rows.map((row, ri) => (
+        <div className="field-row" key={ri}>
+          {row.slice(0, colCount).map((cell, ci) => (
+            <input key={ci} type="text" value={cell} onChange={e => updateCell(ri, ci, e.target.value)} placeholder={headers[ci] || ''} style={{ flex: 1, fontWeight: ci === 0 ? 600 : 400 }} />
+          ))}
+          <button className="row-btn delete" onClick={() => removeRow(ri)} title="Remove row">×</button>
+        </div>
+      ))}
+      <button className="add-row-btn" onClick={addRow}>+ Add row</button>
+    </div>
+  );
+}
+
 /** Map of block type → editor component */
 export const BLOCK_EDITORS = {
   'section':       SectionEditor,
@@ -375,6 +574,13 @@ export const BLOCK_EDITORS = {
   'code-block':    CodeBlockEditor,
   'three-scene':   ThreeSceneEditor,
   'prop-table':    PropTableEditor,
+  'comp-table':    CompTableEditor,
   'reference':     ReferenceEditor,
   'ai-disclosure': AIDisclosureEditor,
+  'video-embed':   VideoEmbedEditor,
+  'divider':       DividerEditor,
+  'blockquote':    BlockquoteEditor,
+  'list':          ListEditor,
+  'heading':       HeadingEditor,
+  'tabs':          TabsEditor,
 };

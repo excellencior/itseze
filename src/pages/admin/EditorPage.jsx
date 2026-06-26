@@ -1,14 +1,14 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import './editor.css';
 
-// Admin modules
-import { parseJSX } from './parseJSX';
-import { RAW_PAGES } from './rawPages';
-
 // Extracted components
 import BlockCard, { BLOCK_TYPES } from './BlockCard';
 import LivePreview from './LivePreview';
-import SiteStructureToC, { getBreadcrumb } from './SiteStructureToC';
+import SiteStructureToC from './SiteStructureToC';
+import VersionHistory from './VersionHistory';
+
+// Supabase data layer
+import * as pagesApi from '../../lib/pages';
 
 /* ═══════════════════════════════════════════
  *  Block Factory
@@ -45,6 +45,13 @@ function createBlock(type) {
     case 'prop-table':     return { ...base, rows: [['', '']] };
     case 'reference':      return { ...base, title: '', url: '', authors: '', venue: '', year: '', description: '' };
     case 'ai-disclosure':  return { ...base, content: 'This post was written with the help of AI. All content has been reviewed, verified against the original papers, and checked to ensure it is accurate and up to date.' };
+    case 'video-embed':    return { ...base, url: '', aspectRatio: '16:9' };
+    case 'divider':        return { ...base, style: 'solid' };
+    case 'blockquote':     return { ...base, content: '', attribution: '' };
+    case 'list':           return { ...base, listType: 'unordered', items: [''] };
+    case 'heading':        return { ...base, level: 2, text: '' };
+    case 'tabs':           return { ...base, tabs: [{ label: 'Tab 1', content: '' }] };
+    case 'comp-table':     return { ...base, headers: ['Column 1', 'Column 2'], rows: [['', '']] };
     default:               return base;
   }
 }
@@ -63,11 +70,67 @@ function routeKeyToPath(routeKey) {
  *  Status Chip Colors
  * ═══════════════════════════════════════════ */
 const STATUS_CHIP_COLORS = {
-  'Draft':       { bg: 'rgba(245,158,11,0.15)', color: '#f59e0b' },
-  'Published':   { bg: 'rgba(16,185,129,0.15)', color: '#10b981' },
-  'Static':      { bg: 'rgba(99,102,241,0.15)', color: '#818cf8' },
-  'Coming Soon': { bg: '#27272a', color: '#52525b' },
+  'draft':       { bg: 'rgba(245,158,11,0.15)', color: '#f59e0b' },
+  'published':   { bg: 'rgba(16,185,129,0.15)', color: '#10b981' },
+  'coming_soon': { bg: '#27272a', color: '#52525b' },
 };
+
+const STATUS_LABELS = {
+  'draft': 'Draft',
+  'published': 'Published',
+  'coming_soon': 'Coming Soon',
+};
+
+/* ═══════════════════════════════════════════
+ *  Sync Indicator
+ * ═══════════════════════════════════════════ */
+function SyncIndicator({ status }) {
+  const styles = {
+    idle:   { bg: 'transparent', color: '#52525b', text: '' },
+    saving: { bg: 'rgba(245,158,11,0.15)', color: '#f59e0b', text: 'Saving…' },
+    saved:  { bg: 'rgba(16,185,129,0.15)', color: '#10b981', text: 'Saved ✓' },
+    error:  { bg: 'rgba(239,68,68,0.15)', color: '#f87171', text: 'Save failed' },
+  };
+  const s = styles[status] || styles.idle;
+  if (!s.text) return null;
+
+  return (
+    <span style={{
+      fontSize: '10px', fontWeight: 700, padding: '3px 10px', borderRadius: '4px',
+      background: s.bg, color: s.color, transition: 'all 0.2s ease',
+      display: 'inline-flex', alignItems: 'center', gap: '4px',
+    }}>
+      {status === 'saving' && (
+        <span style={{
+          width: '8px', height: '8px', border: '2px solid currentColor',
+          borderTopColor: 'transparent', borderRadius: '50%',
+          animation: 'spin 0.6s linear infinite', display: 'inline-block',
+        }} />
+      )}
+      {s.text}
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </span>
+  );
+}
+
+/* ═══════════════════════════════════════════
+ *  Breadcrumb Helper
+ * ═══════════════════════════════════════════ */
+function getBreadcrumb(pageData) {
+  if (!pageData) return { crumbs: [], status: null };
+
+  const meta = pageData.current_version?.meta || {};
+  const status = pageData.status;
+  const title = meta.title || 'Untitled';
+  const cat = meta.category || 'concept';
+  const sub = meta.subcategory || '';
+
+  const crumbs = [cat === 'architecture' ? 'Architecture' : 'Concepts'];
+  if (sub) crumbs.push(sub);
+  crumbs.push(title);
+
+  return { crumbs, status };
+}
 
 /* ═══════════════════════════════════════════
  *  Main Editor Page Component
@@ -85,14 +148,25 @@ export default function EditorPage() {
   const [canvasWidth, setCanvasWidth] = useState(55);
   const mainBodyRef = useRef(null);
 
-  const [selectedRoute, setSelectedRoute] = useState(null);
-  const [draftKey, setDraftKey] = useState(null);
+  // Supabase page tracking
+  const [selectedPageId, setSelectedPageId] = useState(null);
+  const [selectedPageData, setSelectedPageData] = useState(null);
+  const [currentVersionId, setCurrentVersionId] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Sync state
+  const [syncStatus, setSyncStatus] = useState('idle'); // idle | saving | saved | error
+  const syncTimer = useRef(null);
+
+  // Right pane tab
+  const [rightPaneTab, setRightPaneTab] = useState('preview'); // 'preview' | 'history'
 
   // Dirty tracking: snapshot of last-saved state
   const lastSavedRef = useRef(null);
-  const [pendingNavAction, setPendingNavAction] = useState(null); // modal state
+  const [pendingNavAction, setPendingNavAction] = useState(null);
 
-  const isEditing = !!draftKey;
+  // ToC refresh trigger
+  const [tocRefreshKey, setTocRefreshKey] = useState(0);
 
   const isDirty = (() => {
     if (!isEditing || !lastSavedRef.current) return false;
@@ -128,42 +202,62 @@ export default function EditorPage() {
     document.body.style.cursor = 'col-resize';
   };
 
-  // ── Route Selection ──
-  const handleSelectRoute = (route) => {
-    setSelectedRoute(route);
-    if (route && route.startsWith('__draft__')) {
-      const key = route.replace('__draft__', '');
-      setDraftKey(key);
-      const data = localStorage.getItem(key);
-      if (data) {
-        try {
-          const parsed = JSON.parse(data);
-          setMeta(parsed.meta || {});
-          setBlocks(parsed.blocks || []);
-          // Snapshot for dirty tracking
-          lastSavedRef.current = JSON.stringify({ meta: parsed.meta || {}, blocks: parsed.blocks || [] });
-        } catch {
-          flash('Failed to parse draft data');
-        }
-      }
-    } else {
-      setDraftKey(null);
+  // ── Select Page (from ToC) ──
+  const handleSelectPage = useCallback(async (pageId) => {
+    if (!pageId) {
+      setSelectedPageId(null);
+      setSelectedPageData(null);
+      setIsEditing(false);
       setMeta({ title: '', subtitle: '', category: 'concept', subcategory: '', route: '', ready: false });
       setBlocks([]);
       lastSavedRef.current = null;
+      setCurrentVersionId(null);
+      return;
     }
-  };
 
-  // ── Leave edit mode (with save guard) ──
-  const leaveEditMode = () => {
-    setDraftKey(null);
-    setSelectedRoute(null);
-    setMeta({ title: '', subtitle: '', category: 'concept', subcategory: '', route: '', ready: false });
-    setBlocks([]);
+    try {
+      const page = await pagesApi.fetchPageById(pageId);
+      setSelectedPageId(pageId);
+      setSelectedPageData(page);
+      setCurrentVersionId(page.current_version_id);
+
+      if (page.current_version) {
+        const m = page.current_version.meta || {};
+        const b = page.current_version.blocks || [];
+        setMeta(m);
+        setBlocks(b);
+        lastSavedRef.current = JSON.stringify({ meta: m, blocks: b });
+      } else {
+        setMeta({ title: '', subtitle: '', category: 'concept', subcategory: '', route: '', ready: false });
+        setBlocks([]);
+        lastSavedRef.current = null;
+      }
+
+      setIsEditing(false);
+    } catch (err) {
+      console.error('Failed to load page:', err);
+      flash('Failed to load page');
+    }
+  }, [flash]);
+
+  // ── Enter edit mode ──
+  const enterEditMode = useCallback(() => {
+    if (!selectedPageId) return;
+    setIsEditing(true);
+    setRightPaneTab('preview');
+    // Snapshot current state for dirty tracking
+    lastSavedRef.current = JSON.stringify({ meta, blocks });
+  }, [selectedPageId, meta, blocks]);
+
+  // ── Leave edit mode ──
+  const leaveEditMode = useCallback(() => {
+    setIsEditing(false);
+    setRightPaneTab('preview');
     lastSavedRef.current = null;
-  };
+    setSyncStatus('idle');
+  }, []);
 
-  const tryLeaveEdit = (action) => {
+  const tryLeaveEdit = useCallback((action) => {
     if (!isEditing) { action(); return; }
     if (isDirty) {
       setPendingNavAction(() => action);
@@ -171,85 +265,81 @@ export default function EditorPage() {
       leaveEditMode();
       action();
     }
-  };
+  }, [isEditing, isDirty, leaveEditMode]);
 
-  const handleConfirmLeave = (shouldSave) => {
+  const handleConfirmLeave = useCallback((shouldSave) => {
     if (shouldSave) {
       saveDraft();
-    } else if (draftKey) {
-      // Discard: delete the draft from localStorage entirely
-      localStorage.removeItem(draftKey);
     }
     const action = pendingNavAction;
     setPendingNavAction(null);
     leaveEditMode();
     if (action) action();
-  };
+  }, [pendingNavAction, leaveEditMode]);
 
-  // ── Breadcrumb click (parent crumb navigates back) ──
-  const handleBreadcrumbClick = (crumbIndex) => {
-    // Only parent crumbs are clickable (not the last one)
-    if (crumbIndex >= breadcrumb.crumbs.length - 1) return;
-    tryLeaveEdit(() => { /* back to ToC home */ });
-  };
-
-  // ── Clone page into draft ──
-  const handleEditActivePage = () => {
-    if (!selectedRoute) return;
-
-    if (selectedRoute.startsWith('__pub__')) {
-      const urlPath = selectedRoute.replace('__pub__', '');
-      let published = {};
-      try { published = JSON.parse(localStorage.getItem('itseze-published') || '{}'); } catch { /* */ }
-      const pageData = published[urlPath];
-      if (pageData) {
-        const slug = pageData.meta.title
-          ? pageData.meta.title.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, '-')
-          : 'untitled';
-        const key = `itseze-draft-${slug}`;
-        localStorage.setItem(key, JSON.stringify({ meta: pageData.meta, blocks: pageData.blocks, savedAt: new Date().toISOString() }));
-        handleSelectRoute(`__draft__${key}`);
-        flash('Loaded published page into draft editor');
-      }
-    } else {
-      const rawText = RAW_PAGES[selectedRoute];
-      if (rawText) {
-        const { meta: parsedMeta, blocks: parsedBlocks } = parseJSX(rawText, selectedRoute);
-        const slug = parsedMeta.title
-          ? parsedMeta.title.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, '-')
-          : selectedRoute.replace(/:/g, '-');
-        const key = `itseze-draft-${slug}`;
-        localStorage.setItem(key, JSON.stringify({ meta: parsedMeta, blocks: parsedBlocks, savedAt: new Date().toISOString() }));
-        handleSelectRoute(`__draft__${key}`);
-        flash('Parsed static page content into draft editor');
-      } else {
-        flash('Source code not found for this page');
-      }
-    }
-  };
+  // ── Breadcrumb click ──
+  const handleBreadcrumbClick = useCallback((crumbIndex) => {
+    const bc = getBreadcrumb(selectedPageData);
+    if (crumbIndex >= bc.crumbs.length - 1) return;
+    tryLeaveEdit(() => {
+      setSelectedPageId(null);
+      setSelectedPageData(null);
+      setCurrentVersionId(null);
+      setMeta({ title: '', subtitle: '', category: 'concept', subcategory: '', route: '', ready: false });
+      setBlocks([]);
+    });
+  }, [selectedPageData, tryLeaveEdit]);
 
   // ── New Page ──
-  const onCreateNewPage = (category, subcategory) => {
-    const defaultMeta = { title: 'New Page', subtitle: 'Write your page subtitle here...', category, subcategory, route: '', ready: true };
+  const onCreateNewPage = useCallback(async (category, subcategory) => {
+    const defaultMeta = {
+      title: 'New Page',
+      subtitle: 'Write your page subtitle here...',
+      category,
+      subcategory,
+      route: '',
+      ready: true,
+    };
     const defaultBlocks = [
       { id: 'parsed-1-' + Date.now(), type: 'section', title: '1. Introduction' },
       { id: 'parsed-2-' + Date.now(), type: 'paragraph', content: 'Start writing your content here...' },
     ];
-    const newKey = `itseze-draft-new-page-${Date.now()}`;
-    localStorage.setItem(newKey, JSON.stringify({ meta: defaultMeta, blocks: defaultBlocks, savedAt: new Date().toISOString() }));
-    handleSelectRoute(`__draft__${newKey}`);
-    flash('Created new blank page draft');
-  };
+
+    // Generate a temporary route and url_path
+    const tempSlug = `new-page-${Date.now()}`;
+    const route = category === 'architecture'
+      ? tempSlug
+      : `concept:${subcategory ? subcategory.toLowerCase().replace(/\s+/g, '-') + '-' : ''}${tempSlug}`;
+    const urlPath = routeKeyToPath(route);
+
+    try {
+      const { page } = await pagesApi.createPage({
+        route,
+        urlPath,
+        status: 'draft',
+        meta: defaultMeta,
+        blocks: defaultBlocks,
+      });
+      setTocRefreshKey(k => k + 1);
+      await handleSelectPage(page.id);
+      setIsEditing(true);
+      flash('Created new page');
+    } catch (err) {
+      console.error('Failed to create page:', err);
+      flash('Failed to create page');
+    }
+  }, [flash, handleSelectPage]);
 
   // ── Auto-generate route slug ──
   useEffect(() => {
-    if (draftKey && meta.title) {
+    if (isEditing && meta.title) {
       const slug = meta.title.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, '-');
       const prefix = meta.category === 'architecture' ? '' : 'concept:';
       const sub = meta.subcategory ? meta.subcategory.toLowerCase().replace(/\s+/g, '-') + '-' : '';
-      setMeta(prev => ({ ...prev, route: `${prefix}${meta.category === 'concept' ? '' : meta.category + '-'}${sub}${slug}` }));
+      const catPart = meta.category === 'concept' ? '' : meta.category + '-';
+      setMeta(prev => ({ ...prev, route: `${prefix}${catPart}${sub}${slug}` }));
     }
-  }, [meta.title, meta.category, meta.subcategory, draftKey]);
+  }, [meta.title, meta.category, meta.subcategory, isEditing]);
 
   // ── Block CRUD ──
   const addBlock = (type) => setBlocks(prev => [...prev, createBlock(type)]);
@@ -269,34 +359,81 @@ export default function EditorPage() {
     setDragOverIdx(null);
   };
 
-  // ── Persistence ──
-  const saveDraft = () => {
-    if (!draftKey) return;
-    const payload = { meta, blocks, savedAt: new Date().toISOString() };
-    localStorage.setItem(draftKey, JSON.stringify(payload));
-    lastSavedRef.current = JSON.stringify({ meta, blocks });
-    flash('Draft saved');
-  };
+  // ── Save Draft (Supabase) ──
+  const saveDraft = useCallback(async () => {
+    if (!selectedPageId) return;
+    setSyncStatus('saving');
+    try {
+      const version = await pagesApi.saveDraft(selectedPageId, meta, blocks);
+      setCurrentVersionId(version.id);
+      lastSavedRef.current = JSON.stringify({ meta, blocks });
+      setSyncStatus('saved');
+      if (syncTimer.current) clearTimeout(syncTimer.current);
+      syncTimer.current = setTimeout(() => setSyncStatus('idle'), 2500);
+      flash('Draft saved');
 
-  // ── Publish ──
-  const publishPage = () => {
+      // Refresh page data for breadcrumb
+      const updatedPage = await pagesApi.fetchPageById(selectedPageId);
+      setSelectedPageData(updatedPage);
+      setTocRefreshKey(k => k + 1);
+    } catch (err) {
+      console.error('Failed to save draft:', err);
+      setSyncStatus('error');
+      flash('Failed to save draft');
+    }
+  }, [selectedPageId, meta, blocks, flash]);
+
+  // ── Publish (Supabase) ──
+  const handlePublish = useCallback(async () => {
+    if (!selectedPageId) return;
     if (!meta.title) { flash('Add a title before publishing'); return; }
     if (blocks.length === 0) { flash('Add some content before publishing'); return; }
-    const urlPath = routeKeyToPath(meta.route);
-    if (!urlPath) { flash('Cannot determine URL path'); return; }
 
-    let published = {};
-    try { published = JSON.parse(localStorage.getItem('itseze-published') || '{}'); } catch { /* */ }
-    const existing = published[urlPath];
-    const now = new Date().toISOString();
-    published[urlPath] = { meta: { ...meta, ready: true }, blocks, firstPublishedAt: existing?.firstPublishedAt || now, publishedAt: now };
-    localStorage.setItem('itseze-published', JSON.stringify(published));
-    saveDraft();
-    flash(`Published at ${urlPath}`);
-  };
+    setSyncStatus('saving');
+    try {
+      // Update the page's route and url_path if they changed
+      const urlPath = routeKeyToPath(meta.route);
+      if (!urlPath) { flash('Cannot determine URL path'); setSyncStatus('idle'); return; }
 
-  // ── Breadcrumb ──
-  const breadcrumb = getBreadcrumb(selectedRoute);
+      const version = await pagesApi.publishPage(selectedPageId, meta, blocks);
+      setCurrentVersionId(version.id);
+      lastSavedRef.current = JSON.stringify({ meta, blocks });
+      setSyncStatus('saved');
+      if (syncTimer.current) clearTimeout(syncTimer.current);
+      syncTimer.current = setTimeout(() => setSyncStatus('idle'), 2500);
+      flash(`Published at ${urlPath}`);
+
+      // Refresh page data
+      const updatedPage = await pagesApi.fetchPageById(selectedPageId);
+      setSelectedPageData(updatedPage);
+      setTocRefreshKey(k => k + 1);
+    } catch (err) {
+      console.error('Failed to publish:', err);
+      setSyncStatus('error');
+      flash('Failed to publish');
+    }
+  }, [selectedPageId, meta, blocks, flash]);
+
+  // ── Version restore handler ──
+  const handleVersionRestore = useCallback(async (restoredVersion) => {
+    if (restoredVersion) {
+      setMeta(restoredVersion.meta || {});
+      setBlocks(restoredVersion.blocks || []);
+      setCurrentVersionId(restoredVersion.id);
+      lastSavedRef.current = JSON.stringify({
+        meta: restoredVersion.meta || {},
+        blocks: restoredVersion.blocks || [],
+      });
+      // Refresh page data
+      const updatedPage = await pagesApi.fetchPageById(selectedPageId);
+      setSelectedPageData(updatedPage);
+      setTocRefreshKey(k => k + 1);
+      flash('Version restored');
+    }
+  }, [selectedPageId, flash]);
+
+  // ── Breadcrumb data ──
+  const breadcrumb = getBreadcrumb(selectedPageData);
 
   /* ═══════════════════════════════════════════
    *  Render
@@ -313,11 +450,13 @@ export default function EditorPage() {
 
         <div className="toolbar-separator" />
 
+        <SyncIndicator status={syncStatus} />
+
         <button className="toolbar-btn" onClick={saveDraft} disabled={!isEditing} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
           Save Draft
         </button>
-        <button className="toolbar-btn primary" onClick={publishPage} disabled={!isEditing} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+        <button className="toolbar-btn primary" onClick={handlePublish} disabled={!isEditing} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
           Publish
         </button>
@@ -328,7 +467,7 @@ export default function EditorPage() {
         {/* ── Left Edit Pane ── */}
         <div className="editor-left-pane" style={{ width: `${canvasWidth}%`, minWidth: '300px', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
           {/* ── Breadcrumb Bar ── */}
-          {selectedRoute && breadcrumb.crumbs.length > 0 && (
+          {selectedPageId && breadcrumb.crumbs.length > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderBottom: '1px solid #27272a', background: '#1c1c20', flexShrink: 0, gap: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', minWidth: 0 }}>
                 {breadcrumb.crumbs.map((crumb, i) => {
@@ -355,14 +494,14 @@ export default function EditorPage() {
                   <span style={{
                     fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em',
                     padding: '2px 8px', borderRadius: '3px', marginLeft: '8px',
-                    background: (STATUS_CHIP_COLORS[breadcrumb.status] || STATUS_CHIP_COLORS['Static']).bg,
-                    color: (STATUS_CHIP_COLORS[breadcrumb.status] || STATUS_CHIP_COLORS['Static']).color,
-                  }}>{breadcrumb.status}</span>
+                    background: (STATUS_CHIP_COLORS[breadcrumb.status] || STATUS_CHIP_COLORS['draft']).bg,
+                    color: (STATUS_CHIP_COLORS[breadcrumb.status] || STATUS_CHIP_COLORS['draft']).color,
+                  }}>{STATUS_LABELS[breadcrumb.status] || breadcrumb.status}</span>
                 )}
               </div>
-              {!isEditing && breadcrumb.status !== 'Coming Soon' && (
+              {!isEditing && breadcrumb.status !== 'coming_soon' && (
                 <button
-                  onClick={handleEditActivePage}
+                  onClick={enterEditMode}
                   style={{ background: '#0891B2', color: '#fff', border: 'none', padding: '5px 14px', borderRadius: '4px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'filter 0.15s ease', flexShrink: 0 }}
                   onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.15)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.filter = 'none'; }}
@@ -428,9 +567,9 @@ export default function EditorPage() {
                 itseze admin panel
               </h3>
               <p style={{ fontSize: '13px', color: '#71717a', maxWidth: '400px', lineHeight: 1.6 }}>
-                Select a page from the site structure on the right to view its path, or click
+                Select a page from the site structure on the right to view it, or click
                 <strong style={{ color: '#a1a1aa' }}> "Edit Page" </strong>
-                to clone it into a draft. Use the <strong style={{ color: '#a1a1aa' }}> + </strong> buttons to create new pages.
+                to start editing. Use the <strong style={{ color: '#a1a1aa' }}> + </strong> buttons to create new pages.
               </p>
             </div>
           )}
@@ -439,14 +578,63 @@ export default function EditorPage() {
         {/* ── Splitter ── */}
         <div className="main-editor-splitter" onMouseDown={handleCanvasResize} style={{ width: '6px', cursor: 'col-resize', background: '#27272a', flexShrink: 0 }} />
 
-        {/* ── Right Pane: LivePreview when editing, ToC when browsing ── */}
-        <div className="editor-right-pane" style={{ width: `${100 - canvasWidth}%`, height: '100%', overflow: 'hidden' }}>
+        {/* ── Right Pane ── */}
+        <div className="editor-right-pane" style={{ width: `${100 - canvasWidth}%`, height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           {isEditing ? (
-            <div style={{ height: '100%', overflowY: 'auto', background: '#fff', padding: '32px 0' }}>
-              <LivePreview meta={meta} blocks={blocks} />
-            </div>
+            <>
+              {/* Tab switcher */}
+              <div style={{
+                display: 'flex', borderBottom: '1px solid #27272a', background: '#1c1c20', flexShrink: 0,
+              }}>
+                <button
+                  onClick={() => setRightPaneTab('preview')}
+                  style={{
+                    flex: 1, padding: '10px 16px', fontSize: '11px', fontWeight: 700,
+                    textTransform: 'uppercase', letterSpacing: '0.06em',
+                    background: 'transparent', border: 'none', cursor: 'pointer',
+                    color: rightPaneTab === 'preview' ? '#0891B2' : '#71717a',
+                    borderBottom: rightPaneTab === 'preview' ? '2px solid #0891B2' : '2px solid transparent',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  Preview
+                </button>
+                <button
+                  onClick={() => setRightPaneTab('history')}
+                  style={{
+                    flex: 1, padding: '10px 16px', fontSize: '11px', fontWeight: 700,
+                    textTransform: 'uppercase', letterSpacing: '0.06em',
+                    background: 'transparent', border: 'none', cursor: 'pointer',
+                    color: rightPaneTab === 'history' ? '#0891B2' : '#71717a',
+                    borderBottom: rightPaneTab === 'history' ? '2px solid #0891B2' : '2px solid transparent',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  History
+                </button>
+              </div>
+
+              {/* Tab content */}
+              {rightPaneTab === 'preview' ? (
+                <div style={{ flex: 1, overflowY: 'auto', background: '#fff', padding: '32px 0' }}>
+                  <LivePreview meta={meta} blocks={blocks} />
+                </div>
+              ) : (
+                <VersionHistory
+                  pageId={selectedPageId}
+                  currentVersionId={currentVersionId}
+                  onRestore={handleVersionRestore}
+                  onClose={() => setRightPaneTab('preview')}
+                />
+              )}
+            </>
           ) : (
-            <SiteStructureToC selectedRoute={selectedRoute} onSelectRoute={handleSelectRoute} onCreateNewPage={onCreateNewPage} />
+            <SiteStructureToC
+              key={tocRefreshKey}
+              selectedPageId={selectedPageId}
+              onSelectPage={handleSelectPage}
+              onCreateNewPage={onCreateNewPage}
+            />
           )}
         </div>
       </div>
@@ -463,9 +651,9 @@ export default function EditorPage() {
             padding: '28px 32px', maxWidth: '400px', width: '90%',
             boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
           }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#e4e4e7', marginBottom: '8px' }}>Discard Changes?</h3>
+            <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#e4e4e7', marginBottom: '8px' }}>Unsaved Changes</h3>
             <p style={{ fontSize: '13px', color: '#a1a1aa', lineHeight: 1.6, marginBottom: '24px' }}>
-              This will revert <strong style={{ color: '#e4e4e7' }}>{meta.title || 'this page'}</strong> to the latest published version and discard all your drafted edits.
+              You have unsaved changes to <strong style={{ color: '#e4e4e7' }}>{meta.title || 'this page'}</strong>. Save before leaving?
             </p>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
               <button
@@ -480,6 +668,12 @@ export default function EditorPage() {
                 onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.2)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; }}
               >Discard</button>
+              <button
+                onClick={() => handleConfirmLeave(true)}
+                style={{ padding: '7px 16px', fontSize: '12px', fontWeight: 600, border: '1px solid #10b981', background: 'rgba(16,185,129,0.1)', color: '#10b981', borderRadius: '6px', cursor: 'pointer', transition: 'all 0.15s ease' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(16,185,129,0.2)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(16,185,129,0.1)'; }}
+              >Save & Leave</button>
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import Latex from '../../components/Latex';
 import Highlight from '../../components/Highlight';
 import { BarChart3D, ScatterPlot3D } from '../../components/three';
@@ -57,6 +57,7 @@ function renderBlock(block, idx) {
         info:    { bg: '#EFF6FF', border: '#3B82F6', icon: 'ℹ️' },
         warning: { bg: '#FFF7ED', border: '#F59E0B', icon: '⚠️' },
         key:     { bg: '#F0FDF4', border: '#10B981', icon: '💡' },
+        tip:     { bg: '#F0FDF4', border: '#10B981', icon: '💡' },
         accent:  { bg: 'rgba(8,145,178,0.08)', border: '#0891B2', icon: '↩' },
       };
       const c = colors[block.calloutType] || colors.info;
@@ -137,9 +138,144 @@ function renderBlock(block, idx) {
     case 'custom-element':
       return renderCustomElement(block, idx);
 
+    case 'comp-table': {
+      const headers = block.headers || [];
+      const rows = block.rows || [];
+      if (rows.length === 0) return null;
+      return (
+        <table key={idx} style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px', fontSize: '13px', border: '1px solid var(--border)' }}>
+          {headers.length > 0 && (
+            <thead>
+              <tr>
+                {headers.map((h, hi) => (
+                  <th key={hi} style={{ padding: '8px 12px', fontWeight: 700, borderBottom: '2px solid var(--border)', background: 'var(--node-bg)', textAlign: 'left' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+          )}
+          <tbody>
+            {rows.map((row, ri) => (
+              <tr key={ri}>
+                {row.map((cell, ci) => (
+                  <td key={ci} style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', fontWeight: ci === 0 ? 600 : 400 }}>{cell}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    }
+
+    case 'video-embed': {
+      const getEmbedUrl = (url) => {
+        if (!url) return null;
+        const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+        if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+        const vmMatch = url.match(/(?:vimeo\.com\/)(\d+)/);
+        if (vmMatch) return `https://player.vimeo.com/video/${vmMatch[1]}`;
+        return null;
+      };
+      const embedUrl = getEmbedUrl(block.url);
+      if (!embedUrl) return null;
+      const ratioMap = { '16:9': '56.25%', '4:3': '75%', '1:1': '100%' };
+      return (
+        <div key={idx} style={{ position: 'relative', paddingBottom: ratioMap[block.aspectRatio] || '56.25%', height: 0, overflow: 'hidden', borderRadius: '6px', margin: '16px 0' }}>
+          <iframe
+            src={embedUrl}
+            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            title="Embedded video"
+          />
+        </div>
+      );
+    }
+
+    case 'divider': {
+      if (block.style === 'gradient') {
+        return (
+          <div key={idx} style={{ height: '2px', margin: '24px 0', background: 'linear-gradient(to right, transparent, var(--border), transparent)', borderRadius: '1px' }} />
+        );
+      }
+      return (
+        <hr key={idx} style={{ border: 'none', borderTop: `2px ${block.style || 'solid'} var(--border)`, margin: '24px 0' }} />
+      );
+    }
+
+    case 'blockquote':
+      return (
+        <blockquote key={idx} style={{
+          borderLeft: '4px solid var(--accent)', padding: '14px 20px', margin: '16px 0',
+          background: 'var(--node-bg)', borderRadius: '0 4px 4px 0', fontStyle: 'italic',
+          fontSize: 'var(--font-size)', lineHeight: 1.75, color: 'var(--text-muted)',
+        }}>
+          <RichText content={block.content} />
+          {block.attribution && (
+            <div style={{ marginTop: '8px', fontSize: '13px', fontWeight: 600, fontStyle: 'normal', color: 'var(--text-light)' }}>
+              {block.attribution}
+            </div>
+          )}
+        </blockquote>
+      );
+
+    case 'list': {
+      const listItems = (block.items || []).filter(item => item);
+      if (listItems.length === 0) return null;
+      const ListTag = block.listType === 'ordered' ? 'ol' : 'ul';
+      return (
+        <ListTag key={idx} style={{ fontSize: 'var(--font-size)', lineHeight: 1.75, color: 'var(--text-muted)', marginBottom: '16px', paddingLeft: '24px' }}>
+          {listItems.map((item, i) => <li key={i} style={{ marginBottom: '4px' }}>{item}</li>)}
+        </ListTag>
+      );
+    }
+
+    case 'heading': {
+      const level = block.level || 2;
+      const sizes = { 2: '22px', 3: '18px', 4: '15px' };
+      const HeadingTag = `h${level}`;
+      return (
+        <HeadingTag key={idx} style={{ fontSize: sizes[level], fontWeight: 800, marginBottom: '12px', letterSpacing: '-0.3px' }}>
+          {block.text || 'Untitled'}
+        </HeadingTag>
+      );
+    }
+
+    case 'tabs':
+      return <PublishedTabs key={idx} block={block} />;
+
     default:
       return null;
   }
+}
+
+function PublishedTabs({ block }) {
+  const [activeTab, setActiveTab] = useState(0);
+  const tabs = block.tabs || [];
+  if (tabs.length === 0) return null;
+  return (
+    <div style={{ margin: '16px 0', border: '1px solid var(--border)', borderRadius: '6px', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--node-bg)' }}>
+        {tabs.map((tab, i) => (
+          <button
+            key={i}
+            onClick={() => setActiveTab(i)}
+            style={{
+              padding: '8px 16px', fontSize: '13px', fontWeight: activeTab === i ? 700 : 500,
+              border: 'none', background: activeTab === i ? 'var(--bg)' : 'transparent',
+              borderBottom: activeTab === i ? '2px solid var(--accent)' : '2px solid transparent',
+              color: activeTab === i ? 'var(--text)' : 'var(--text-light)', cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      <div style={{ padding: '16px 18px', fontSize: '14px', lineHeight: 1.65, color: 'var(--text-muted)', whiteSpace: 'pre-wrap' }}>
+        {tabs[activeTab]?.content || ''}
+      </div>
+    </div>
+  );
 }
 
 export default function PublishedPage({ pageData }) {

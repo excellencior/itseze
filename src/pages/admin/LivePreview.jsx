@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import Latex from '../../components/Latex';
 import { BarChart3D, ScatterPlot3D } from '../../components/three';
 import { renderCustomElement } from './widgetsRegistry';
@@ -39,6 +40,7 @@ function PreviewCallout({ type = 'info', children }) {
     info:    { bg: '#EFF6FF', border: '#3B82F6', icon: 'i' },
     warning: { bg: '#FFF7ED', border: '#F59E0B', icon: '!' },
     key:     { bg: '#F0FDF4', border: '#10B981', icon: '*' },
+    tip:     { bg: '#F0FDF4', border: '#10B981', icon: '*' },
     accent:  { bg: 'rgba(8,145,178,0.08)', border: '#0891B2', icon: '>' },
   };
   const c = colors[type] || colors.info;
@@ -141,6 +143,111 @@ function renderPreviewBlock(block, idx) {
     case 'custom-element':
       return renderCustomElement(block, idx);
 
+    case 'comp-table': {
+      const headers = block.headers || [];
+      const rows = block.rows || [];
+      if (rows.length === 0) return null;
+      return (
+        <table key={idx} style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px', fontSize: '13px', border: '1px solid #e5e7eb', color: '#374151' }}>
+          {headers.length > 0 && (
+            <thead>
+              <tr>
+                {headers.map((h, hi) => (
+                  <th key={hi} style={{ padding: '8px 12px', fontWeight: 700, borderBottom: '2px solid #e5e7eb', background: '#F9FAFB', textAlign: 'left', color: '#1f2937' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+          )}
+          <tbody>
+            {rows.map((row, ri) => (
+              <tr key={ri}>
+                {row.map((cell, ci) => (
+                  <td key={ci} style={{ padding: '8px 12px', borderBottom: '1px solid #e5e7eb', fontWeight: ci === 0 ? 600 : 400 }}>{cell}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    }
+
+    case 'video-embed': {
+      const getEmbedUrl = (url) => {
+        if (!url) return null;
+        const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+        if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+        const vmMatch = url.match(/(?:vimeo\.com\/)(\d+)/);
+        if (vmMatch) return `https://player.vimeo.com/video/${vmMatch[1]}`;
+        return null;
+      };
+      const embedUrl = getEmbedUrl(block.url);
+      if (!embedUrl) return null;
+      const ratioMap = { '16:9': '56.25%', '4:3': '75%', '1:1': '100%' };
+      return (
+        <div key={idx} style={{ position: 'relative', paddingBottom: ratioMap[block.aspectRatio] || '56.25%', height: 0, overflow: 'hidden', borderRadius: '6px', margin: '16px 0' }}>
+          <iframe
+            src={embedUrl}
+            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            title="Embedded video"
+          />
+        </div>
+      );
+    }
+
+    case 'divider': {
+      if (block.style === 'gradient') {
+        return (
+          <div key={idx} style={{ height: '2px', margin: '24px 0', background: 'linear-gradient(to right, transparent, #d1d5db, transparent)', borderRadius: '1px' }} />
+        );
+      }
+      return (
+        <hr key={idx} style={{ border: 'none', borderTop: `2px ${block.style || 'solid'} #d1d5db`, margin: '24px 0' }} />
+      );
+    }
+
+    case 'blockquote':
+      return (
+        <blockquote key={idx} style={{
+          borderLeft: '4px solid #0891B2', padding: '14px 20px', margin: '16px 0',
+          background: '#f8fafb', borderRadius: '0 4px 4px 0', fontStyle: 'italic',
+          fontSize: '15px', lineHeight: 1.75, color: '#374151',
+        }}>
+          <span dangerouslySetInnerHTML={{ __html: richContentToHtml(block.content) }} />
+          {block.attribution && (
+            <div style={{ marginTop: '8px', fontSize: '13px', fontWeight: 600, fontStyle: 'normal', color: '#6B7280' }}>
+              {block.attribution}
+            </div>
+          )}
+        </blockquote>
+      );
+
+    case 'list': {
+      const items = (block.items || []).filter(item => item);
+      if (items.length === 0) return null;
+      const Tag = block.listType === 'ordered' ? 'ol' : 'ul';
+      return (
+        <Tag key={idx} style={{ fontSize: '15px', lineHeight: 1.75, color: '#374151', marginBottom: '16px', paddingLeft: '24px' }}>
+          {items.map((item, i) => <li key={i} style={{ marginBottom: '4px' }}>{item}</li>)}
+        </Tag>
+      );
+    }
+
+    case 'heading': {
+      const level = block.level || 2;
+      const sizes = { 2: '22px', 3: '18px', 4: '15px' };
+      const Tag = `h${level}`;
+      return (
+        <Tag key={idx} style={{ fontSize: sizes[level], fontWeight: 800, marginBottom: '12px', letterSpacing: '-0.3px', color: '#111827' }}>
+          {block.text || <span style={{ color: '#ccc', fontStyle: 'italic' }}>Empty heading</span>}
+        </Tag>
+      );
+    }
+
+    case 'tabs':
+      return <PreviewTabs key={idx} block={block} />;
+
     case 'reference':
     case 'ai-disclosure':
       return null;
@@ -148,6 +255,36 @@ function renderPreviewBlock(block, idx) {
     default:
       return null;
   }
+}
+
+function PreviewTabs({ block }) {
+  const [activeTab, setActiveTab] = useState(0);
+  const tabs = block.tabs || [];
+  if (tabs.length === 0) return null;
+  return (
+    <div style={{ margin: '16px 0', border: '1px solid #e5e7eb', borderRadius: '6px', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', background: '#f9fafb' }}>
+        {tabs.map((tab, i) => (
+          <button
+            key={i}
+            onClick={() => setActiveTab(i)}
+            style={{
+              padding: '8px 16px', fontSize: '13px', fontWeight: activeTab === i ? 700 : 500,
+              border: 'none', background: activeTab === i ? '#fff' : 'transparent',
+              borderBottom: activeTab === i ? '2px solid #0891B2' : '2px solid transparent',
+              color: activeTab === i ? '#111827' : '#6B7280', cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      <div style={{ padding: '16px 18px', fontSize: '14px', lineHeight: 1.65, color: '#374151', whiteSpace: 'pre-wrap' }}>
+        {tabs[activeTab]?.content || <span style={{ color: '#ccc', fontStyle: 'italic' }}>Empty tab content</span>}
+      </div>
+    </div>
+  );
 }
 
 /* ═══════════════════════════════════════════
