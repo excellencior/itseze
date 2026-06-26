@@ -3,6 +3,7 @@ import { createBubbles } from '@hyperplexed/bubbles';
 import { useSettings } from '../../SettingsContext';
 import { ACCENT_SWATCHES } from '../../settingsStore';
 import { fetchPublishedPages } from '../../lib/pages';
+import { SHORTCUTS, installShortcuts } from '../../shortcuts';
 
 /* ═══════════════════════════════════════════
  *  Theme-aware color palette for panel content
@@ -51,6 +52,7 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
   const managerRef = useRef(null);
   const pagesContentRef = useRef(null);
   const settingsContentRef = useRef(null);
+  const shortcutsContentRef = useRef(null);
   const [pages, setPages] = useState([]);
   const mountedRef = useRef(false);
 
@@ -535,6 +537,90 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
     });
   }, [buildSettingsContent]);
 
+  // ── Build Keyboard Shortcuts panel DOM ──
+  const buildShortcutsContent = useCallback(() => {
+    const container = document.createElement('div');
+    container.style.cssText = `
+      padding: 20px 16px;
+      font-family: var(--font-main);
+      color: ${pal.text};
+      overflow-y: auto;
+      max-height: 100%;
+    `;
+
+    // Title
+    const title = document.createElement('div');
+    title.style.cssText = `font-size: 15px; font-weight: 700; margin-bottom: 4px; color: ${pal.text}; display: flex; align-items: center; gap: 8px;`;
+    title.textContent = '⌨ Keyboard Shortcuts';
+    container.appendChild(title);
+
+    const subtitle = document.createElement('div');
+    subtitle.style.cssText = `font-size: 11px; color: ${pal.textDim}; margin-bottom: 20px;`;
+    subtitle.textContent = 'Press ? anytime to toggle this panel';
+    container.appendChild(subtitle);
+
+    // Group shortcuts by category
+    const categories = {};
+    SHORTCUTS.forEach(s => {
+      if (!categories[s.category]) categories[s.category] = [];
+      categories[s.category].push(s);
+    });
+
+    Object.entries(categories).forEach(([catName, shortcuts]) => {
+      const catLabel = document.createElement('div');
+      catLabel.style.cssText = `font-size: 11px; font-weight: 600; color: ${pal.textDim}; margin-bottom: 8px; margin-top: 4px;`;
+      catLabel.textContent = catName;
+      container.appendChild(catLabel);
+
+      shortcuts.forEach(shortcut => {
+        const row = document.createElement('div');
+        row.style.cssText = `
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 6px 0; border-bottom: 1px solid ${pal.border}22;
+        `;
+
+        const label = document.createElement('span');
+        label.style.cssText = `font-size: 13px; color: ${pal.textMuted}; font-weight: 500;`;
+        label.textContent = shortcut.label;
+
+        const keysWrap = document.createElement('div');
+        keysWrap.style.cssText = 'display: flex; gap: 4px; align-items: center;';
+
+        shortcut.keys.forEach((k, i) => {
+          const kbd = document.createElement('kbd');
+          kbd.style.cssText = `
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 24px; height: 24px; padding: 0 6px;
+            background: ${pal.controlBg}; border: 1px solid ${pal.border};
+            border-radius: 5px; font-size: 11px; font-weight: 600;
+            font-family: var(--font-mono); color: ${pal.text};
+            box-shadow: 0 1px 0 ${pal.border};
+          `;
+          kbd.textContent = k;
+          keysWrap.appendChild(kbd);
+
+          if (i < shortcut.keys.length - 1) {
+            const plus = document.createElement('span');
+            plus.style.cssText = `font-size: 10px; color: ${pal.textDim}; font-weight: 600;`;
+            plus.textContent = '+';
+            keysWrap.appendChild(plus);
+          }
+        });
+
+        row.appendChild(label);
+        row.appendChild(keysWrap);
+        container.appendChild(row);
+      });
+
+      // Spacer between categories
+      const spacer = document.createElement('div');
+      spacer.style.cssText = 'height: 12px;';
+      container.appendChild(spacer);
+    });
+
+    return container;
+  }, [pal]);
+
   // ── Create SVG icons ──
   function createPagesIcon() {
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -561,6 +647,20 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
     svg.setAttribute('stroke-linecap', 'round');
     svg.setAttribute('stroke-linejoin', 'round');
     svg.innerHTML = '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>';
+    return svg;
+  }
+
+  function createKeyboardIcon() {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('width', '20');
+    svg.setAttribute('height', '20');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    svg.innerHTML = '<rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><path d="M6 8h.001M10 8h.001M14 8h.001M18 8h.001M8 12h.001M12 12h.001M16 12h.001M7 16h10"/>';
     return svg;
   }
 
@@ -619,6 +719,16 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
         content: settingsContent,
       });
 
+      // Add Keyboard Shortcuts bubble
+      const shortcutsContent = buildShortcutsContent();
+      shortcutsContentRef.current = shortcutsContent;
+      manager.add({
+        id: 'shortcuts',
+        label: 'Keyboard Shortcuts',
+        icon: createKeyboardIcon(),
+        content: shortcutsContent,
+      });
+
       mountedRef.current = true;
     }, 100);
 
@@ -668,7 +778,18 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
         content: newSettings,
       });
     } catch { /* */ }
-  }, [resolvedTheme, settings.accent, buildPagesContent, buildSettingsContent]);
+
+    const newShortcuts = buildShortcutsContent();
+    shortcutsContentRef.current = newShortcuts;
+    try {
+      managerRef.current.add({
+        id: 'shortcuts',
+        label: 'Keyboard Shortcuts',
+        icon: createKeyboardIcon(),
+        content: newShortcuts,
+      });
+    } catch { /* */ }
+  }, [resolvedTheme, settings.accent, buildPagesContent, buildSettingsContent, buildShortcutsContent]);
 
   // Update pages content when pages or selectedModel changes
   useEffect(() => {
@@ -684,6 +805,78 @@ export default function BubbleNav({ selectedModel, onSelectModel }) {
       });
     } catch { /* */ }
   }, [pages, selectedModel, buildPagesContent]);
+
+  // ── Install keyboard shortcuts ──
+  useEffect(() => {
+    const cleanup = installShortcuts({
+      toggleBubble: () => {
+        if (managerRef.current) {
+          try { managerRef.current.toggle(); } catch { /* */ }
+        }
+      },
+      searchPages: () => {
+        // Open bubble on pages panel
+        if (managerRef.current) {
+          try {
+            managerRef.current.activate('pages');
+          } catch { /* */ }
+        }
+      },
+      toggleNav: () => {
+        updateSettings({ navMode: settings.navMode === 'bubble' ? 'sidebar' : 'bubble' });
+      },
+      escape: () => {
+        if (managerRef.current && managerRef.current.state() === 'open') {
+          try { managerRef.current.configure({ initialState: 'docked' }); } catch { /* */ }
+        }
+      },
+      toggleTheme: () => {
+        const next = resolvedTheme === 'dark' ? 'light' : 'dark';
+        updateSettings({ theme: next });
+      },
+      scrollTop: () => {
+        const main = document.querySelector('main');
+        if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
+      },
+      scrollBottom: () => {
+        const main = document.querySelector('main');
+        if (main) main.scrollTo({ top: main.scrollHeight, behavior: 'smooth' });
+      },
+      nextSection: () => {
+        const main = document.querySelector('main');
+        if (!main) return;
+        const sections = main.querySelectorAll('[data-section]');
+        const scrollTop = main.scrollTop;
+        for (const sec of sections) {
+          if (sec.offsetTop > scrollTop + 40) {
+            sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            break;
+          }
+        }
+      },
+      prevSection: () => {
+        const main = document.querySelector('main');
+        if (!main) return;
+        const sections = [...main.querySelectorAll('[data-section]')];
+        const scrollTop = main.scrollTop;
+        for (let i = sections.length - 1; i >= 0; i--) {
+          if (sections[i].offsetTop < scrollTop - 10) {
+            sections[i].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            break;
+          }
+        }
+      },
+      showShortcuts: () => {
+        if (managerRef.current) {
+          try {
+            managerRef.current.activate('shortcuts');
+          } catch { /* */ }
+        }
+      },
+    });
+
+    return cleanup;
+  }, [settings.navMode, resolvedTheme, updateSettings]);
 
   // This component renders nothing — the bubbles library manages its own DOM
   return null;
