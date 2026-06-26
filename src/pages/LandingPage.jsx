@@ -12,13 +12,68 @@ import { ARCHITECTURES, CONCEPTS } from '../navigation';
  * - Full theme awareness
  */
 
+/* ── SVG Icons — all use currentColor for theme support ── */
+const ICONS = {
+  architecture: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
+    </svg>
+  ),
+  zap: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  ),
+  eye: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
+    </svg>
+  ),
+  refresh: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" />
+      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+    </svg>
+  ),
+  rocket: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
+      <path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
+      <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 3 0 3 0" /><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-3 0-3" />
+    </svg>
+  ),
+  chart: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+    </svg>
+  ),
+  brain: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9.5 2A5.5 5.5 0 0 0 4 7.5c0 1.58.7 3 1.8 4C4.7 12.45 4 13.92 4 15.5A5.5 5.5 0 0 0 9.5 21h0" />
+      <path d="M14.5 2A5.5 5.5 0 0 1 20 7.5c0 1.58-.7 3-1.8 4 1.1.95 1.8 2.42 1.8 4a5.5 5.5 0 0 1-5.5 5.5h0" />
+      <path d="M12 2v19" />
+    </svg>
+  ),
+  chat: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  ),
+  concept: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  ),
+};
+
 /* ── Collect all ready pages for the card grid ── */
 function getReadyPages() {
   const pages = [];
 
   ARCHITECTURES.forEach(item => {
     if (item.ready) {
-      pages.push({ ...item, category: 'Architecture', icon: '🏗' });
+      pages.push({ ...item, category: 'Architecture', icon: 'architecture' });
     }
   });
 
@@ -38,22 +93,19 @@ function getReadyPages() {
 }
 
 function getCategoryIcon(name) {
-  const map = {
-    'Reasoning': '🧠',
-    'Prompting': '💬',
-  };
-  return map[name] || '📐';
+  const map = { 'Reasoning': 'brain', 'Prompting': 'chat' };
+  return map[name] || 'concept';
 }
 
 function getConceptIcon(name) {
   const map = {
-    'Activation Functions': '⚡',
-    'Attention (Self / Cross)': '👁',
-    'Encoder (Transformer)': '🔄',
-    'Speculative Decoding': '🚀',
-    'State Space Models (SSMs)': '📊',
+    'Activation Functions': 'zap',
+    'Attention (Self / Cross)': 'eye',
+    'Encoder (Transformer)': 'refresh',
+    'Speculative Decoding': 'rocket',
+    'State Space Models (SSMs)': 'chart',
   };
-  return map[name] || '📐';
+  return map[name] || 'concept';
 }
 
 /* ── Particle Canvas ── */
@@ -223,7 +275,13 @@ function TopicCard({ page, onNavigate, index }) {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: '20px' }}>{page.icon}</span>
+        <span style={{
+          color: hovered ? 'var(--accent)' : 'var(--text-light)',
+          transition: 'color 0.2s',
+          display: 'flex',
+        }}>
+          {ICONS[page.icon] || ICONS.concept}
+        </span>
         <span style={{
           fontSize: '10px',
           fontWeight: 600,
@@ -256,11 +314,10 @@ function TopicCard({ page, onNavigate, index }) {
         gap: '4px',
       }}>
         Explore
-        <span style={{
-          display: 'inline-block',
-          transition: 'transform 0.2s',
-          transform: hovered ? 'translateX(3px)' : 'translateX(0)',
-        }}>→</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          style={{ transition: 'transform 0.2s', transform: hovered ? 'translateX(3px)' : 'translateX(0)' }}>
+          <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+        </svg>
       </div>
     </button>
   );
@@ -361,7 +418,7 @@ export default function LandingPage({ onNavigate }) {
           }}>
             <Stat value={totalReady} label="Topics" />
             <Stat value={categories} label="Categories" />
-            <Stat value="∞" label="Curiosity" />
+            <Stat value={<svg width="24" height="18" viewBox="0 0 24 16" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18.2 4a4.6 4.6 0 0 1 0 8C15.6 12 12 8 12 8s-3.6-4-6.2-4a4.6 4.6 0 0 0 0 8C8.4 12 12 8 12 8s3.6 4 6.2 4" /></svg>} label="Curiosity" />
           </div>
         </div>
       </div>
