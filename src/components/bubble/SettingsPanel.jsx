@@ -316,19 +316,6 @@ export default function SettingsPanel({ onConfigure }) {
       {/* ── Divider ── */}
       <hr style={{ border: 'none', borderTop: `1px solid ${pal.segBg}`, margin: '0 0 20px' }} />
 
-      {/* ── Navigation Mode ── */}
-      <SettingGroup label="Navigation" pal={pal}>
-        <SegmentedControl
-          options={[
-            { label: 'Sidebar', value: 'sidebar' },
-            { label: 'Bubble', value: 'bubble' },
-          ]}
-          value={settings.navMode}
-          onChange={(val) => updateSettings({ navMode: val })}
-          pal={pal}
-        />
-      </SettingGroup>
-
       {/* ── Theme ── */}
       <SettingGroup label="Theme" pal={pal}>
         <SegmentedControl

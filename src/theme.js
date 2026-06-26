@@ -36,14 +36,6 @@ const theme = {
   textMuted: '#545454',
   textLight: '#A0A0A0',
 
-  // ── Sidebar ──
-  sidebarBg: '#000000',
-  sidebarBorder: '#222222',
-  sidebarText: '#FFFFFF',
-  sidebarTextMuted: '#555555',
-  sidebarTextDim: '#333333',
-  sidebarHoverBg: '#111111',
-  sidebarActiveBg: '#1a1a1a',
 
   // ── Shadows ──
   shadowSm: '0 2px 8px rgba(0,0,0,0.04)',
@@ -62,9 +54,6 @@ const theme = {
   scrollbarTrack: 'transparent',
 
   // ── Layout ──
-  sidebarDefaultWidth: 280,
-  sidebarMinWidth: 200,
-  sidebarMaxWidth: 500,
   outerPadding: '12px',
 
   // ── Typography ──

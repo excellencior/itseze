@@ -4,7 +4,7 @@
  * ═══════════════════════════════════════════
  *
  * Single source of truth for all navigable pages.
- * Used by Sidebar, PageNav, and App routing.
+ * Used by PageNav and App routing.
  */
 
 export const ARCHITECTURES = [

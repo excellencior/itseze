@@ -4,13 +4,12 @@
  * ═══════════════════════════════════════════
  *
  * Centralized settings with localStorage persistence.
- * Manages nav mode, theme, accent, bubble config.
+ * Manages theme, accent, bubble config.
  */
 
 const STORAGE_KEY = 'itseze-settings';
 
 const DEFAULTS = {
-  navMode: 'bubble',          // 'bubble' | 'sidebar'
   theme: 'auto',              // 'auto' | 'dark' | 'light'
   accent: '#0891B2',          // hex color
   dockSide: 'left',           // 'left' | 'right'

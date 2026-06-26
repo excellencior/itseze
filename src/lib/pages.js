@@ -24,7 +24,7 @@ export async function fetchAllPages() {
 }
 
 /**
- * Fetch published + coming_soon pages (public sidebar/navigation).
+ * Fetch published + coming_soon pages (public navigation).
  * Joins current version for meta (title, category, subcategory).
  */
 export async function fetchPublishedPages() {

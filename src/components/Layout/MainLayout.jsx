@@ -1,5 +1,4 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import Sidebar from './Sidebar';
 import PageNav from './PageNav';
 import SeekLadder from './SeekLadder';
 import Logo from './Logo';
@@ -9,17 +8,11 @@ import { useSettings } from '../../SettingsContext';
 
 export default function MainLayout({ selectedModel, onSelectModel, children, isAdminMode = false, onCreateNewPage }) {
   const { settings, resolvedTheme, updateSettings } = useSettings();
-  const [sidebarWidth, setSidebarWidth] = useState(280);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    return sessionStorage.getItem('sidebar-collapsed') === 'true';
-  });
-  const [isResizing, setIsResizing] = useState(false);
   const containerRef = useRef(null);
   const mainRef = useRef(null);
   const bubbleRef = useRef(null);
 
   const headerInfo = getRouteHeaderInfo(selectedModel);
-  const isBubbleMode = settings.navMode === 'bubble';
 
   // Helper to format date
   const formatDate = (dateStr) => {
@@ -85,11 +78,6 @@ export default function MainLayout({ selectedModel, onSelectModel, children, isA
     return () => observer.disconnect();
   }, [selectedModel]);
 
-  /* ── Persist collapsed state ── */
-  useEffect(() => {
-    sessionStorage.setItem('sidebar-collapsed', sidebarCollapsed);
-  }, [sidebarCollapsed]);
-
   useEffect(() => {
     if (mainRef.current) {
       const savedScroll = sessionStorage.getItem(`scroll-pos-${selectedModel}`);
@@ -105,41 +93,6 @@ export default function MainLayout({ selectedModel, onSelectModel, children, isA
     sessionStorage.setItem(`scroll-pos-${selectedModel}`, e.target.scrollTop);
   };
 
-  const handleMouseDown = useCallback((e) => {
-    if (sidebarCollapsed) return;
-    e.preventDefault();
-    setIsResizing(true);
-  }, [sidebarCollapsed]);
-
-  useEffect(() => {
-    if (!isResizing) return;
-
-    const handleMouseMove = (e) => {
-      if (!containerRef.current) return;
-      const containerRect = containerRef.current.getBoundingClientRect();
-      const newWidth = e.clientX - containerRect.left;
-      setSidebarWidth(Math.min(500, Math.max(200, newWidth)));
-    };
-
-    const handleMouseUp = () => {
-      setIsResizing(false);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    };
-  }, [isResizing]);
-
-  const toggleCollapse = () => setSidebarCollapsed(prev => !prev);
-
   /** Navigate to the default home page */
   const handleNavigateHome = useCallback(() => {
     onSelectModel?.('/');
@@ -147,9 +100,7 @@ export default function MainLayout({ selectedModel, onSelectModel, children, isA
 
   /* ═══════════════════════════════════════════
    *  Global Keyboard Shortcuts
-   * ═══════════════════════════════════════════
-   *  Work in BOTH sidebar and bubble modes.
-   */
+   * ═══════════════════════════════════════════ */
   useEffect(() => {
     const IS_MAC = /Mac|iPod|iPhone|iPad/.test(navigator.platform);
 
@@ -169,13 +120,6 @@ export default function MainLayout({ selectedModel, onSelectModel, children, isA
             bubbleRef.current.toggle();
           }
         }
-        return;
-      }
-
-      // Ctrl+\ → toggle sidebar/bubble mode
-      if (mod && !e.shiftKey && e.key === '\\') {
-        e.preventDefault();
-        updateSettings({ navMode: settings.navMode === 'bubble' ? 'sidebar' : 'bubble' });
         return;
       }
 
@@ -229,7 +173,7 @@ export default function MainLayout({ selectedModel, onSelectModel, children, isA
 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [settings.navMode, resolvedTheme, updateSettings]);
+  }, [resolvedTheme, updateSettings]);
 
   // Dynamic container background based on theme
   const contentBg = resolvedTheme === 'dark' ? '#1a1a1a' : '#F6F6F6';
@@ -258,82 +202,13 @@ export default function MainLayout({ selectedModel, onSelectModel, children, isA
           transition: 'background-color 0.3s ease',
         }}
       >
-        {/* Sidebar — only in sidebar mode */}
-        {!isBubbleMode && (
-          <>
-            <Sidebar
-              selectedModel={selectedModel}
-              onSelectModel={onSelectModel}
-              width={sidebarWidth}
-              collapsed={sidebarCollapsed}
-              onToggleCollapse={toggleCollapse}
-              isAdminMode={isAdminMode}
-              onCreateNewPage={onCreateNewPage}
-            />
-
-            {/* Resize handle — only when sidebar is expanded */}
-            {!sidebarCollapsed && (
-              <div
-                onMouseDown={handleMouseDown}
-                style={{
-                  width: '5px',
-                  cursor: 'col-resize',
-                  background: 'transparent',
-                  flexShrink: 0,
-                  zIndex: 20,
-                }}
-              />
-            )}
-          </>
-        )}
-        
         <main 
           ref={mainRef}
           onScroll={handleScroll}
           style={{ flex: 1, overflowY: 'auto', padding: '40px 4%' }}
         >
-            {/* Toggle button when sidebar is collapsed (sidebar mode only) */}
-            {!isBubbleMode && sidebarCollapsed && (
-              <button
-                onClick={toggleCollapse}
-                aria-label="Open sidebar"
-                style={{
-                  position: 'fixed',
-                  left: '24px',
-                  top: '24px',
-                  zIndex: 100,
-                  width: '34px',
-                  height: '34px',
-                  borderRadius: '8px',
-                  border: `1px solid ${resolvedTheme === 'dark' ? '#333' : '#E0E0E0'}`,
-                  background: resolvedTheme === 'dark' ? 'rgba(30,30,30,0.9)' : 'rgba(255,255,255,0.9)',
-                  backdropFilter: 'blur(8px)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '16px',
-                  color: resolvedTheme === 'dark' ? '#999' : '#555',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--accent)';
-                  e.currentTarget.style.color = 'var(--accent)';
-                  e.currentTarget.style.boxShadow = '0 2px 12px var(--accent-20)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = resolvedTheme === 'dark' ? '#333' : '#E0E0E0';
-                  e.currentTarget.style.color = resolvedTheme === 'dark' ? '#999' : '#555';
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)';
-                }}
-              >
-                ☰
-              </button>
-            )}
-
-            {/* Standalone logo — only in bubble mode (sidebar mode has it in the sidebar header) */}
-            {isBubbleMode && <Logo onNavigateHome={handleNavigateHome} />}
+            {/* Logo */}
+            <Logo onNavigateHome={handleNavigateHome} />
 
             {/* Dynamic category / date header */}
             {headerInfo && (headerInfo.category || headerInfo.firstPublishedAt) && (
@@ -379,14 +254,12 @@ export default function MainLayout({ selectedModel, onSelectModel, children, isA
         </main>
       </div>
 
-      {/* Bubble navigation — only in bubble mode */}
-      {isBubbleMode && (
-        <BubbleNav
-          ref={bubbleRef}
-          selectedModel={selectedModel}
-          onSelectModel={onSelectModel}
-        />
-      )}
+      {/* Bubble navigation */}
+      <BubbleNav
+        ref={bubbleRef}
+        selectedModel={selectedModel}
+        onSelectModel={onSelectModel}
+      />
     </div>
   );
 }

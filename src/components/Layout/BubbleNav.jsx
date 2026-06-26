@@ -236,12 +236,9 @@ const BubbleNav = forwardRef(function BubbleNav({ selectedModel, onSelectModel }
 
   // ── Initialize the bubble manager ──
   useEffect(() => {
-    if (settings.navMode !== 'bubble') {
-      if (managerRef.current) {
-        try { managerRef.current.destroy(); } catch { /* */ }
-        managerRef.current = null;
-      }
-      return;
+    if (managerRef.current) {
+      try { managerRef.current.destroy(); } catch { /* */ }
+      managerRef.current = null;
     }
 
     const timer = setTimeout(() => {
@@ -285,13 +282,13 @@ const BubbleNav = forwardRef(function BubbleNav({ selectedModel, onSelectModel }
         managerRef.current = null;
       }
     };
-  }, [settings.navMode]); // Only re-create on mode change
+  }, []); // Initialize once on mount
 
   // ── Live-configure when ANY setting changes ──
   // configure() resets omitted options to defaults,
   // so we always send the full set.
   useEffect(() => {
-    if (!managerRef.current || settings.navMode !== 'bubble') return;
+    if (!managerRef.current) return;
     try {
       managerRef.current.configure({
         theme: settings.theme,
@@ -305,13 +302,12 @@ const BubbleNav = forwardRef(function BubbleNav({ selectedModel, onSelectModel }
     } catch { /* */ }
   }, [resolvedTheme, settings.accent, settings.theme, settings.dockSide,
       settings.dockVertical, settings.panelWidth, settings.panelMaxHeight,
-      settings.ricochet, settings.navMode]);
+      settings.ricochet]);
 
   // ── Re-render all mounted panel roots when settings/pages/selection change ──
   // This is what makes the panels reactive: we push new context + props
   // into existing React roots without destroying/recreating them.
   useEffect(() => {
-    if (settings.navMode !== 'bubble') return;
     for (const [id, entry] of Object.entries(rootsRef.current)) {
       if (entry?.root) renderPanel(id, entry.root);
     }

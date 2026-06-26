@@ -259,7 +259,7 @@ export default function PagesPanel({ pages, selectedModel, onSelectModel, onColl
   const [conceptsOpen, setConceptsOpen] = useState(true);
 
   // Organize pages into architecture + concepts (with subcategories)
-  // Sort by meta.order (falling back to title) to match the sidebar
+  // Sort by meta.order (falling back to title) to match navigation order
   const { architecturePages, conceptGroups, flatConcepts, totalCount } = useMemo(() => {
     const arch = [];
     const groups = {};
