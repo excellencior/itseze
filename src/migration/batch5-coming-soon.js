@@ -1,0 +1,118 @@
+/**
+ * Batch 5 — Coming Soon Placeholder Pages
+ * ~16 pages with status 'coming_soon', empty blocks, basic meta
+ */
+export const pages = [
+  {
+    route: 'concept:batch-norm',
+    urlPath: '/concepts/batch-normalization',
+    status: 'coming_soon',
+    meta: { title: 'Batch Normalization', subtitle: 'Stabilizing activations across mini-batches', category: 'concept', subcategory: null, ready: false },
+    blocks: [],
+  },
+  {
+    route: 'concept:convolution',
+    urlPath: '/concepts/convolution',
+    status: 'coming_soon',
+    meta: { title: 'Convolution', subtitle: 'Spatial feature extraction with learned filters', category: 'concept', subcategory: null, ready: false },
+    blocks: [],
+  },
+  {
+    route: 'concept:dropout',
+    urlPath: '/concepts/dropout',
+    status: 'coming_soon',
+    meta: { title: 'Dropout', subtitle: 'Regularization through random deactivation', category: 'concept', subcategory: null, ready: false },
+    blocks: [],
+  },
+  {
+    route: 'concept:embedding',
+    urlPath: '/concepts/embedding',
+    status: 'coming_soon',
+    meta: { title: 'Embedding', subtitle: 'Dense vector representations for discrete tokens', category: 'concept', subcategory: null, ready: false },
+    blocks: [],
+  },
+  {
+    route: 'concept:mlp',
+    urlPath: '/concepts/mlp',
+    status: 'coming_soon',
+    meta: { title: 'MLP', subtitle: 'Multi-layer perceptrons and feed-forward networks', category: 'concept', subcategory: null, ready: false },
+    blocks: [],
+  },
+  {
+    route: 'concept:kv-cache',
+    urlPath: '/concepts/kv-cache',
+    status: 'coming_soon',
+    meta: { title: 'KV-Cache', subtitle: 'Key-value caching for efficient autoregressive generation', category: 'concept', subcategory: null, ready: false },
+    blocks: [],
+  },
+  {
+    route: 'concept:layer-norm',
+    urlPath: '/concepts/layer-normalization',
+    status: 'coming_soon',
+    meta: { title: 'Layer Normalization', subtitle: 'Normalizing across features for stable training', category: 'concept', subcategory: null, ready: false },
+    blocks: [],
+  },
+  {
+    route: 'concept:loss-functions',
+    urlPath: '/concepts/loss-functions',
+    status: 'coming_soon',
+    meta: { title: 'Loss Functions', subtitle: 'Objective functions that guide model optimization', category: 'concept', subcategory: null, ready: false },
+    blocks: [],
+  },
+  {
+    route: 'concept:moe',
+    urlPath: '/concepts/mixture-of-experts',
+    status: 'coming_soon',
+    meta: { title: 'Mixture of Experts', subtitle: 'Sparse routing for efficient scaling', category: 'concept', subcategory: null, ready: false },
+    blocks: [],
+  },
+  {
+    route: 'concept:multi-head-attention',
+    urlPath: '/concepts/multi-head-attention',
+    status: 'coming_soon',
+    meta: { title: 'Multi-Head Attention', subtitle: 'Parallel attention subspaces for richer representations', category: 'concept', subcategory: null, ready: false },
+    blocks: [],
+  },
+  {
+    route: 'concept:residual',
+    urlPath: '/concepts/residual-connections',
+    status: 'coming_soon',
+    meta: { title: 'Residual Connections', subtitle: 'Skip connections for gradient flow in deep networks', category: 'concept', subcategory: null, ready: false },
+    blocks: [],
+  },
+  {
+    route: 'concept:rope',
+    urlPath: '/concepts/rope',
+    status: 'coming_soon',
+    meta: { title: 'RoPE', subtitle: 'Rotary position embeddings for length generalization', category: 'concept', subcategory: null, ready: false },
+    blocks: [],
+  },
+  {
+    route: 'concept:softmax',
+    urlPath: '/concepts/softmax',
+    status: 'coming_soon',
+    meta: { title: 'Softmax', subtitle: 'Probability distributions from raw logits', category: 'concept', subcategory: null, ready: false },
+    blocks: [],
+  },
+  {
+    route: 'concept:tokenization',
+    urlPath: '/concepts/tokenization',
+    status: 'coming_soon',
+    meta: { title: 'Tokenization', subtitle: 'Breaking text into model-digestible subwords', category: 'concept', subcategory: null, ready: false },
+    blocks: [],
+  },
+  {
+    route: 'architecture:llama3',
+    urlPath: '/architecture/llama3',
+    status: 'coming_soon',
+    meta: { title: 'LLaMA 3', subtitle: 'Meta\'s open-source large language model', category: 'architecture', subcategory: null, ready: false },
+    blocks: [],
+  },
+  {
+    route: 'architecture:claude3',
+    urlPath: '/architecture/claude3',
+    status: 'coming_soon',
+    meta: { title: 'Claude 3', subtitle: 'Anthropic\'s constitutional AI assistant', category: 'architecture', subcategory: null, ready: false },
+    blocks: [],
+  },
+];

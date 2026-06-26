@@ -27,6 +27,7 @@ import SelfConsistencyPage from './pages/prompting/SelfConsistencyPage';
 // Admin
 import EditorPage from './pages/admin/EditorPage';
 import PublishedPage from './pages/admin/PublishedPage';
+import MigratePage from './pages/admin/MigratePage';
 
 // Auth
 import { AuthProvider } from './lib/auth';
@@ -311,6 +312,19 @@ function App() {
       </div>
     );
   };
+
+  // Migration page renders outside MainLayout, wrapped in AuthGuard
+  if (selectedModel === '__migrate__' || window.location.pathname === '/admin/migrate') {
+    return (
+      <SettingsProvider>
+        <AuthProvider>
+          <AuthGuard>
+            <MigratePage />
+          </AuthGuard>
+        </AuthProvider>
+      </SettingsProvider>
+    );
+  }
 
   // Editor page renders outside MainLayout, wrapped in AuthGuard
   if (selectedModel === '__editor__' || window.location.pathname === '/admin/editor') {
