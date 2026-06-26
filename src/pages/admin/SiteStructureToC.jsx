@@ -210,6 +210,29 @@ export default function SiteStructureToC({ selectedPageId, onSelectPage, onCreat
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', paddingBottom: '24px' }}>
+        {/* Home / Landing Page */}
+        <div
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '8px 12px', cursor: 'pointer', fontSize: '13px', fontWeight: 600,
+            color: '#d4d4d8', borderBottom: '1px solid #27272a',
+            transition: 'all 0.12s ease',
+          }}
+          onClick={() => window.open('/', '_blank')}
+          onMouseEnter={(e) => { e.currentTarget.style.background = hoverBg; e.currentTarget.style.color = '#0891B2'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#d4d4d8'; }}
+        >
+          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            Landing Page
+          </span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+          </svg>
+        </div>
+
         {/* Architecture */}
         <div style={tocHeaderStyle} onClick={() => setArchOpen(!archOpen)}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
