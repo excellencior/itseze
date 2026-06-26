@@ -1,60 +1,5 @@
-import { useState } from 'react';
-import { ARCHITECTURES, CONCEPTS, getPublishedNavItems, getDraftNavItems } from '../../navigation';
-
-/* ═══════════════════════════════════════════
- *  Breadcrumb Helper — compute path from route
- * ═══════════════════════════════════════════ */
-export function getBreadcrumb(route) {
-  if (!route || typeof route !== 'string') return { crumbs: [], status: null };
-
-  if (route.startsWith('__draft__')) {
-    const key = route.replace('__draft__', '');
-    let name = key.replace('itseze-draft-', '').replace(/-/g, ' ');
-    try {
-      const data = JSON.parse(localStorage.getItem(key));
-      if (data?.meta?.title) name = data.meta.title;
-      const cat = data?.meta?.category || 'concept';
-      const sub = data?.meta?.subcategory || '';
-      const crumbs = [cat === 'architecture' ? 'Architecture' : 'Concepts'];
-      if (sub) crumbs.push(sub);
-      crumbs.push(name);
-      return { crumbs, status: 'Draft' };
-    } catch { /* */ }
-    return { crumbs: ['Draft', name], status: 'Draft' };
-  }
-
-  if (route.startsWith('__pub__')) {
-    const urlPath = route.replace('__pub__', '');
-    try {
-      const published = JSON.parse(localStorage.getItem('itseze-published') || '{}');
-      const data = published[urlPath];
-      if (data) {
-        const name = data.meta?.title || 'Untitled';
-        const cat = data.meta?.category || 'concept';
-        const sub = data.meta?.subcategory || '';
-        const crumbs = [cat === 'architecture' ? 'Architecture' : 'Concepts'];
-        if (sub) crumbs.push(sub);
-        crumbs.push(name);
-        return { crumbs, status: 'Published' };
-      }
-    } catch { /* */ }
-    return { crumbs: ['Published', urlPath], status: 'Published' };
-  }
-
-  const arch = ARCHITECTURES.find(a => a.route === route);
-  if (arch) return { crumbs: ['Architecture', arch.name], status: arch.ready ? 'Static' : 'Coming Soon' };
-
-  for (const c of CONCEPTS) {
-    if (c.children) {
-      const child = c.children.find(ch => ch.route === route);
-      if (child) return { crumbs: ['Concepts', c.name, child.name], status: child.ready ? 'Static' : 'Coming Soon' };
-    } else if (c.route === route) {
-      return { crumbs: ['Concepts', c.name], status: c.ready ? 'Static' : 'Coming Soon' };
-    }
-  }
-
-  return { crumbs: [route], status: 'Static' };
-}
+import { useState, useEffect, useCallback } from 'react';
+import { fetchAllPages } from '../../lib/pages';
 
 /* ═══════════════════════════════════════════
  *  Shared Styles
@@ -142,109 +87,126 @@ function TocItem({ isActive, onClick, style, children }) {
   );
 }
 
-function isNew(dateStr) {
-  if (!dateStr) return false;
-  return Date.now() - new Date(dateStr).getTime() < 14 * 24 * 60 * 60 * 1000;
-}
-
 /* ═══════════════════════════════════════════
- *  SiteStructureToC Component
+ *  SiteStructureToC Component (Supabase-driven)
  * ═══════════════════════════════════════════ */
-export default function SiteStructureToC({ selectedRoute, onSelectRoute, onCreateNewPage }) {
+export default function SiteStructureToC({ selectedPageId, onSelectPage, onCreateNewPage }) {
   const [archOpen, setArchOpen] = useState(true);
   const [conceptsOpen, setConceptsOpen] = useState(true);
   const [subcatOpen, setSubcatOpen] = useState({});
 
-  const publishedItems = getPublishedNavItems();
-  const draftItems = getDraftNavItems();
+  const [pages, setPages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const loadPages = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchAllPages();
+      setPages(data);
+    } catch (err) {
+      console.error('Failed to load pages:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPages();
+  }, [loadPages]);
 
   const toggleSubcat = (name) => setSubcatOpen(prev => ({ ...prev, [name]: !prev[name] }));
 
-  const renderConceptsList = () => {
-    const items = [];
+  // ── Organize pages by category/subcategory ──
+  const architecturePages = pages
+    .filter(p => (p.current_version?.meta?.category || '') === 'architecture')
+    .sort((a, b) => (a.current_version?.meta?.title || '').localeCompare(b.current_version?.meta?.title || ''));
 
-    CONCEPTS.forEach(c => {
-      if (c.children) {
-        const subcatName = c.name;
-        const isOpen = subcatOpen[subcatName] !== false;
-        const pubChildren = publishedItems.filter(p => p.parentCategory === subcatName);
-        const draftChildren = draftItems.filter(d => d.parentCategory === subcatName);
+  const conceptPages = pages
+    .filter(p => {
+      const cat = p.current_version?.meta?.category || 'concept';
+      return cat === 'concept' || cat === 'concepts';
+    })
+    .sort((a, b) => (a.current_version?.meta?.title || '').localeCompare(b.current_version?.meta?.title || ''));
 
-        items.push(
-          <div key={`sub-${subcatName}`}>
-            <div
-              style={{ ...tocItemStyle(false), cursor: 'pointer', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#a1a1aa' }}
-              onClick={() => toggleSubcat(subcatName)}
-            >
-              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Chevron open={isOpen} /> {subcatName}
-              </span>
-              <PlusButton onClick={(e) => { e.stopPropagation(); onCreateNewPage?.('concept', subcatName); }} title={`Add new page under ${subcatName}`} />
-            </div>
-            {isOpen && (
-              <div>
-                {c.children.map(child => (
-                  <TocItem key={child.route} isActive={selectedRoute === child.route} onClick={() => child.ready && onSelectRoute(child.route)} style={tocSubItemStyle(selectedRoute === child.route)}>
-                    <span style={{ opacity: child.ready ? 1 : 0.4 }}>{child.name}</span>
-                    {!child.ready && <span style={soonStyle}>Soon</span>}
-                  </TocItem>
-                ))}
-                {pubChildren.map(pub => (
-                  <TocItem key={pub.route} isActive={selectedRoute === pub.route} onClick={() => onSelectRoute(pub.route)} style={tocSubItemStyle(selectedRoute === pub.route)}>
-                    <span>{pub.name}</span>
-                    {isNew(pub.firstPublishedAt) && <span style={chipStyle('New')}>New</span>}
-                  </TocItem>
-                ))}
-                {draftChildren.map(draft => (
-                  <TocItem key={draft.route} isActive={selectedRoute === draft.route} onClick={() => onSelectRoute(draft.route)} style={tocSubItemStyle(selectedRoute === draft.route)}>
-                    <span>{draft.name}</span>
-                    <span style={chipStyle('Draft')}>Draft</span>
-                  </TocItem>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      } else {
-        items.push(
-          <TocItem key={c.route} isActive={selectedRoute === c.route} onClick={() => c.ready && onSelectRoute(c.route)} style={tocItemStyle(selectedRoute === c.route)}>
-            <span style={{ opacity: c.ready ? 1 : 0.4 }}>{c.name}</span>
-            {!c.ready && <span style={soonStyle}>Soon</span>}
-          </TocItem>
-        );
-      }
-    });
+  // Group concept pages by subcategory
+  const subcategories = {};
+  const flatConcepts = [];
 
-    publishedItems.filter(p => !p.parentCategory && p.category !== 'architecture').forEach(pub => {
-      if (!CONCEPTS.some(c => c.route === pub.route)) {
-        items.push(
-          <TocItem key={pub.route} isActive={selectedRoute === pub.route} onClick={() => onSelectRoute(pub.route)} style={tocItemStyle(selectedRoute === pub.route)}>
-            <span>{pub.name}</span>
-            {isNew(pub.firstPublishedAt) && <span style={chipStyle('New')}>New</span>}
-          </TocItem>
-        );
-      }
-    });
+  conceptPages.forEach(page => {
+    const sub = page.current_version?.meta?.subcategory || '';
+    if (sub) {
+      if (!subcategories[sub]) subcategories[sub] = [];
+      subcategories[sub].push(page);
+    } else {
+      flatConcepts.push(page);
+    }
+  });
 
-    draftItems.filter(d => !d.parentCategory && d.category !== 'architecture').forEach(draft => {
-      items.push(
-        <TocItem key={draft.route} isActive={selectedRoute === draft.route} onClick={() => onSelectRoute(draft.route)} style={tocItemStyle(selectedRoute === draft.route)}>
-          <span>{draft.name}</span>
-          <span style={chipStyle('Draft')}>Draft</span>
-        </TocItem>
-      );
-    });
+  // Sort subcategory names alphabetically
+  const subcatNames = Object.keys(subcategories).sort();
 
-    return items;
+  const renderStatusChip = (status) => {
+    if (status === 'draft') return <span style={chipStyle('Draft')}>Draft</span>;
+    if (status === 'coming_soon') return <span style={soonStyle}>Soon</span>;
+    return null;
   };
 
-  const draftArchitectures = draftItems.filter(d => d.category === 'architecture');
+  const renderPageItem = (page, useSubStyle = false) => {
+    const isActive = selectedPageId === page.id;
+    const isSoon = page.status === 'coming_soon';
+    const title = page.current_version?.meta?.title || page.route || 'Untitled';
+    const style = useSubStyle ? tocSubItemStyle(isActive) : tocItemStyle(isActive);
+
+    return (
+      <TocItem
+        key={page.id}
+        isActive={isActive}
+        onClick={() => !isSoon && onSelectPage(page.id)}
+        style={{ ...style, cursor: isSoon ? 'default' : 'pointer' }}
+      >
+        <span style={{ opacity: isSoon ? 0.4 : 1 }}>{title}</span>
+        {renderStatusChip(page.status)}
+      </TocItem>
+    );
+  };
+
+  // ── Loading / Error states ──
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#18181b', color: '#71717a', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{
+          width: '24px', height: '24px', border: '3px solid #27272a',
+          borderTopColor: '#0891B2', borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite', marginBottom: '12px',
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <span style={{ fontSize: '12px' }}>Loading pages…</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#18181b', color: '#71717a', alignItems: 'center', justifyContent: 'center', padding: '32px' }}>
+        <p style={{ fontSize: '13px', color: '#f87171', marginBottom: '12px' }}>Failed to load pages</p>
+        <button
+          onClick={loadPages}
+          style={{ padding: '6px 16px', fontSize: '12px', fontWeight: 600, background: '#27272a', border: '1px solid #3f3f46', color: '#a1a1aa', borderRadius: '6px', cursor: 'pointer' }}
+        >Retry</button>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#18181b', color: '#d4d4d8' }}>
       <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid #27272a' }}>
         <div style={{ fontSize: '13px', fontWeight: 800, color: '#e4e4e7', letterSpacing: '-0.3px' }}>Site Structure</div>
-        <div style={{ fontSize: '11px', color: '#71717a', marginTop: '4px' }}>Click a page to select it for editing</div>
+        <div style={{ fontSize: '11px', color: '#71717a', marginTop: '4px' }}>
+          {pages.length} page{pages.length !== 1 ? 's' : ''} · Click to select
+        </div>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', paddingBottom: '24px' }}>
@@ -257,18 +219,10 @@ export default function SiteStructureToC({ selectedRoute, onSelectRoute, onCreat
         </div>
         {archOpen && (
           <div>
-            {ARCHITECTURES.map(a => (
-              <TocItem key={a.route} isActive={selectedRoute === a.route} onClick={() => a.ready && onSelectRoute(a.route)} style={tocItemStyle(selectedRoute === a.route)}>
-                <span style={{ opacity: a.ready ? 1 : 0.4 }}>{a.name}</span>
-                {!a.ready && <span style={soonStyle}>Soon</span>}
-              </TocItem>
-            ))}
-            {draftArchitectures.map(draft => (
-              <TocItem key={draft.route} isActive={selectedRoute === draft.route} onClick={() => onSelectRoute(draft.route)} style={tocItemStyle(selectedRoute === draft.route)}>
-                <span>{draft.name}</span>
-                <span style={chipStyle('Draft')}>Draft</span>
-              </TocItem>
-            ))}
+            {architecturePages.length === 0 && (
+              <div style={{ padding: '12px 24px', fontSize: '12px', color: '#52525b', fontStyle: 'italic' }}>No architecture pages yet</div>
+            )}
+            {architecturePages.map(page => renderPageItem(page))}
           </div>
         )}
 
@@ -279,7 +233,41 @@ export default function SiteStructureToC({ selectedRoute, onSelectRoute, onCreat
           </span>
           <PlusButton onClick={(e) => { e.stopPropagation(); onCreateNewPage?.('concept', ''); }} title="Add new concept page" />
         </div>
-        {conceptsOpen && <div>{renderConceptsList()}</div>}
+        {conceptsOpen && (
+          <div>
+            {/* Subcategory groups */}
+            {subcatNames.map(subcatName => {
+              const isOpen = subcatOpen[subcatName] !== false;
+              const subcatPages = subcategories[subcatName];
+
+              return (
+                <div key={`sub-${subcatName}`}>
+                  <div
+                    style={{ ...tocItemStyle(false), cursor: 'pointer', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#a1a1aa' }}
+                    onClick={() => toggleSubcat(subcatName)}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Chevron open={isOpen} /> {subcatName}
+                    </span>
+                    <PlusButton onClick={(e) => { e.stopPropagation(); onCreateNewPage?.('concept', subcatName); }} title={`Add new page under ${subcatName}`} />
+                  </div>
+                  {isOpen && (
+                    <div>
+                      {subcatPages.map(page => renderPageItem(page, true))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Flat concept pages (no subcategory) */}
+            {flatConcepts.map(page => renderPageItem(page))}
+
+            {flatConcepts.length === 0 && subcatNames.length === 0 && (
+              <div style={{ padding: '12px 24px', fontSize: '12px', color: '#52525b', fontStyle: 'italic' }}>No concept pages yet</div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

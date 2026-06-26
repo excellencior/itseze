@@ -52,6 +52,7 @@ function createBlock(type) {
     case 'heading':        return { ...base, level: 2, text: '' };
     case 'tabs':           return { ...base, tabs: [{ label: 'Tab 1', content: '' }] };
     case 'comp-table':     return { ...base, headers: ['Column 1', 'Column 2'], rows: [['', '']] };
+    case 'custom-element': return { ...base, name: '' };
     default:               return base;
   }
 }

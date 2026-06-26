@@ -38,6 +38,7 @@ export const BLOCK_TYPES = [
   { type: 'heading', icon: Icons.heading, label: 'Heading' },
   { type: 'tabs', icon: Icons.tabs, label: 'Tabs' },
   { type: 'comp-table', icon: Icons.table, label: 'Comparison Table' },
+  { type: 'custom-element', icon: Icons.scene, label: 'Widget' },
 ];
 
 /* ═══════════════════════════════════════════

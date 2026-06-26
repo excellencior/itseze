@@ -158,6 +158,7 @@ export function CalloutEditor({ block, onChange }) {
       <div className="field-label">Type</div>
       <select className="callout-type-select" value={block.calloutType} onChange={e => onChange({ ...block, calloutType: e.target.value })}>
         <option value="key">Key Insight</option>
+        <option value="tip">Tip</option>
         <option value="info">Info</option>
         <option value="warning">Warning</option>
         <option value="accent">Accent</option>
@@ -565,22 +566,41 @@ export function CompTableEditor({ block, onChange }) {
   );
 }
 
+export function CustomElementEditor({ block, onChange }) {
+  return (
+    <div className="block-card-body">
+      <div className="field-label">Widget Name</div>
+      <input
+        type="text"
+        value={block.name || ''}
+        onChange={e => onChange({ ...block, name: e.target.value })}
+        placeholder="e.g. PromptAnatomyWidget"
+        style={{ fontFamily: 'var(--font-mono)', fontSize: '12px' }}
+      />
+      <div style={{ fontSize: '10px', color: '#71717a', marginTop: '6px', lineHeight: 1.5 }}>
+        Maps to a component in <code style={{ color: '#0891B2' }}>widgetsRegistry.jsx</code>. The widget renders live in the preview pane.
+      </div>
+    </div>
+  );
+}
+
 /** Map of block type → editor component */
 export const BLOCK_EDITORS = {
-  'section':       SectionEditor,
-  'paragraph':     ParagraphEditor,
-  'callout':       CalloutEditor,
-  'math-box':      MathBoxEditor,
-  'code-block':    CodeBlockEditor,
-  'three-scene':   ThreeSceneEditor,
-  'prop-table':    PropTableEditor,
-  'comp-table':    CompTableEditor,
-  'reference':     ReferenceEditor,
-  'ai-disclosure': AIDisclosureEditor,
-  'video-embed':   VideoEmbedEditor,
-  'divider':       DividerEditor,
-  'blockquote':    BlockquoteEditor,
-  'list':          ListEditor,
-  'heading':       HeadingEditor,
-  'tabs':          TabsEditor,
+  'section':        SectionEditor,
+  'paragraph':      ParagraphEditor,
+  'callout':        CalloutEditor,
+  'math-box':       MathBoxEditor,
+  'code-block':     CodeBlockEditor,
+  'three-scene':    ThreeSceneEditor,
+  'prop-table':     PropTableEditor,
+  'comp-table':     CompTableEditor,
+  'reference':      ReferenceEditor,
+  'ai-disclosure':  AIDisclosureEditor,
+  'video-embed':    VideoEmbedEditor,
+  'divider':        DividerEditor,
+  'blockquote':     BlockquoteEditor,
+  'list':           ListEditor,
+  'heading':        HeadingEditor,
+  'tabs':           TabsEditor,
+  'custom-element': CustomElementEditor,
 };

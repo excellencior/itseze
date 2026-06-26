@@ -96,6 +96,42 @@ function renderBlockJSX(block, idx) {
         <strong style={{ color: 'var(--text-muted)' }}>A note on this article:</strong> ${block.content || ''}
       </div>`;
 
+    case 'comp-table': {
+      const hdrs = (block.headers || []).map(h => `'${escapeJSX(h)}'`).join(', ');
+      const tblRows = (block.rows || [])
+        .map(row => `          [${row.map(c => `'${escapeJSX(c)}'`).join(', ')}],`)
+        .join('\n');
+      return `        <CompTable headers={[${hdrs}]} rows={[\n${tblRows}\n        ]} />`;
+    }
+
+    case 'custom-element':
+      return `        <${block.name || 'UnknownWidget'} />`;
+
+    case 'video-embed':
+      return `        {/* Video: ${escapeJSX(block.url || '')} (${block.aspectRatio || '16:9'}) */}`;
+
+    case 'divider':
+      return `        <hr style={{ border: 'none', borderTop: '2px ${block.style || 'solid'} var(--border)', margin: '24px 0' }} />`;
+
+    case 'blockquote':
+      return `        <blockquote style={{ borderLeft: '4px solid var(--accent)', padding: '14px 20px', margin: '16px 0', fontStyle: 'italic' }}>
+          ${block.content || ''}${block.attribution ? `\n          <div style={{ marginTop: '8px', fontSize: '13px', fontWeight: 600, fontStyle: 'normal' }}>${block.attribution}</div>` : ''}
+        </blockquote>`;
+
+    case 'list': {
+      const tag = block.listType === 'ordered' ? 'ol' : 'ul';
+      const listItems = (block.items || []).filter(i => i).map(i => `          <li>${i}</li>`).join('\n');
+      return `        <${tag}>\n${listItems}\n        </${tag}>`;
+    }
+
+    case 'heading': {
+      const lvl = block.level || 2;
+      return `        <h${lvl}>${block.text || ''}</h${lvl}>`;
+    }
+
+    case 'tabs':
+      return `        {/* Tabs block — ${(block.tabs || []).map(t => t.label).join(', ')} */}`;
+
     default:
       return `        {/* Unknown block type: ${block.type} */}`;
   }
