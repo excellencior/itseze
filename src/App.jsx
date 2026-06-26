@@ -92,6 +92,8 @@ const STATIC_PAGES = {
 function getKeyFromURL() {
   const path = window.location.pathname;
   if (path === '/admin/editor') return '__editor__';
+  if (path === '/admin/migrate') return '__migrate__';
+  if (path === '/' || path === '') return null; // root — use sessionStorage default
   if (PATH_TO_KEY[path]) return PATH_TO_KEY[path];
   // Any other path is treated as a potential Supabase page url_path
   return `__supabase__${path}`;
@@ -100,10 +102,9 @@ function getKeyFromURL() {
 function App() {
   const [selectedModel, setSelectedModel] = useState(() => {
     const fromURL = getKeyFromURL();
-    if (fromURL === '__editor__' || fromURL.startsWith('__supabase__')) return fromURL;
-    if (window.location.pathname !== '/' && PATH_TO_KEY[window.location.pathname]) {
-      return fromURL;
-    }
+    if (fromURL === '__editor__' || fromURL === '__migrate__') return fromURL;
+    if (fromURL && fromURL.startsWith('__supabase__')) return fromURL;
+    if (fromURL) return fromURL; // static route key
     return sessionStorage.getItem('itseze-active-page') || 'gpt3';
   });
 
@@ -177,7 +178,7 @@ function App() {
   useEffect(() => {
     const handlePopState = () => {
       const key = getKeyFromURL();
-      setSelectedModel(key);
+      setSelectedModel(key || sessionStorage.getItem('itseze-active-page') || 'gpt3');
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
