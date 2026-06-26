@@ -28,7 +28,17 @@ import SelfConsistencyPage from './pages/prompting/SelfConsistencyPage';
 import EditorPage from './pages/admin/EditorPage';
 import PublishedPage from './pages/admin/PublishedPage';
 
-// ── Route mapping: internal key ↔ URL path ──
+// Auth
+import { AuthProvider } from './lib/auth';
+import AuthGuard from './components/AuthGuard';
+
+// Settings
+import { SettingsProvider } from './SettingsContext';
+
+// Supabase data layer
+import { fetchPageByUrlPath } from './lib/pages';
+
+// ── Static route mapping (kept as fallback until migration completes) ──
 const ROUTE_MAP = {
   'gpt3': '/gpt3',
   'concept:activation-functions': '/concepts/activation-functions',
@@ -55,37 +65,73 @@ const PATH_TO_KEY = Object.fromEntries(
   Object.entries(ROUTE_MAP).map(([key, path]) => [path, key])
 );
 
-function getPublishedPages() {
-  try { return JSON.parse(localStorage.getItem('itseze-published') || '{}'); } catch { return {}; }
-}
+// ── Static route key → component map ──
+const STATIC_PAGES = {
+  'gpt3': GPT3Course,
+  'concept:activation-functions': ActivationFunctionsPage,
+  'concept:attention': AttentionPage,
+  'concept:encoder': EncoderPage,
+  'concept:speculative-decoding': SpeculativeDecodingPage,
+  'concept:ssm': SSMPage,
+  'concept:reasoning-symbolic': SymbolicPage,
+  'concept:reasoning-probabilistic': ProbabilisticPage,
+  'concept:reasoning-neural': NeuralPage,
+  'concept:reasoning-neuro-symbolic': NeuroSymbolicPage,
+  'concept:reasoning-chain-of-thought': ChainOfThoughtPage,
+  'concept:reasoning-rag': RagPage,
+  'concept:reasoning-program-synthesis': ProgramSynthesisPage,
+  'concept:prompting-zero-shot': ZeroShotPage,
+  'concept:prompting-few-shot': FewShotPage,
+  'concept:prompting-cot': COTPage,
+  'concept:prompting-zero-cot': ZeroCOTPage,
+  'concept:prompting-ltm': LeastToMostPage,
+  'concept:prompting-sc': SelfConsistencyPage,
+};
 
 function getKeyFromURL() {
   const path = window.location.pathname;
   if (path === '/admin/editor') return '__editor__';
   if (PATH_TO_KEY[path]) return PATH_TO_KEY[path];
-  // Check if it's a published page
-  const published = getPublishedPages();
-  if (published[path]) return `__pub__${path}`;
-  return 'gpt3';
+  // Any other path is treated as a potential Supabase page url_path
+  return `__supabase__${path}`;
 }
 
 function App() {
   const [selectedModel, setSelectedModel] = useState(() => {
-    // URL takes priority, then sessionStorage fallback
     const fromURL = getKeyFromURL();
-    if (fromURL === '__editor__' || fromURL.startsWith('__pub__')) return fromURL;
+    if (fromURL === '__editor__' || fromURL.startsWith('__supabase__')) return fromURL;
     if (window.location.pathname !== '/' && PATH_TO_KEY[window.location.pathname]) {
       return fromURL;
     }
     return sessionStorage.getItem('itseze-active-page') || 'gpt3';
   });
 
+  // For Supabase-backed pages
+  const [supabasePageData, setSupabasePageData] = useState(null);
+  const [supabaseLoading, setSupabaseLoading] = useState(false);
+
   const isInitialMount = useRef(true);
+
+  // Handle model selection: can be a static route key or a url_path
+  const handleSelectModel = useCallback((modelOrPath) => {
+    // If it's a url_path (starts with /), check if it maps to a static route first
+    if (modelOrPath && modelOrPath.startsWith('/')) {
+      const staticKey = PATH_TO_KEY[modelOrPath];
+      if (staticKey) {
+        setSelectedModel(staticKey);
+      } else {
+        // Treat as a Supabase page path
+        setSelectedModel(`__supabase__${modelOrPath}`);
+        window.history.pushState({}, '', modelOrPath);
+      }
+    } else {
+      setSelectedModel(modelOrPath);
+    }
+  }, []);
 
   // On page selection change, update URL and sessionStorage
   useEffect(() => {
-    // Don't touch URL when on the editor page or a published page
-    if (!selectedModel || selectedModel === '__editor__' || selectedModel.startsWith('__pub__')) return;
+    if (!selectedModel || selectedModel === '__editor__' || selectedModel.startsWith('__supabase__')) return;
 
     sessionStorage.setItem('itseze-active-page', selectedModel);
 
@@ -94,7 +140,6 @@ function App() {
       window.history.pushState({ page: selectedModel }, '', targetPath);
     }
 
-    // On page change, clear the hash
     if (!isInitialMount.current) {
       window.history.replaceState(
         { page: selectedModel },
@@ -103,6 +148,28 @@ function App() {
       );
     }
     isInitialMount.current = false;
+  }, [selectedModel]);
+
+  // Fetch Supabase page data when a __supabase__ route is selected
+  useEffect(() => {
+    if (!selectedModel || !selectedModel.startsWith('__supabase__')) {
+      setSupabasePageData(null);
+      return;
+    }
+
+    const urlPath = selectedModel.replace('__supabase__', '');
+    setSupabaseLoading(true);
+
+    fetchPageByUrlPath(urlPath)
+      .then(data => {
+        setSupabasePageData(data);
+        setSupabaseLoading(false);
+      })
+      .catch(err => {
+        console.error('Failed to fetch Supabase page:', err);
+        setSupabasePageData(null);
+        setSupabaseLoading(false);
+      });
   }, [selectedModel]);
 
   // Handle browser back/forward
@@ -115,19 +182,26 @@ function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  // Listen for toast events from AuthGuard
+  useEffect(() => {
+    const handleToast = (e) => {
+      // Could integrate with a global toast system
+      console.warn('Auth toast:', e.detail?.message);
+    };
+    window.addEventListener('itseze-toast', handleToast);
+    return () => window.removeEventListener('itseze-toast', handleToast);
+  }, []);
+
   // ── Section hash tracking via Intersection Observer ──
   const observerRef = useRef(null);
 
   const setupHashTracking = useCallback(() => {
-    // Clean up previous observer
     if (observerRef.current) {
       observerRef.current.disconnect();
     }
 
-    // Wait for DOM to settle
     setTimeout(() => {
       const sectionEls = Array.from(document.querySelectorAll('[data-section]'));
-
       if (sectionEls.length === 0) return;
 
       const visibleSections = new Map();
@@ -142,9 +216,7 @@ function App() {
             }
           });
 
-          // Pick the first visible section (topmost)
           if (visibleSections.size > 0) {
-            // Get sections in DOM order
             const ordered = sectionEls
               .filter(el => visibleSections.has(el.id))
               .map(el => el.id);
@@ -169,7 +241,6 @@ function App() {
     }, 300);
   }, []);
 
-  // Set up observer whenever page changes
   useEffect(() => {
     setupHashTracking();
     return () => {
@@ -191,7 +262,6 @@ function App() {
       }, 500);
     }
 
-    // Set initial URL if on root
     if (window.location.pathname === '/') {
       const targetPath = ROUTE_MAP[selectedModel] || '/';
       window.history.replaceState({ page: selectedModel }, '', targetPath);
@@ -199,73 +269,70 @@ function App() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const renderContent = () => {
-    switch (selectedModel) {
-      case 'gpt3':
-        return <GPT3Course />;
-      case 'concept:activation-functions':
-        return <ActivationFunctionsPage />;
-      case 'concept:attention':
-        return <AttentionPage />;
-      case 'concept:encoder':
-        return <EncoderPage />;
-      case 'concept:speculative-decoding':
-        return <SpeculativeDecodingPage />;
-      case 'concept:ssm':
-        return <SSMPage />;
-      case 'concept:reasoning-symbolic':
-        return <SymbolicPage />;
-      case 'concept:reasoning-probabilistic':
-        return <ProbabilisticPage />;
-      case 'concept:reasoning-neural':
-        return <NeuralPage />;
-      case 'concept:reasoning-neuro-symbolic':
-        return <NeuroSymbolicPage />;
-      case 'concept:reasoning-chain-of-thought':
-        return <ChainOfThoughtPage />;
-      case 'concept:reasoning-rag':
-        return <RagPage />;
-      case 'concept:reasoning-program-synthesis':
-        return <ProgramSynthesisPage />;
-      case 'concept:prompting-zero-shot':
-        return <ZeroShotPage />;
-      case 'concept:prompting-few-shot':
-        return <FewShotPage />;
-      case 'concept:prompting-cot':
-        return <COTPage />;
-      case 'concept:prompting-zero-cot':
-        return <ZeroCOTPage />;
-      case 'concept:prompting-ltm':
-        return <LeastToMostPage />;
-      case 'concept:prompting-sc':
-        return <SelfConsistencyPage />;
-      default: {
-        // Check for dynamically published pages
-        if (selectedModel && selectedModel.startsWith('__pub__')) {
-          const pubPath = selectedModel.replace('__pub__', '');
-          const published = getPublishedPages();
-          const pageData = published[pubPath];
-          if (pageData) return <PublishedPage pageData={pageData} />;
-        }
+    // Check static pages first
+    const StaticComponent = STATIC_PAGES[selectedModel];
+    if (StaticComponent) return <StaticComponent />;
+
+    // Check for Supabase-backed pages
+    if (selectedModel && selectedModel.startsWith('__supabase__')) {
+      if (supabaseLoading) {
         return (
-          <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--text-light)' }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🚧</div>
-            <h2 style={{ fontSize: '20px', fontWeight: 700 }}>Under Construction</h2>
-            <p style={{ fontSize: '14px', marginTop: '8px' }}>This page is currently being built.</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0', color: 'var(--text-light)' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                width: '32px', height: '32px', border: '3px solid var(--border)',
+                borderTopColor: 'var(--accent)', borderRadius: '50%',
+                animation: 'spin 0.8s linear infinite', margin: '0 auto 16px',
+              }} />
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+              <p style={{ fontSize: '14px' }}>Loading page…</p>
+            </div>
           </div>
         );
       }
+
+      if (supabasePageData) {
+        const pageData = {
+          meta: supabasePageData.current_version?.meta || {},
+          blocks: supabasePageData.current_version?.blocks || [],
+          firstPublishedAt: supabasePageData.created_at,
+          publishedAt: supabasePageData.updated_at,
+        };
+        return <PublishedPage pageData={pageData} />;
+      }
     }
+
+    // Fallback
+    return (
+      <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--text-light)' }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>🚧</div>
+        <h2 style={{ fontSize: '20px', fontWeight: 700 }}>Under Construction</h2>
+        <p style={{ fontSize: '14px', marginTop: '8px' }}>This page is currently being built.</p>
+      </div>
+    );
   };
 
-  // Editor page renders outside MainLayout
+  // Editor page renders outside MainLayout, wrapped in AuthGuard
   if (selectedModel === '__editor__' || window.location.pathname === '/admin/editor') {
-    return <EditorPage />;
+    return (
+      <SettingsProvider>
+        <AuthProvider>
+          <AuthGuard>
+            <EditorPage />
+          </AuthGuard>
+        </AuthProvider>
+      </SettingsProvider>
+    );
   }
 
   return (
-    <MainLayout selectedModel={selectedModel} onSelectModel={setSelectedModel}>
-      {renderContent()}
-    </MainLayout>
+    <SettingsProvider>
+      <AuthProvider>
+        <MainLayout selectedModel={selectedModel} onSelectModel={handleSelectModel}>
+          {renderContent()}
+        </MainLayout>
+      </AuthProvider>
+    </SettingsProvider>
   );
 }
 

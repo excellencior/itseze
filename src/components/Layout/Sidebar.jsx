@@ -1,6 +1,5 @@
-import { useState } from 'react';
-import theme from '../../theme';
-import { CONCEPTS, ARCHITECTURES, getPublishedNavItems, getDraftNavItems } from '../../navigation';
+import { useState, useEffect } from 'react';
+import { fetchPublishedPages } from '../../lib/pages';
 
 /* ── Color Palette ── */
 const SB = {
@@ -48,7 +47,7 @@ function NavItem({ label, isActive, isReady = true, onClick, indent = 0, badge, 
             ? SB.bgHover
             : 'transparent',
         color: isActive
-          ? theme.accent
+          ? 'var(--accent)'
           : hovered && isReady
             ? SB.textBright
             : isReady
@@ -73,7 +72,7 @@ function NavItem({ label, isActive, isReady = true, onClick, indent = 0, badge, 
             width: '6px',
             height: '6px',
             borderRadius: '50%',
-            background: theme.accent,
+            background: 'var(--accent)',
             flexShrink: 0,
           }} />
         )}
@@ -88,8 +87,8 @@ function NavItem({ label, isActive, isReady = true, onClick, indent = 0, badge, 
       {badge && <span style={{
         fontSize: '9px',
         fontWeight: 700,
-        background: badgeColor === 'accent' ? 'rgba(8,145,178,0.15)' : SB.bgActive,
-        color: badgeColor === 'accent' ? theme.accent : (badge === 'Draft' ? '#E59866' : SB.textMuted),
+        background: badgeColor === 'accent' ? 'var(--accent-20)' : SB.bgActive,
+        color: badgeColor === 'accent' ? 'var(--accent)' : (badge === 'Draft' ? '#E59866' : SB.textMuted),
         padding: '2px 7px',
         borderRadius: '4px',
         textTransform: 'uppercase',
@@ -128,7 +127,7 @@ function SectionToggle({ label, isOpen, onToggle, isAdminMode, onAddClick }) {
           padding: '10px 14px',
           border: 'none',
           background: 'transparent',
-          color: hovered ? theme.accent : SB.textBright,
+          color: hovered ? 'var(--accent)' : SB.textBright,
           fontSize: '11.5px',
           fontWeight: 700,
           letterSpacing: '0.1em',
@@ -154,7 +153,7 @@ function SectionToggle({ label, isOpen, onToggle, isAdminMode, onAddClick }) {
         >
           <path
             d="M4 6L8 10L12 6"
-            stroke={hovered ? theme.accent : SB.textMuted}
+            stroke={hovered ? 'var(--accent)' : SB.textMuted}
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -181,7 +180,7 @@ function SectionToggle({ label, isOpen, onToggle, isAdminMode, onAddClick }) {
             outline: 'none',
             transition: 'color 0.15s ease',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = theme.accent; }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.color = SB.textMuted; }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -220,7 +219,7 @@ function SubcategoryToggle({ label, isOpen, isActive, onToggle, isAdminMode, onA
           padding: '9px 12px',
           border: 'none',
           background: 'transparent',
-          color: isActive ? theme.accent : hovered ? SB.textBright : SB.text,
+          color: isActive ? 'var(--accent)' : hovered ? SB.textBright : SB.text,
           fontSize: '13.5px',
           fontWeight: 650,
           cursor: 'pointer',
@@ -244,7 +243,7 @@ function SubcategoryToggle({ label, isOpen, isActive, onToggle, isAdminMode, onA
         >
           <path
             d="M4 6L8 10L12 6"
-            stroke={isActive ? theme.accent : hovered ? SB.textBright : SB.textMuted}
+            stroke={isActive ? 'var(--accent)' : hovered ? SB.textBright : SB.textMuted}
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -271,7 +270,7 @@ function SubcategoryToggle({ label, isOpen, isActive, onToggle, isAdminMode, onA
             outline: 'none',
             transition: 'color 0.15s ease',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = theme.accent; }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.color = SB.textMuted; }}
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -281,17 +280,90 @@ function SubcategoryToggle({ label, isOpen, isActive, onToggle, isAdminMode, onA
   );
 }
 
+/* ── Helper: organize Supabase pages into architecture + grouped concepts ── */
+function organizePages(pages) {
+  const architecturePages = [];
+  const conceptGroups = {};   // { subcategory: [pages] }
+  const flatConcepts = [];    // concepts without a subcategory
+
+  for (const page of pages) {
+    const meta = page.current_version?.meta;
+    if (!meta) continue;
+
+    const category = (meta.category || '').toLowerCase();
+    const isReady = page.status === 'published';
+
+    const item = {
+      id: page.id,
+      title: meta.title || 'Untitled',
+      urlPath: page.url_path,
+      route: page.route,
+      isReady,
+      createdAt: page.current_version?.created_at,
+      subcategory: meta.subcategory || null,
+    };
+
+    if (category === 'architecture') {
+      architecturePages.push(item);
+    } else if (category === 'concept' || category === 'concepts') {
+      if (item.subcategory) {
+        if (!conceptGroups[item.subcategory]) {
+          conceptGroups[item.subcategory] = [];
+        }
+        conceptGroups[item.subcategory].push(item);
+      } else {
+        flatConcepts.push(item);
+      }
+    }
+  }
+
+  // Sort each group alphabetically by title
+  const sortByTitle = (a, b) => a.title.localeCompare(b.title);
+  architecturePages.sort(sortByTitle);
+  flatConcepts.sort(sortByTitle);
+
+  // Sort subcategory names and their items
+  const sortedSubcategories = Object.keys(conceptGroups).sort();
+  for (const key of sortedSubcategories) {
+    conceptGroups[key].sort(sortByTitle);
+  }
+
+  return { architecturePages, conceptGroups, sortedSubcategories, flatConcepts };
+}
+
 export default function Sidebar({ selectedModel, onSelectModel, width = 280, collapsed = false, onToggleCollapse, isAdminMode = false, onCreateNewPage }) {
-  const isConcept = selectedModel ? (selectedModel.startsWith('concept:') || selectedModel.startsWith('__pub__/concepts/') || selectedModel.startsWith('__draft__/itseze-draft-')) : false;
-  
+  /* ── Supabase data ── */
+  const [pages, setPages] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchPublishedPages()
+      .then((data) => { if (!cancelled) setPages(data); })
+      .catch(() => { if (!cancelled) setPages([]); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const { architecturePages, conceptGroups, sortedSubcategories, flatConcepts } = organizePages(pages);
+
+  /* ── Determine if current selection is a concept ── */
+  const isConcept = selectedModel
+    ? (selectedModel.startsWith('/concepts/') || selectedModel.startsWith('concept:'))
+    : false;
+
   const [lastSelectedModel, setLastSelectedModel] = useState(selectedModel);
   const [archOpen, setArchOpen] = useState(!isConcept);
   const [conceptsOpen, setConceptsOpen] = useState(isConcept);
-  const [reasoningSubOpen, setReasoningSubOpen] = useState(() => {
-    if (!selectedModel) return false;
-    return CONCEPTS.some(
-      c => c.children && c.children.some(child => selectedModel === child.route)
-    ) || selectedModel.includes('/reasoning/') || selectedModel.includes('/prompting/') || selectedModel.includes('reasoning') || selectedModel.includes('prompting');
+  const [subcatOpenState, setSubcatOpenState] = useState(() => {
+    // Auto-open the subcategory that contains the selected page
+    const openMap = {};
+    if (selectedModel) {
+      for (const [subcat, items] of Object.entries(conceptGroups)) {
+        if (items.some(item => selectedModel === item.urlPath)) {
+          openMap[subcat] = true;
+        }
+      }
+    }
+    return openMap;
   });
   const [collapseBtnHovered, setCollapseBtnHovered] = useState(false);
 
@@ -300,11 +372,11 @@ export default function Sidebar({ selectedModel, onSelectModel, width = 280, col
     setLastSelectedModel(selectedModel);
     if (isConcept) {
       setConceptsOpen(true);
-      const hasChildActive = selectedModel && CONCEPTS.some(
-        c => c.children && c.children.some(child => selectedModel === child.route)
-      );
-      if (hasChildActive || (selectedModel && (selectedModel.includes('/reasoning/') || selectedModel.includes('/prompting/') || selectedModel.includes('reasoning') || selectedModel.includes('prompting')))) {
-        setReasoningSubOpen(true);
+      // Auto-open matching subcategory
+      for (const [subcat, items] of Object.entries(conceptGroups)) {
+        if (items.some(item => selectedModel === item.urlPath)) {
+          setSubcatOpenState(prev => ({ ...prev, [subcat]: true }));
+        }
       }
     } else {
       if (selectedModel) {
@@ -313,137 +385,86 @@ export default function Sidebar({ selectedModel, onSelectModel, width = 280, col
     }
   }
 
+  const toggleSubcat = (subcat) => {
+    setSubcatOpenState(prev => ({ ...prev, [subcat]: !prev[subcat] }));
+  };
+
   const renderConceptsList = () => {
     const rendered = [];
-    const publishedItems = getPublishedNavItems();
-    const draftItems = isAdminMode ? getDraftNavItems() : [];
 
-    CONCEPTS.forEach((c) => {
-      if (c.children) {
-        // Merge published pages that belong to this subcategory
-        const subcatName = c.name; // e.g. 'Reasoning', 'Prompting'
-        const pubChildren = publishedItems.filter(p => p.parentCategory === subcatName);
-        const draftChildren = draftItems.filter(d => d.parentCategory === subcatName);
+    // Render grouped subcategories
+    for (const subcat of sortedSubcategories) {
+      const items = conceptGroups[subcat];
+      const isSubOpen = !!subcatOpenState[subcat];
+      const isAnyChildActive = items.some(item => selectedModel === item.urlPath);
 
-        const isAnyChildActive = c.children.some(child => selectedModel === child.route)
-          || pubChildren.some(p => selectedModel === p.route)
-          || draftChildren.some(d => selectedModel === d.route);
-        
-        rendered.push(
-          <div key={`sub-${c.name}`}>
-            <SubcategoryToggle
-              label={c.name}
-              isOpen={reasoningSubOpen}
-              isActive={isAnyChildActive}
-              onToggle={() => setReasoningSubOpen(!reasoningSubOpen)}
-              isAdminMode={isAdminMode}
-              onAddClick={() => onCreateNewPage?.('concept', c.name)}
-            />
+      rendered.push(
+        <div key={`sub-${subcat}`}>
+          <SubcategoryToggle
+            label={subcat}
+            isOpen={isSubOpen}
+            isActive={isAnyChildActive}
+            onToggle={() => toggleSubcat(subcat)}
+            isAdminMode={isAdminMode}
+            onAddClick={() => onCreateNewPage?.('concept', subcat)}
+          />
 
-            <div style={{
-              display: 'grid',
-              gridTemplateRows: reasoningSubOpen ? '1fr' : '0fr',
-              opacity: reasoningSubOpen ? 1 : 0,
-              transition: 'grid-template-rows 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease',
-            }}>
-              <div style={{ overflow: 'hidden' }}>
-                <div style={{ padding: '4px 0 6px 0' }}>
-                  {c.children.map((child) => (
-                    <NavItem
-                      key={child.name}
-                      label={child.name}
-                      isActive={selectedModel === child.route}
-                      isReady={child.ready}
-                      onClick={() => onSelectModel(child.route)}
-                      indent={20}
-                      badge={!child.ready ? 'Soon' : null}
-                    />
-                  ))}
-                  {pubChildren.map((pub) => (
-                    <NavItem
-                      key={pub.route}
-                      label={pub.name}
-                      isActive={selectedModel === pub.route}
-                      isReady={true}
-                      onClick={() => onSelectModel(pub.route)}
-                      indent={20}
-                      badge={isNew(pub.firstPublishedAt) ? 'New' : null}
-                      badgeColor="accent"
-                    />
-                  ))}
-                  {draftChildren.map((draft) => (
-                    <NavItem
-                      key={draft.route}
-                      label={draft.name}
-                      isActive={selectedModel === draft.route}
-                      isReady={true}
-                      onClick={() => onSelectModel(draft.route)}
-                      indent={20}
-                      badge="Draft"
-                    />
-                  ))}
-                </div>
+          <div style={{
+            display: 'grid',
+            gridTemplateRows: isSubOpen ? '1fr' : '0fr',
+            opacity: isSubOpen ? 1 : 0,
+            transition: 'grid-template-rows 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease',
+          }}>
+            <div style={{ overflow: 'hidden' }}>
+              <div style={{ padding: '4px 0 6px 0' }}>
+                {items.map((item) => (
+                  <NavItem
+                    key={item.id}
+                    label={item.title}
+                    isActive={selectedModel === item.urlPath}
+                    isReady={item.isReady}
+                    onClick={() => onSelectModel(item.urlPath)}
+                    indent={20}
+                    badge={
+                      !item.isReady
+                        ? 'Soon'
+                        : isNew(item.createdAt)
+                          ? 'New'
+                          : null
+                    }
+                    badgeColor={item.isReady && isNew(item.createdAt) ? 'accent' : undefined}
+                  />
+                ))}
               </div>
             </div>
           </div>
-        );
-      } else {
-        // Flat concept
-        const pubEquivalent = publishedItems.find(p => !p.parentCategory && p.category === 'concept' && selectedModel === p.route);
-        const draftEquivalent = draftItems.find(d => !d.parentCategory && d.category === 'concept' && selectedModel === d.route);
-        
-        rendered.push(
-          <NavItem
-            key={c.name}
-            label={c.name}
-            isActive={selectedModel === c.route || (pubEquivalent && pubEquivalent.name === c.name) || (draftEquivalent && draftEquivalent.name === c.name)}
-            isReady={c.ready}
-            onClick={() => onSelectModel(c.route)}
-            badge={!c.ready ? 'Soon' : null}
-          />
-        );
-      }
-    });
+        </div>
+      );
+    }
 
-    // Add flat published concepts (no subcategory) at the end
-    const flatPubConcepts = publishedItems.filter(p => !p.parentCategory && p.category !== 'architecture');
-    flatPubConcepts.forEach(pub => {
-      // Avoid duplicate listing if it matches standard ready routes
-      if (!CONCEPTS.some(c => c.route === pub.route)) {
-        rendered.push(
-          <NavItem
-            key={pub.route}
-            label={pub.name}
-            isActive={selectedModel === pub.route}
-            isReady={true}
-            onClick={() => onSelectModel(pub.route)}
-            badge={isNew(pub.firstPublishedAt) ? 'New' : null}
-            badgeColor="accent"
-          />
-        );
-      }
-    });
-
-    // Add flat draft concepts at the end
-    const flatDraftConcepts = draftItems.filter(d => !d.parentCategory && d.category !== 'architecture');
-    flatDraftConcepts.forEach(draft => {
+    // Render flat (ungrouped) concepts
+    for (const item of flatConcepts) {
       rendered.push(
         <NavItem
-          key={draft.route}
-          label={draft.name}
-          isActive={selectedModel === draft.route}
-          isReady={true}
-          onClick={() => onSelectModel(draft.route)}
-          badge="Draft"
+          key={item.id}
+          label={item.title}
+          isActive={selectedModel === item.urlPath}
+          isReady={item.isReady}
+          onClick={() => onSelectModel(item.urlPath)}
+          badge={
+            !item.isReady
+              ? 'Soon'
+              : isNew(item.createdAt)
+                ? 'New'
+                : null
+          }
+          badgeColor={item.isReady && isNew(item.createdAt) ? 'accent' : undefined}
         />
       );
-    });
+    }
 
     return rendered;
   };
-
-  const draftItems = isAdminMode ? getDraftNavItems() : [];
-  const draftArchitectures = draftItems.filter(d => d.category === 'architecture');
 
   return (
     <aside style={{
@@ -464,34 +485,13 @@ export default function Sidebar({ selectedModel, onSelectModel, width = 280, col
     }}>
       {/* ── Header ── */}
       <div style={{
-        padding: '28px 22px 24px',
+        padding: '20px 22px',
         borderBottom: `1px solid ${SB.border}`,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-end',
         gap: '12px',
       }}>
-        <div style={{ minWidth: 0 }}>
-          <h1 style={{
-            fontSize: '1.6rem',
-            fontWeight: 900,
-            letterSpacing: '-0.04em',
-            color: SB.textBright,
-            margin: 0,
-            lineHeight: 1.1,
-            whiteSpace: 'nowrap',
-          }}>It'sEze</h1>
-          <p style={{
-            fontSize: '10px',
-            fontWeight: 700,
-            color: SB.textMuted,
-            marginTop: '6px',
-            textTransform: 'uppercase',
-            letterSpacing: '0.2em',
-            whiteSpace: 'nowrap',
-            margin: '8px 0 0 0',
-          }}>Serve to simplify</p>
-        </div>
         {onToggleCollapse && (
           <button
             onClick={onToggleCollapse}
@@ -502,9 +502,9 @@ export default function Sidebar({ selectedModel, onSelectModel, width = 280, col
               width: '30px',
               height: '30px',
               borderRadius: '8px',
-              border: `1px solid ${collapseBtnHovered ? theme.accent : SB.border}`,
+              border: `1px solid ${collapseBtnHovered ? 'var(--accent)' : SB.border}`,
               background: collapseBtnHovered ? SB.bgHover : 'transparent',
-              color: collapseBtnHovered ? theme.accent : SB.textMuted,
+              color: collapseBtnHovered ? 'var(--accent)' : SB.textMuted,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -545,24 +545,21 @@ export default function Sidebar({ selectedModel, onSelectModel, width = 280, col
         }}>
           <div style={{ overflow: 'hidden' }}>
             <div style={{ padding: '4px 0 12px 0' }}>
-              {ARCHITECTURES.map((a) => (
+              {architecturePages.map((item) => (
                 <NavItem
-                  key={a.name}
-                  label={a.name}
-                  isActive={selectedModel === a.route}
-                  isReady={a.ready}
-                  onClick={() => onSelectModel(a.route)}
-                  badge={!a.ready ? 'Soon' : null}
-                />
-              ))}
-              {draftArchitectures.map((draft) => (
-                <NavItem
-                  key={draft.route}
-                  label={draft.name}
-                  isActive={selectedModel === draft.route}
-                  isReady={true}
-                  onClick={() => onSelectModel(draft.route)}
-                  badge="Draft"
+                  key={item.id}
+                  label={item.title}
+                  isActive={selectedModel === item.urlPath}
+                  isReady={item.isReady}
+                  onClick={() => onSelectModel(item.urlPath)}
+                  badge={
+                    !item.isReady
+                      ? 'Soon'
+                      : isNew(item.createdAt)
+                        ? 'New'
+                        : null
+                  }
+                  badgeColor={item.isReady && isNew(item.createdAt) ? 'accent' : undefined}
                 />
               ))}
             </div>

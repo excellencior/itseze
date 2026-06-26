@@ -2,9 +2,13 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import PageNav from './PageNav';
 import SeekLadder from './SeekLadder';
+import Logo from './Logo';
+import BubbleNav from './BubbleNav';
 import { getRouteHeaderInfo } from '../../navigation';
+import { useSettings } from '../../SettingsContext';
 
 export default function MainLayout({ selectedModel, onSelectModel, children, isAdminMode = false, onCreateNewPage }) {
+  const { settings, resolvedTheme } = useSettings();
   const [sidebarWidth, setSidebarWidth] = useState(280);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return sessionStorage.getItem('sidebar-collapsed') === 'true';
@@ -14,6 +18,7 @@ export default function MainLayout({ selectedModel, onSelectModel, children, isA
   const mainRef = useRef(null);
 
   const headerInfo = getRouteHeaderInfo(selectedModel);
+  const isBubbleMode = settings.navMode === 'bubble';
 
   // Helper to format date
   const formatDate = (dateStr) => {
@@ -134,14 +139,25 @@ export default function MainLayout({ selectedModel, onSelectModel, children, isA
 
   const toggleCollapse = () => setSidebarCollapsed(prev => !prev);
 
+  /** Navigate to the default home page */
+  const handleNavigateHome = useCallback(() => {
+    // Navigate to the first available architecture page, or root
+    onSelectModel?.('/');
+  }, [onSelectModel]);
+
+  // Dynamic container background based on theme
+  const contentBg = resolvedTheme === 'dark' ? '#1a1a1a' : '#F6F6F6';
+  const outerBg = resolvedTheme === 'dark' ? '#000' : '#111';
+
   return (
     <div style={{
       height: '100vh',
       width: '100%',
       padding: '12px',
-      backgroundColor: '#111',
+      backgroundColor: outerBg,
       fontFamily: 'var(--font-main)',
       boxSizing: 'border-box',
+      transition: 'background-color 0.3s ease',
     }}>
       <div
         ref={containerRef}
@@ -149,34 +165,40 @@ export default function MainLayout({ selectedModel, onSelectModel, children, isA
           display: 'flex',
           height: '100%',
           width: '100%',
-          backgroundColor: '#F6F6F6',
+          backgroundColor: contentBg,
           overflow: 'hidden',
           borderRadius: '12px',
           boxShadow: '0 0 40px rgba(0,0,0,0.4)',
+          transition: 'background-color 0.3s ease',
         }}
       >
-        <Sidebar
-          selectedModel={selectedModel}
-          onSelectModel={onSelectModel}
-          width={sidebarWidth}
-          collapsed={sidebarCollapsed}
-          onToggleCollapse={toggleCollapse}
-          isAdminMode={isAdminMode}
-          onCreateNewPage={onCreateNewPage}
-        />
+        {/* Sidebar — only in sidebar mode */}
+        {!isBubbleMode && (
+          <>
+            <Sidebar
+              selectedModel={selectedModel}
+              onSelectModel={onSelectModel}
+              width={sidebarWidth}
+              collapsed={sidebarCollapsed}
+              onToggleCollapse={toggleCollapse}
+              isAdminMode={isAdminMode}
+              onCreateNewPage={onCreateNewPage}
+            />
 
-        {/* Resize handle — only when sidebar is expanded */}
-        {!sidebarCollapsed && (
-          <div
-            onMouseDown={handleMouseDown}
-            style={{
-              width: '5px',
-              cursor: 'col-resize',
-              background: 'transparent',
-              flexShrink: 0,
-              zIndex: 20,
-            }}
-          />
+            {/* Resize handle — only when sidebar is expanded */}
+            {!sidebarCollapsed && (
+              <div
+                onMouseDown={handleMouseDown}
+                style={{
+                  width: '5px',
+                  cursor: 'col-resize',
+                  background: 'transparent',
+                  flexShrink: 0,
+                  zIndex: 20,
+                }}
+              />
+            )}
+          </>
         )}
         
         <main 
@@ -184,8 +206,8 @@ export default function MainLayout({ selectedModel, onSelectModel, children, isA
           onScroll={handleScroll}
           style={{ flex: 1, overflowY: 'auto', padding: '40px 4%' }}
         >
-            {/* Toggle button when sidebar is collapsed */}
-            {sidebarCollapsed && (
+            {/* Toggle button when sidebar is collapsed (sidebar mode only) */}
+            {!isBubbleMode && sidebarCollapsed && (
               <button
                 onClick={toggleCollapse}
                 aria-label="Open sidebar"
@@ -197,32 +219,36 @@ export default function MainLayout({ selectedModel, onSelectModel, children, isA
                   width: '34px',
                   height: '34px',
                   borderRadius: '8px',
-                  border: '1px solid #E0E0E0',
-                  background: 'rgba(255,255,255,0.9)',
+                  border: `1px solid ${resolvedTheme === 'dark' ? '#333' : '#E0E0E0'}`,
+                  background: resolvedTheme === 'dark' ? 'rgba(30,30,30,0.9)' : 'rgba(255,255,255,0.9)',
                   backdropFilter: 'blur(8px)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '16px',
-                  color: '#555',
+                  color: resolvedTheme === 'dark' ? '#999' : '#555',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                   transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#0891B2';
-                  e.currentTarget.style.color = '#0891B2';
-                  e.currentTarget.style.boxShadow = '0 2px 12px rgba(8,145,178,0.15)';
+                  e.currentTarget.style.borderColor = 'var(--accent)';
+                  e.currentTarget.style.color = 'var(--accent)';
+                  e.currentTarget.style.boxShadow = '0 2px 12px var(--accent-20)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#E0E0E0';
-                  e.currentTarget.style.color = '#555';
+                  e.currentTarget.style.borderColor = resolvedTheme === 'dark' ? '#333' : '#E0E0E0';
+                  e.currentTarget.style.color = resolvedTheme === 'dark' ? '#999' : '#555';
                   e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)';
                 }}
               >
                 ☰
               </button>
             )}
+
+            {/* Standalone logo — always visible */}
+            <Logo onNavigateHome={handleNavigateHome} />
+
             {/* Dynamic category / date header */}
             {headerInfo && (headerInfo.category || headerInfo.firstPublishedAt) && (
               <div style={
@@ -266,6 +292,14 @@ export default function MainLayout({ selectedModel, onSelectModel, children, isA
             <SeekLadder scrollContainerRef={mainRef} />
         </main>
       </div>
+
+      {/* Bubble navigation — only in bubble mode */}
+      {isBubbleMode && (
+        <BubbleNav
+          selectedModel={selectedModel}
+          onSelectModel={onSelectModel}
+        />
+      )}
     </div>
   );
 }
