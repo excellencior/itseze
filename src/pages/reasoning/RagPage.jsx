@@ -16,9 +16,9 @@ function P({ children }) {
 
 function Callout({ type = 'info', children }) {
   const colors = {
-    info: { bg: '#EFF6FF', border: '#3B82F6', icon: 'ℹ️' },
-    warning: { bg: '#FFF7ED', border: '#F59E0B', icon: '⚠️' },
-    key: { bg: '#F0FDF4', border: '#10B981', icon: '💡' },
+    info: { bg: 'rgba(59,130,246,0.08)', border: '#3B82F6', icon: 'ℹ️' },
+    warning: { bg: 'rgba(245,158,11,0.08)', border: '#F59E0B', icon: '⚠️' },
+    key: { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '💡' },
     accent: { bg: 'var(--accent-20)', border: 'var(--accent)', icon: '↩' },
   };
   const c = colors[type];
@@ -26,7 +26,7 @@ function Callout({ type = 'info', children }) {
     <div style={{
       background: c.bg, borderLeft: `4px solid ${c.border}`,
       padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0',
-      fontSize: '14px', lineHeight: 1.6, color: '#333',
+      fontSize: '14px', lineHeight: 1.6, color: 'var(--text-main)',
     }}>
       <span style={{ marginRight: '8px' }}>{c.icon}</span>{children}
     </div>
@@ -243,19 +243,19 @@ export default function RagPage() {
         </P>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', margin: '16px 0' }}>
-          <div style={{ background: '#FAFAFA', border: '1px solid var(--border)', padding: '14px' }}>
+          <div style={{ background: 'var(--node-bg)', border: '1px solid var(--border)', padding: '14px' }}>
             <div style={{ fontSize: '11px', fontWeight: 800, color: '#3B82F6', textTransform: 'uppercase', marginBottom: '6px' }}>Phase 1: Embed</div>
             <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
               Documents are chunked and converted into dense vector embeddings using a model like <strong>E5</strong>, <strong>BGE</strong>, or OpenAI's <strong>text-embedding</strong> series. These vectors capture semantic meaning.
             </p>
           </div>
-          <div style={{ background: '#FAFAFA', border: '1px solid var(--border)', padding: '14px' }}>
+          <div style={{ background: 'var(--node-bg)', border: '1px solid var(--border)', padding: '14px' }}>
             <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '6px' }}>Phase 2: Retrieve</div>
             <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
               The user's query is embedded and compared against the document vectors using <strong>cosine similarity</strong> or approximate nearest neighbor (ANN) search. Top-<Latex math="k" /> chunks are selected.
             </p>
           </div>
-          <div style={{ background: '#FAFAFA', border: '1px solid var(--border)', padding: '14px' }}>
+          <div style={{ background: 'var(--node-bg)', border: '1px solid var(--border)', padding: '14px' }}>
             <div style={{ fontSize: '11px', fontWeight: 800, color: '#10B981', textTransform: 'uppercase', marginBottom: '6px' }}>Phase 3: Generate</div>
             <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
               Retrieved chunks are prepended to the prompt as context. The LLM synthesizes an answer grounded in the retrieved evidence, with explicit references where possible.

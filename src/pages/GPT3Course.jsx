@@ -19,7 +19,7 @@ export default function GPT3Course() {
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
       <header style={{ textAlign: 'center', marginBottom: '40px' }}>
         <h1 style={{ fontSize: '3rem', fontWeight: 900, letterSpacing: '-0.05em', color: '#000', margin: '0 0 12px 0' }}>Transformer</h1>
-        <p style={{ fontSize: '1rem', color: '#545454', fontWeight: 500, lineHeight: 1.6, margin: 0 }}>
+        <p style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 500, lineHeight: 1.6, margin: 0 }}>
           An interactive, step-by-step visual dive into how Large Language Models like GPT-3 process text using the Transformer architecture.
         </p>
       </header>

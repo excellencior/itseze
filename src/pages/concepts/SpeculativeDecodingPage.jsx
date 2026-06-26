@@ -20,14 +20,14 @@ function P({ children }) {
 }
 function Callout({ type = 'info', children }) {
   const colors = {
-    info: { bg: '#EFF6FF', border: '#3B82F6', icon: 'ℹ️' },
-    warning: { bg: '#FFF7ED', border: '#F59E0B', icon: '⚠️' },
-    key: { bg: '#F0FDF4', border: '#10B981', icon: '💡' },
+    info: { bg: 'rgba(59,130,246,0.08)', border: '#3B82F6', icon: 'ℹ️' },
+    warning: { bg: 'rgba(245,158,11,0.08)', border: '#F59E0B', icon: '⚠️' },
+    key: { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '💡' },
     accent: { bg: 'var(--accent-20)', border: 'var(--accent)', icon: '↩' },
   };
   const c = colors[type];
   return (
-    <div style={{ background: c.bg, borderLeft: `4px solid ${c.border}`, padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0', fontSize: '14px', lineHeight: 1.6, color: '#333' }}>
+    <div style={{ background: c.bg, borderLeft: `4px solid ${c.border}`, padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0', fontSize: '14px', lineHeight: 1.6, color: 'var(--text-main)' }}>
       <span style={{ marginRight: '8px' }}>{c.icon}</span>{children}
     </div>
   );
@@ -38,7 +38,7 @@ function PropTable({ rows }) {
       <tbody>
         {rows.map(([k, v], i) => (
           <tr key={i}>
-            <td style={{ padding: '8px 12px', fontWeight: 700, borderBottom: '1px solid var(--border)', width: '40%', background: '#FAFAFA' }}>{k}</td>
+            <td style={{ padding: '8px 12px', fontWeight: 700, borderBottom: '1px solid var(--border)', width: '40%', background: 'var(--node-bg)' }}>{k}</td>
             <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)' }}>{v}</td>
           </tr>
         ))}
@@ -71,7 +71,7 @@ function TokenChip({ text, color = 'var(--text-main)', bg = '#FAFAFA', border = 
 function MiniTable({ rows, draftToken, accepted }) {
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', border: '1px solid var(--border)' }}>
-      <thead><tr style={{ background: '#FAFAFA' }}>
+      <thead><tr style={{ background: 'var(--node-bg)' }}>
         <th style={{ padding: '6px 10px', textAlign: 'left', fontWeight: 700, borderBottom: '2px solid var(--border)' }}>Token</th>
         <th style={{ padding: '6px 10px', textAlign: 'left', fontWeight: 700, borderBottom: '2px solid var(--border)' }}>Probability</th>
         <th style={{ padding: '6px 10px', borderBottom: '2px solid var(--border)' }}></th>
@@ -136,7 +136,7 @@ export function SpecDecodingWalkthrough() {
           <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.7 }}>
             <p style={{ marginBottom: '12px' }}>Think of it as a <strong>junior writer</strong> and a <strong>senior editor</strong>.</p>
             <p style={{ marginBottom: '12px' }}>The junior drafts a few sentences quickly. The senior editor reads ahead and, at each word, asks:</p>
-            <div style={{ padding: '14px 18px', background: '#FAFAFA', border: '1px solid var(--border)', fontFamily: 'var(--font-mono)', fontSize: '13px', fontWeight: 600, marginBottom: '14px' }}>
+            <div style={{ padding: '14px 18px', background: 'var(--node-bg)', border: '1px solid var(--border)', fontFamily: 'var(--font-mono)', fontSize: '13px', fontWeight: 600, marginBottom: '14px' }}>
               "Would I myself likely write this next word?"
             </div>
             <p style={{ marginBottom: '6px' }}>If <strong>yes</strong> → keep it, move on.</p>
@@ -148,7 +148,7 @@ export function SpecDecodingWalkthrough() {
         {step === 1 && (
           <div>
             <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '10px', lineHeight: 1.7 }}>Current context:</div>
-            <div style={{ padding: '10px 16px', background: '#FAFAFA', border: '1px solid var(--border)', marginBottom: '14px' }}>
+            <div style={{ padding: '10px 16px', background: 'var(--node-bg)', border: '1px solid var(--border)', marginBottom: '14px' }}>
               {CONTEXT.map((t, i) => <TokenChip key={i} text={t} mono bold bg="#F0FDF4" border="#10B981" color="#166534" />)}
             </div>
             <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '10px', lineHeight: 1.7 }}>Small drafter predicts 4 tokens:</div>
@@ -156,7 +156,7 @@ export function SpecDecodingWalkthrough() {
               {DRAFTED.map((t, i) => <TokenChip key={i} text={t} mono bold border="#3B82F6" bg="#EFF6FF" color="#1E40AF" />)}
             </div>
             <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '10px', lineHeight: 1.7 }}>So the full sequence becomes:</div>
-            <div style={{ padding: '10px 16px', background: '#FAFAFA', border: '1px solid var(--border)' }}>
+            <div style={{ padding: '10px 16px', background: 'var(--node-bg)', border: '1px solid var(--border)' }}>
               {[...CONTEXT, ...DRAFTED].map((t, i) => (
                 <TokenChip key={i} text={t} mono bold bg={i < 2 ? '#F0FDF4' : '#EFF6FF'} border={i < 2 ? '#10B981' : '#3B82F6'} color={i < 2 ? '#166534' : '#1E40AF'} />
               ))}
@@ -172,7 +172,7 @@ export function SpecDecodingWalkthrough() {
             </div>
             <div style={{ border: '1px solid var(--border)', overflow: 'hidden', marginBottom: '14px' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <thead><tr style={{ background: '#FAFAFA' }}>
+                <thead><tr style={{ background: 'var(--node-bg)' }}>
                   <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 700, borderBottom: '2px solid var(--border)' }}>Position</th>
                   <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 700, borderBottom: '2px solid var(--border)' }}>Predicting next word after…</th>
                   <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 700, borderBottom: '2px solid var(--border)' }}>Draft token</th>
@@ -448,7 +448,7 @@ function ParallelViz() {
       </div>
 
       {/* ── SECTION 2: Matrix Shape Comparison ── */}
-      <div style={{ padding: '16px', background: '#FAFAFA', border: '1px solid var(--border)', marginBottom: '16px' }}>
+      <div style={{ padding: '16px', background: 'var(--node-bg)', border: '1px solid var(--border)', marginBottom: '16px' }}>
         <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '14px' }}>
           {mode === 'sequential' ? 'Each step: Matrix × Vector → Vector (repeated 5×)' : 'One step: Matrix × Matrix → Matrix (done once)'}
         </div>
@@ -940,7 +940,7 @@ export default function SpeculativeDecodingPage() {
       <Section title="Quick Reference">
         <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px', fontSize: '13px', border: '1px solid var(--border)' }}>
           <thead>
-            <tr style={{ background: '#FAFAFA' }}>
+            <tr style={{ background: 'var(--node-bg)' }}>
               <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 700, borderBottom: '2px solid var(--border)' }}>Concept</th>
               <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 700, borderBottom: '2px solid var(--border)' }}>Key Idea</th>
               <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 700, borderBottom: '2px solid var(--border)' }}>One-Line Summary</th>
@@ -1008,7 +1008,7 @@ export default function SpeculativeDecodingPage() {
       </Section>
 
       {/* ── AI DISCLOSURE ── */}
-      <div style={{ marginTop: '32px', padding: '16px 20px', background: '#F8F8F8', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '13px', color: 'var(--text-light)', lineHeight: 1.6 }}>
+      <div style={{ marginTop: '32px', padding: '16px 20px', background: 'var(--node-bg)', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '13px', color: 'var(--text-light)', lineHeight: 1.6 }}>
         <strong style={{ color: 'var(--text-muted)' }}>A note on this article:</strong> This post was written
         with the help of AI. All content has been reviewed, verified against the original papers, and
         checked to ensure it is accurate and up to date as of 2025.

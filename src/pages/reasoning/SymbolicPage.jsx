@@ -16,9 +16,9 @@ function P({ children }) {
 
 function Callout({ type = 'info', children }) {
   const colors = {
-    info: { bg: '#EFF6FF', border: '#3B82F6', icon: 'ℹ️' },
-    warning: { bg: '#FFF7ED', border: '#F59E0B', icon: '⚠️' },
-    key: { bg: '#F0FDF4', border: '#10B981', icon: '💡' },
+    info: { bg: 'rgba(59,130,246,0.08)', border: '#3B82F6', icon: 'ℹ️' },
+    warning: { bg: 'rgba(245,158,11,0.08)', border: '#F59E0B', icon: '⚠️' },
+    key: { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '💡' },
     accent: { bg: 'var(--accent-20)', border: 'var(--accent)', icon: '↩' },
   };
   const c = colors[type];
@@ -26,7 +26,7 @@ function Callout({ type = 'info', children }) {
     <div style={{
       background: c.bg, borderLeft: `4px solid ${c.border}`,
       padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0',
-      fontSize: '14px', lineHeight: 1.6, color: '#333',
+      fontSize: '14px', lineHeight: 1.6, color: 'var(--text-main)',
     }}>
       <span style={{ marginRight: '8px' }}>{c.icon}</span>{children}
     </div>
@@ -153,7 +153,7 @@ export function PropositionalEvaluator() {
       </div>
 
       {/* Variable Evaluator controls */}
-      <div style={{ display: 'flex', gap: '24px', marginBottom: '20px', background: '#FAFAFA', padding: '12px 16px', border: '1px solid var(--border)', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '24px', marginBottom: '20px', background: 'var(--node-bg)', padding: '12px 16px', border: '1px solid var(--border)', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <input
             type="checkbox"
@@ -206,7 +206,7 @@ export function PropositionalEvaluator() {
       {/* Truth Table */}
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
         <thead>
-          <tr style={{ background: '#FAFAFA', borderBottom: '2px solid var(--border)' }}>
+          <tr style={{ background: 'var(--node-bg)', borderBottom: '2px solid var(--border)' }}>
             <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>A</th>
             <th style={{ padding: '10px', textAlign: 'center', fontWeight: 700 }}>B</th>
             <th style={{ padding: '10px', textAlign: 'left', fontWeight: 700 }}>Expression ({expression})</th>
@@ -288,7 +288,7 @@ export default function SymbolicPage() {
 
         {/* Inference Rules */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', margin: '20px 0' }}>
-          <div style={{ background: '#FAFAFA', border: '1px solid var(--border)', padding: '16px' }}>
+          <div style={{ background: 'var(--node-bg)', border: '1px solid var(--border)', padding: '16px' }}>
             <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
               Modus Ponens
             </div>
@@ -299,7 +299,7 @@ export default function SymbolicPage() {
               If <Latex math="P" /> is true, and <Latex math="P" /> implies <Latex math="Q" />, then <Latex math="Q" /> must be true. The most fundamental deductive step.
             </p>
           </div>
-          <div style={{ background: '#FAFAFA', border: '1px solid var(--border)', padding: '16px' }}>
+          <div style={{ background: 'var(--node-bg)', border: '1px solid var(--border)', padding: '16px' }}>
             <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
               Modus Tollens
             </div>
@@ -333,7 +333,7 @@ export default function SymbolicPage() {
           fontFamily: 'var(--font-mono)', fontSize: '12.5px', lineHeight: 1.6,
           border: '1px solid #333', position: 'relative',
         }}>
-          <div style={{ position: 'absolute', top: '8px', right: '12px', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#666', fontWeight: 700 }}>
+          <div style={{ position: 'absolute', top: '8px', right: '12px', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', fontWeight: 700 }}>
             prolog
           </div>
           <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{`parent(tom, bob).

@@ -54,10 +54,10 @@ function renderBlock(block, idx) {
 
     case 'callout': {
       const colors = {
-        info:    { bg: '#EFF6FF', border: '#3B82F6', icon: 'ℹ️' },
-        warning: { bg: '#FFF7ED', border: '#F59E0B', icon: '⚠️' },
-        key:     { bg: '#F0FDF4', border: '#10B981', icon: '💡' },
-        tip:     { bg: '#F0FDF4', border: '#10B981', icon: '💡' },
+        info:    { bg: 'rgba(59,130,246,0.08)', border: '#3B82F6', icon: 'ℹ️' },
+        warning: { bg: 'rgba(245,158,11,0.08)', border: '#F59E0B', icon: '⚠️' },
+        key:     { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '💡' },
+        tip:     { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '💡' },
         accent:  { bg: 'rgba(8,145,178,0.08)', border: '#0891B2', icon: '↩' },
       };
       const c = colors[block.calloutType] || colors.info;

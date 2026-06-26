@@ -17,9 +17,9 @@ function P({ children }) {
 
 function Callout({ type = 'info', children }) {
   const colors = {
-    info: { bg: '#EFF6FF', border: '#3B82F6', icon: 'ℹ️' },
-    warning: { bg: '#FFF7ED', border: '#F59E0B', icon: '⚠️' },
-    key: { bg: '#F0FDF4', border: '#10B981', icon: '💡' },
+    info: { bg: 'rgba(59,130,246,0.08)', border: '#3B82F6', icon: 'ℹ️' },
+    warning: { bg: 'rgba(245,158,11,0.08)', border: '#F59E0B', icon: '⚠️' },
+    key: { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '💡' },
     accent: { bg: 'var(--accent-20)', border: 'var(--accent)', icon: '↩' },
   };
   const c = colors[type];
@@ -27,7 +27,7 @@ function Callout({ type = 'info', children }) {
     <div style={{
       background: c.bg, borderLeft: `4px solid ${c.border}`,
       padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0',
-      fontSize: '14px', lineHeight: 1.6, color: '#333',
+      fontSize: '14px', lineHeight: 1.6, color: 'var(--text-main)',
     }}>
       <span style={{ marginRight: '8px' }}>{c.icon}</span>{children}
     </div>
@@ -93,7 +93,7 @@ export function SampleAndVoteWidget() {
       </div>
 
       <div style={{ background: '#1e1e24', color: '#e5c07b', padding: '14px 18px', marginBottom: '16px', fontFamily: 'var(--font-mono)', fontSize: '12px', lineHeight: 1.6, border: '1px solid #333', borderRadius: '4px', position: 'relative' }}>
-        <div style={{ position: 'absolute', top: '6px', right: '10px', fontSize: '8px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#666', fontWeight: 700 }}>problem</div>
+        <div style={{ position: 'absolute', top: '6px', right: '10px', fontSize: '8px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', fontWeight: 700 }}>problem</div>
         <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{`Janet's ducks lay 16 eggs per day. She eats three for breakfast\nevery morning and bakes muffins for her friends with four every day.\nShe sells the remaining at the farmers' market for $2 each.\nHow much does she earn every day?`}</pre>
       </div>
 
@@ -268,7 +268,7 @@ export default function SelfConsistencyPage() {
           fontFamily: 'var(--font-mono)', fontSize: '12.5px', lineHeight: 1.6,
           border: '1px solid #333', position: 'relative',
         }}>
-          <div style={{ position: 'absolute', top: '8px', right: '12px', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#666', fontWeight: 700 }}>
+          <div style={{ position: 'absolute', top: '8px', right: '12px', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', fontWeight: 700 }}>
             self-consistency procedure
           </div>
           <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{`# Standard CoT (greedy):
@@ -412,7 +412,7 @@ final_answer = majority_vote(answer₁, answer₂, ..., answerₙ)`}</pre>
           fontFamily: 'var(--font-mono)', fontSize: '12.5px', lineHeight: 1.6,
           border: '1px solid #333', position: 'relative',
         }}>
-          <div style={{ position: 'absolute', top: '8px', right: '12px', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#666', fontWeight: 700 }}>
+          <div style={{ position: 'absolute', top: '8px', right: '12px', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', fontWeight: 700 }}>
             results summary
           </div>
           <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{`Benchmark       | Greedy CoT | + Self-Consistency | Δ

@@ -29,9 +29,9 @@ function P({ children }) {
 
 function Callout({ type = 'info', children }) {
   const colors = {
-    info: { bg: '#EFF6FF', border: '#3B82F6', icon: 'ℹ️' },
-    warning: { bg: '#FFF7ED', border: '#F59E0B', icon: '⚠️' },
-    key: { bg: '#F0FDF4', border: '#10B981', icon: '💡' },
+    info: { bg: 'rgba(59,130,246,0.08)', border: '#3B82F6', icon: 'ℹ️' },
+    warning: { bg: 'rgba(245,158,11,0.08)', border: '#F59E0B', icon: '⚠️' },
+    key: { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '💡' },
     accent: { bg: 'var(--accent-20)', border: 'var(--accent)', icon: '↩' },
   };
   const c = colors[type];
@@ -39,7 +39,7 @@ function Callout({ type = 'info', children }) {
     <div style={{
       background: c.bg, borderLeft: `4px solid ${c.border}`,
       padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0',
-      fontSize: '14px', lineHeight: 1.6, color: '#333',
+      fontSize: '14px', lineHeight: 1.6, color: 'var(--text-main)',
     }}>
       <span style={{ marginRight: '8px' }}>{c.icon}</span>{children}
     </div>
@@ -55,7 +55,7 @@ function PropTable({ rows }) {
       <tbody>
         {rows.map(([k, v], i) => (
           <tr key={i}>
-            <td style={{ padding: '8px 12px', fontWeight: 700, borderBottom: '1px solid var(--border)', width: '40%', background: '#FAFAFA' }}>{k}</td>
+            <td style={{ padding: '8px 12px', fontWeight: 700, borderBottom: '1px solid var(--border)', width: '40%', background: 'var(--node-bg)' }}>{k}</td>
             <td style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)' }}>{v}</td>
           </tr>
         ))}
@@ -126,7 +126,7 @@ export function AttentionHeatmap({ tokens, weights }) {
         padding: '14px 16px',
         border: '1px solid var(--border)',
         borderRadius: '6px',
-        background: '#FAFAFA',
+        background: 'var(--node-bg)',
         fontSize: '13px',
         color: 'var(--text-muted)',
         lineHeight: 1.6,
@@ -645,7 +645,7 @@ export default function AttentionPage() {
         </P>
         {/* Triangular mask visual */}
         <div style={{ margin: '16px 0 20px 0', overflowX: 'auto' }}>
-          <div style={{ fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#333', marginBottom: '8px' }}>
+          <div style={{ fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-main)', marginBottom: '8px' }}>
             Causal mask for a 5-token sequence
           </div>
           <div style={{ display: 'inline-block', fontFamily: 'var(--font-mono)', fontSize: '13px' }}>
@@ -738,7 +738,7 @@ export default function AttentionPage() {
           fontSize: '13px', border: '1px solid var(--border)',
         }}>
           <thead>
-            <tr style={{ background: '#FAFAFA' }}>
+            <tr style={{ background: 'var(--node-bg)' }}>
               <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 700, borderBottom: '2px solid var(--border)' }}>Concept</th>
               <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 700, borderBottom: '2px solid var(--border)' }}>Key Equation</th>
               <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 700, borderBottom: '2px solid var(--border)' }}>One-Line Summary</th>
@@ -814,7 +814,7 @@ export default function AttentionPage() {
       <div style={{
         marginTop: '32px',
         padding: '16px 20px',
-        background: '#F8F8F8',
+        background: 'var(--node-bg)',
         border: '1px solid var(--border)',
         borderRadius: '4px',
         fontSize: '13px',

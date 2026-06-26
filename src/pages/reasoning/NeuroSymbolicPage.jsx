@@ -16,9 +16,9 @@ function P({ children }) {
 
 function Callout({ type = 'info', children }) {
   const colors = {
-    info: { bg: '#EFF6FF', border: '#3B82F6', icon: 'ℹ️' },
-    warning: { bg: '#FFF7ED', border: '#F59E0B', icon: '⚠️' },
-    key: { bg: '#F0FDF4', border: '#10B981', icon: '💡' },
+    info: { bg: 'rgba(59,130,246,0.08)', border: '#3B82F6', icon: 'ℹ️' },
+    warning: { bg: 'rgba(245,158,11,0.08)', border: '#F59E0B', icon: '⚠️' },
+    key: { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '💡' },
     accent: { bg: 'var(--accent-20)', border: 'var(--accent)', icon: '↩' },
   };
   const c = colors[type];
@@ -26,7 +26,7 @@ function Callout({ type = 'info', children }) {
     <div style={{
       background: c.bg, borderLeft: `4px solid ${c.border}`,
       padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0',
-      fontSize: '14px', lineHeight: 1.6, color: '#333',
+      fontSize: '14px', lineHeight: 1.6, color: 'var(--text-main)',
     }}>
       <span style={{ marginRight: '8px' }}>{c.icon}</span>{children}
     </div>
@@ -103,7 +103,7 @@ export function TextToSqlCompiler() {
           <div style={{ fontSize: '13px', fontStyle: 'italic', marginBottom: '8px', color: 'var(--text-muted)' }}>
             &ldquo;{queries[activeQueryIndex].label}&rdquo;
           </div>
-          <div style={{ fontSize: '11px', color: '#666', lineHeight: 1.4 }}>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
             A neural seq-to-seq model parses the natural language intent, identifies entities (field names, operators, values), and compiles them into a structured SQL abstract syntax tree.
           </div>
         </div>
@@ -125,7 +125,7 @@ export function TextToSqlCompiler() {
       {/* Database Table */}
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px' }}>
         <thead>
-          <tr style={{ background: '#FAFAFA', borderBottom: '2px solid var(--border)' }}>
+          <tr style={{ background: 'var(--node-bg)', borderBottom: '2px solid var(--border)' }}>
             <th style={{ padding: '8px', textAlign: 'center' }}>ID</th>
             <th style={{ padding: '8px', textAlign: 'left' }}>Paper Title</th>
             <th style={{ padding: '8px', textAlign: 'center' }}>Field</th>
@@ -198,25 +198,25 @@ export default function NeuroSymbolicPage() {
         </P>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', margin: '16px 0' }}>
-          <div style={{ background: '#FAFAFA', border: '1px solid var(--border)', padding: '14px' }}>
+          <div style={{ background: 'var(--node-bg)', border: '1px solid var(--border)', padding: '14px' }}>
             <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '6px' }}>Type 1: Sequential Pipeline</div>
             <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
               Neural model produces structured output (e.g., SQL, code, logical form), which is then executed by a symbolic engine. <strong>Example</strong>: Text-to-SQL systems, LLM code generation.
             </p>
           </div>
-          <div style={{ background: '#FAFAFA', border: '1px solid var(--border)', padding: '14px' }}>
+          <div style={{ background: 'var(--node-bg)', border: '1px solid var(--border)', padding: '14px' }}>
             <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '6px' }}>Type 2: Symbolic Loss</div>
             <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
               Symbolic constraints are incorporated into the neural network's loss function during training, ensuring the model learns to satisfy logical rules. <strong>Example</strong>: DeepProbLog, Logic Tensor Networks.
             </p>
           </div>
-          <div style={{ background: '#FAFAFA', border: '1px solid var(--border)', padding: '14px' }}>
+          <div style={{ background: 'var(--node-bg)', border: '1px solid var(--border)', padding: '14px' }}>
             <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '6px' }}>Type 3: Neural Theorem Proving</div>
             <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
               Neural networks guide the search process of a symbolic theorem prover, selecting which proof steps to try next. <strong>Example</strong>: AlphaProof, HyperTree Proof Search.
             </p>
           </div>
-          <div style={{ background: '#FAFAFA', border: '1px solid var(--border)', padding: '14px' }}>
+          <div style={{ background: 'var(--node-bg)', border: '1px solid var(--border)', padding: '14px' }}>
             <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '6px' }}>Type 4: Neural Architecture with Symbolic Structure</div>
             <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
               The neural architecture itself is designed to mirror symbolic reasoning patterns (e.g., graph neural networks over knowledge graphs). <strong>Example</strong>: Neural Module Networks.
@@ -238,7 +238,7 @@ export default function NeuroSymbolicPage() {
           fontFamily: 'var(--font-mono)', fontSize: '12.5px', lineHeight: 1.6,
           border: '1px solid #333', position: 'relative',
         }}>
-          <div style={{ position: 'absolute', top: '8px', right: '12px', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#666', fontWeight: 700 }}>
+          <div style={{ position: 'absolute', top: '8px', right: '12px', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', fontWeight: 700 }}>
             problog
           </div>
           <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{`nn(digit_classifier, [Image], Digit) :: digit(Image, Digit).

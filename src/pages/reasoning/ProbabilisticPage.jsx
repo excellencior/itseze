@@ -16,9 +16,9 @@ function P({ children }) {
 
 function Callout({ type = 'info', children }) {
   const colors = {
-    info: { bg: '#EFF6FF', border: '#3B82F6', icon: 'ℹ️' },
-    warning: { bg: '#FFF7ED', border: '#F59E0B', icon: '⚠️' },
-    key: { bg: '#F0FDF4', border: '#10B981', icon: '💡' },
+    info: { bg: 'rgba(59,130,246,0.08)', border: '#3B82F6', icon: 'ℹ️' },
+    warning: { bg: 'rgba(245,158,11,0.08)', border: '#F59E0B', icon: '⚠️' },
+    key: { bg: 'rgba(16,185,129,0.08)', border: '#10B981', icon: '💡' },
     accent: { bg: 'var(--accent-20)', border: 'var(--accent)', icon: '↩' },
   };
   const c = colors[type];
@@ -26,7 +26,7 @@ function Callout({ type = 'info', children }) {
     <div style={{
       background: c.bg, borderLeft: `4px solid ${c.border}`,
       padding: '14px 18px', marginBottom: '16px', borderRadius: '0 4px 4px 0',
-      fontSize: '14px', lineHeight: 1.6, color: '#333',
+      fontSize: '14px', lineHeight: 1.6, color: 'var(--text-main)',
     }}>
       <span style={{ marginRight: '8px' }}>{c.icon}</span>{children}
     </div>
@@ -329,13 +329,13 @@ export default function ProbabilisticPage() {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', margin: '16px 0' }}>
-          <div style={{ background: '#FAFAFA', border: '1px solid var(--border)', padding: '12px' }}>
+          <div style={{ background: 'var(--node-bg)', border: '1px solid var(--border)', padding: '12px' }}>
             <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--accent)', marginBottom: '4px' }}>PRIOR → POSTERIOR</div>
             <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
               <Latex math="P(H)" /> is your <strong>prior belief</strong> before seeing evidence. <Latex math="P(H|E)" /> is your <strong>posterior belief</strong> after observing evidence <Latex math="E" />. Bayes' theorem tells you exactly how to update.
             </p>
           </div>
-          <div style={{ background: '#FAFAFA', border: '1px solid var(--border)', padding: '12px' }}>
+          <div style={{ background: 'var(--node-bg)', border: '1px solid var(--border)', padding: '12px' }}>
             <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--accent)', marginBottom: '4px' }}>LIKELIHOOD</div>
             <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
               <Latex math="P(E|H)" /> is the <strong>likelihood</strong> — how probable the evidence is, assuming the hypothesis is true. This is what allows the data to "speak" and shift your beliefs.
