@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import MainLayout from './components/Layout/MainLayout';
+import LandingPage from './pages/LandingPage';
 import GPT3Course from './pages/GPT3Course';
 import ActivationFunctionsPage from './pages/concepts/ActivationFunctionsPage';
 import AttentionPage from './pages/concepts/AttentionPage';
@@ -93,7 +94,7 @@ function getKeyFromURL() {
   const path = window.location.pathname;
   if (path === '/admin/editor') return '__editor__';
   if (path === '/admin/migrate') return '__migrate__';
-  if (path === '/' || path === '') return null; // root — use sessionStorage default
+  if (path === '/' || path === '') return '__home__';
   if (PATH_TO_KEY[path]) return PATH_TO_KEY[path];
   // Any other path is treated as a potential Supabase page url_path
   return `__supabase__${path}`;
@@ -104,8 +105,8 @@ function App() {
     const fromURL = getKeyFromURL();
     if (fromURL === '__editor__' || fromURL === '__migrate__') return fromURL;
     if (fromURL && fromURL.startsWith('__supabase__')) return fromURL;
-    if (fromURL) return fromURL; // static route key
-    return sessionStorage.getItem('itseze-active-page') || 'gpt3';
+    if (fromURL) return fromURL; // static route key or __home__
+    return sessionStorage.getItem('itseze-active-page') || '__home__';
   });
 
   // For Supabase-backed pages
@@ -118,6 +119,11 @@ function App() {
   const handleSelectModel = useCallback((modelOrPath) => {
     // If it's a url_path (starts with /), check if it maps to a static route first
     if (modelOrPath && modelOrPath.startsWith('/')) {
+      if (modelOrPath === '/') {
+        setSelectedModel('__home__');
+        window.history.pushState({}, '', '/');
+        return;
+      }
       const staticKey = PATH_TO_KEY[modelOrPath];
       if (staticKey) {
         setSelectedModel(staticKey);
@@ -133,7 +139,7 @@ function App() {
 
   // On page selection change, update URL and sessionStorage
   useEffect(() => {
-    if (!selectedModel || selectedModel === '__editor__' || selectedModel.startsWith('__supabase__')) return;
+    if (!selectedModel || selectedModel === '__editor__' || selectedModel === '__home__' || selectedModel.startsWith('__supabase__')) return;
 
     sessionStorage.setItem('itseze-active-page', selectedModel);
 
@@ -178,7 +184,7 @@ function App() {
   useEffect(() => {
     const handlePopState = () => {
       const key = getKeyFromURL();
-      setSelectedModel(key || sessionStorage.getItem('itseze-active-page') || 'gpt3');
+      setSelectedModel(key || sessionStorage.getItem('itseze-active-page') || '__home__');
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
@@ -274,6 +280,11 @@ function App() {
     // Check static pages first
     const StaticComponent = STATIC_PAGES[selectedModel];
     if (StaticComponent) return <StaticComponent />;
+
+    // Landing page
+    if (selectedModel === '__home__') {
+      return <LandingPage onNavigate={handleSelectModel} />;
+    }
 
     // Check for Supabase-backed pages
     if (selectedModel && selectedModel.startsWith('__supabase__')) {

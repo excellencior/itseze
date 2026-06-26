@@ -207,8 +207,8 @@ export default function MainLayout({ selectedModel, onSelectModel, children, isA
           onScroll={handleScroll}
           style={{ flex: 1, overflowY: 'auto', padding: '40px 4%' }}
         >
-            {/* Logo */}
-            <Logo onNavigateHome={handleNavigateHome} />
+            {/* Logo — hidden on landing page */}
+            {selectedModel !== '__home__' && <Logo onNavigateHome={handleNavigateHome} />}
 
             {/* Dynamic category / date header */}
             {headerInfo && (headerInfo.category || headerInfo.firstPublishedAt) && (
@@ -247,9 +247,12 @@ export default function MainLayout({ selectedModel, onSelectModel, children, isA
               </div>
             )}
             {children}
-            <div style={{ width: '80%', maxWidth: '1200px', margin: '0 auto' }}>
-              <PageNav currentRoute={selectedModel} onNavigate={onSelectModel} />
-            </div>
+            {/* PageNav — hidden on landing page */}
+            {selectedModel !== '__home__' && (
+              <div style={{ width: '80%', maxWidth: '1200px', margin: '0 auto' }}>
+                <PageNav currentRoute={selectedModel} onNavigate={onSelectModel} />
+              </div>
+            )}
             <SeekLadder scrollContainerRef={mainRef} />
         </main>
       </div>
